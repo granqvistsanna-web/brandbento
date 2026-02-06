@@ -1,4 +1,7 @@
+import { useCanvasStore } from '@/state/canvasState';
+
 interface TileProps {
+  id: string;
   children: React.ReactNode;
   isLoading?: boolean;
   isDefault?: boolean;
@@ -7,14 +10,29 @@ interface TileProps {
 }
 
 export function Tile({
+  id,
   children,
   isLoading = false,
   isDefault = false,
   label,
   className = ''
 }: TileProps) {
+  const editingTileId = useCanvasStore((state) => state.editingTileId);
+  const setEditingTile = useCanvasStore((state) => state.setEditingTile);
+
+  const isEditing = editingTileId === id;
+  const isDimmed = editingTileId !== null && !isEditing;
+
+  const handleClick = () => {
+    // Toggle: if already editing, close; otherwise open
+    setEditingTile(isEditing ? null : id);
+  };
+
   return (
-    <div className={`tile ${isLoading ? 'tile-loading' : ''} ${className}`}>
+    <div
+      className={`tile ${isLoading ? 'tile-loading' : ''} ${isDimmed ? 'tile-dimmed' : ''} ${isEditing ? 'tile-editing' : ''} ${className}`}
+      onClick={handleClick}
+    >
       <div className="tile-header">
         <span className="tile-label">{label}</span>
         {isDefault && <span className="tile-status">default</span>}
@@ -22,6 +40,14 @@ export function Tile({
       <div className="tile-content">
         {!isLoading && children}
       </div>
+
+      {/* Frosted glass overlay - only show on hover when not editing */}
+      {!isEditing && !isLoading && (
+        <div className="tile-overlay">
+          <span className="tile-overlay-label">{label}</span>
+          <span className="tile-overlay-icon">Edit</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -38,6 +64,7 @@ export function LogoTile({
 }) {
   return (
     <Tile
+      id="logo"
       isLoading={isLoading}
       isDefault={isDefault}
       label="Logo"
@@ -68,6 +95,7 @@ export function FontTile({
 
   return (
     <Tile
+      id={isPrimary ? 'primary-font' : 'secondary-font'}
       isLoading={isLoading}
       isDefault={isDefault}
       label={isPrimary ? 'Primary Type' : 'Secondary Type'}
@@ -95,6 +123,7 @@ export function ColorTile({
 }) {
   return (
     <Tile
+      id="colors"
       isLoading={isLoading}
       isDefault={isDefault}
       label="Colors"
@@ -133,6 +162,7 @@ export function ImageTile({
 
   return (
     <Tile
+      id="imagery"
       isLoading={isLoading}
       isDefault={isDefault}
       label="Imagery"

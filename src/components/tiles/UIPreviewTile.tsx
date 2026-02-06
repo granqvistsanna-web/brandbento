@@ -7,6 +7,7 @@ export function UIPreviewTile({
 }) {
   return (
     <Tile
+      id="ui-preview"
       isLoading={isLoading}
       isDefault={false}
       label="UI Preview"
