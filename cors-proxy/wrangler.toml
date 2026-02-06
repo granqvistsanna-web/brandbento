@@ -1,0 +1,9 @@
+name = "brand-bento-cors-proxy"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[[rate_limit]]
+binding = "RATE_LIMITER"
+namespace_id = "1"
+limit = 10
+period = 60
