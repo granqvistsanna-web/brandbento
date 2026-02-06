@@ -12,6 +12,7 @@ export function UIPreviewTile({
       isDefault={false}
       label="UI Preview"
       className="tile-ui-preview"
+      nonInteractive
     >
       <div className="ui-preview-placeholder">
         <span>Interface preview</span>

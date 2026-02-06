@@ -7,6 +7,8 @@ interface TileProps {
   isDefault?: boolean;
   label: string;
   className?: string;
+  /** Set true for tiles that are not directly editable (e.g., UI Preview) */
+  nonInteractive?: boolean;
 }
 
 export function Tile({
@@ -15,7 +17,8 @@ export function Tile({
   isLoading = false,
   isDefault = false,
   label,
-  className = ''
+  className = '',
+  nonInteractive = false
 }: TileProps) {
   const editingTileId = useCanvasStore((state) => state.editingTileId);
   const setEditingTile = useCanvasStore((state) => state.setEditingTile);
@@ -24,14 +27,53 @@ export function Tile({
   const isDimmed = editingTileId !== null && !isEditing;
 
   const handleClick = () => {
+    if (nonInteractive) return;
     // Toggle: if already editing, close; otherwise open
     setEditingTile(isEditing ? null : id);
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (nonInteractive) return;
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); // Prevent space from scrolling
+      setEditingTile(isEditing ? null : id);
+    }
+    if (e.key === 'Escape' && isEditing) {
+      e.preventDefault();
+      setEditingTile(null);
+    }
+  };
+
+  // Non-interactive tiles have different semantics
+  if (nonInteractive) {
+    return (
+      <div
+        className={`tile ${isLoading ? 'tile-loading' : ''} ${isDimmed ? 'tile-dimmed' : ''} ${className}`}
+        tabIndex={isDimmed ? -1 : 0}
+        role="region"
+        aria-label={`${label} - updates automatically as you change brand assets`}
+      >
+        <div className="tile-header">
+          <span className="tile-label">{label}</span>
+          {isDefault && <span className="tile-status">default</span>}
+        </div>
+        <div className="tile-content">
+          {!isLoading && children}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
       className={`tile ${isLoading ? 'tile-loading' : ''} ${isDimmed ? 'tile-dimmed' : ''} ${isEditing ? 'tile-editing' : ''} ${className}`}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={isDimmed ? -1 : 0}
+      role="button"
+      aria-label={`${label} tile - ${isEditing ? 'press Enter or Escape to close' : 'press Enter to edit'}`}
+      aria-pressed={isEditing}
     >
       <div className="tile-header">
         <span className="tile-label">{label}</span>
