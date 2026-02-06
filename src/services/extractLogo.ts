@@ -14,13 +14,13 @@ export async function extractLogo(doc: Document, baseUrl: string): Promise<Extra
   }
 
   // Strategy 2: PNG favicon with size preference
-  const pngIcons = doc.querySelectorAll('link[rel*="icon"][type="image/png"]');
+  const pngIcons = Array.from(doc.querySelectorAll('link[rel*="icon"][type="image/png"]'));
   if (pngIcons.length > 0) {
     // Prefer largest icon
     let bestIcon: Element | null = null;
     let bestSize = 0;
 
-    pngIcons.forEach(icon => {
+    for (const icon of pngIcons) {
       const sizes = icon.getAttribute('sizes');
       if (sizes) {
         const size = parseInt(sizes.split('x')[0]) || 0;
@@ -31,11 +31,13 @@ export async function extractLogo(doc: Document, baseUrl: string): Promise<Extra
       } else if (!bestIcon) {
         bestIcon = icon;
       }
-    });
+    }
 
-    const href = bestIcon?.getAttribute('href');
-    if (href) {
-      return { logo: resolveUrl(href, baseUrl), source: 'favicon-png' };
+    if (bestIcon) {
+      const href = bestIcon.getAttribute('href');
+      if (href) {
+        return { logo: resolveUrl(href, baseUrl), source: 'favicon-png' };
+      }
     }
   }
 
