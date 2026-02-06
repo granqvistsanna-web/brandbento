@@ -1,4 +1,4 @@
-import type { BrandAssets, CanvasState } from '@/types/brand';
+import type { BrandAssets, CanvasState, TileSettings } from '@/types/brand';
 
 export const DEFAULT_COLORS = ['#111111', '#555555', '#F5F5F5', '#2563EB', '#FFFFFF'];
 export const DEFAULT_PRIMARY_FONT = 'Inter';
@@ -16,11 +16,31 @@ export const DEFAULT_ASSETS: BrandAssets = {
   imagesSource: 'default',
 };
 
+export const defaultTileSettings: TileSettings = {
+  logo: {
+    scale: 70,
+    variant: 'original',
+    background: 'auto',
+  },
+  primaryFont: {
+    weight: 'regular',
+    sizeScale: 1.0,
+    lineHeight: 1.2,
+  },
+  secondaryFont: {
+    weight: 'regular',
+    sizeScale: 1.0,
+    lineHeight: 1.5,
+  },
+  recentFonts: [],
+};
+
 export function createDefaultState(): CanvasState {
   return {
     version: 1,
     sourceUrl: null,
     assets: { ...DEFAULT_ASSETS },
+    tileSettings: { ...defaultTileSettings },
     extractedAt: null,
     lastModified: Date.now(),
   };
