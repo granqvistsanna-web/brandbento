@@ -9,12 +9,18 @@ interface CanvasStore extends CanvasState {
   extractionStage: ExtractionStage;
   extractionError: string | null;
 
+  // Editing state (not persisted)
+  editingTileId: string | null;
+
   // Actions
   setAssets: (assets: Partial<BrandAssets>) => void;
   setSourceUrl: (url: string | null) => void;
   setExtractionStage: (stage: ExtractionStage) => void;
   setExtractionError: (error: string | null) => void;
   reset: () => void;
+
+  // Editing action
+  setEditingTile: (tileId: string | null) => void;
 
   // Persistence
   hydrate: () => void;
@@ -26,6 +32,7 @@ export const useCanvasStore = create<CanvasStore>()(
     ...createDefaultState(),
     extractionStage: 'idle',
     extractionError: null,
+    editingTileId: null,
 
     setAssets: (newAssets) => set((state) => ({
       assets: { ...state.assets, ...newAssets },
@@ -51,8 +58,11 @@ export const useCanvasStore = create<CanvasStore>()(
         sourceUrl: current.sourceUrl, // Keep URL
         extractionStage: 'idle',
         extractionError: null,
+        editingTileId: null,
       });
     },
+
+    setEditingTile: (tileId) => set({ editingTileId: tileId }),
 
     hydrate: () => {
       const loaded = loadState();
