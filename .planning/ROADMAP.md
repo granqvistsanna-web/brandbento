@@ -59,10 +59,12 @@ Plans:
   4. Clicking a tile opens its edit panel inline while dimming other tiles to 60% opacity
   5. State transitions between idle, hover, and editing happen smoothly at 200ms with no flickering
 
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — Grid layout with UI Preview tile and responsive breakpoints
+- [ ] 02-02-PLAN.md — Tile hover overlays and click-to-edit with dimming
+- [ ] 02-03-PLAN.md — Keyboard navigation and inline edit panel base
 
 ### Phase 3: Logo & Typography Tiles
 **Goal**: Users can view, customize, and swap logo and typography assets with live preview and font picker
@@ -176,7 +178,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Extraction | 4/4 | Complete | 2026-02-07 |
-| 2. Canvas System | 0/TBD | Not started | - |
+| 2. Canvas System | 0/3 | Planned | - |
 | 3. Logo & Typography Tiles | 0/TBD | Not started | - |
 | 4. Color & Imagery Tiles | 0/TBD | Not started | - |
 | 5. System View | 0/TBD | Not started | - |
@@ -185,4 +187,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 1 completion*
+*Last updated: 2026-02-07 after Phase 2 planning*
