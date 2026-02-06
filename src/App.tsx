@@ -4,6 +4,7 @@ import { extractBrand, type ExtractionProgress } from '@/services/brandExtractor
 import { URLInput } from '@/components/URLInput';
 import { LogoTile, FontTile, ColorTile, ImageTile } from '@/components/Tile';
 import { ExtractionOverlay } from '@/components/ExtractionOverlay';
+import { UIPreviewTile } from '@/components';
 import './App.css';
 
 function App() {
@@ -113,6 +114,10 @@ function App() {
               variant="secondary"
               isLoading={isExtracting && tileLoading.fonts}
               isDefault={assets.fontsSource === 'default'}
+            />
+
+            <UIPreviewTile
+              isLoading={isExtracting && tileLoading.logo}
             />
           </div>
         </div>
