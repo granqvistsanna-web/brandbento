@@ -1,7 +1,9 @@
 import { useEffect, useCallback } from 'react';
 import { useCanvasStore } from '@/state/canvasState';
 import { extractBrand, type ExtractionProgress } from '@/services/brandExtractor';
-import { URLInput, ColorTile, FontTile, LogoTile, ImageTile, ExtractionOverlay } from '@/components';
+import { URLInput } from '@/components/URLInput';
+import { LogoTile, FontTile, ColorTile, ImageTile } from '@/components/Tile';
+import { ExtractionOverlay } from '@/components/ExtractionOverlay';
 import './App.css';
 
 function App() {
@@ -39,10 +41,9 @@ function App() {
       setAssets(result);
       setExtractionStage('complete');
 
-      // Clear complete status after a moment
       setTimeout(() => {
         setExtractionStage('idle');
-      }, 1500);
+      }, 1000);
 
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Extraction failed';
@@ -58,7 +59,7 @@ function App() {
 
   const isExtracting = extractionStage !== 'idle' && extractionStage !== 'complete' && extractionStage !== 'error';
 
-  // Determine which tiles are still loading
+  // Progressive loading states
   const tileLoading = {
     colors: extractionStage === 'fetching' || extractionStage === 'colors',
     fonts: extractionStage === 'fetching' || extractionStage === 'colors' || extractionStage === 'fonts',
@@ -69,8 +70,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1 className="app-title">Brand Bento</h1>
-        <p className="app-subtitle">Extract and remix brand assets</p>
+        <span className="app-wordmark">Brand Bento</span>
       </header>
 
       <main className="app-main">
@@ -80,8 +80,8 @@ function App() {
           initialValue={sourceUrl || ''}
         />
 
-        <div className="canvas-preview">
-          <div className="tile-grid">
+        <div className="canvas">
+          <div className="bento-grid">
             <LogoTile
               logo={assets.logo}
               isLoading={isExtracting && tileLoading.logo}

@@ -8,13 +8,13 @@ interface ExtractionOverlayProps {
 
 const STAGE_MESSAGES: Record<ExtractionStage, string> = {
   idle: '',
-  fetching: 'Fetching page...',
-  colors: 'Extracting colors...',
-  fonts: 'Extracting typography...',
-  images: 'Finding imagery...',
-  logo: 'Detecting logo...',
-  complete: 'Extraction complete!',
-  error: 'Extraction failed',
+  fetching: 'Fetching',
+  colors: 'Extracting colors',
+  fonts: 'Extracting typography',
+  images: 'Finding imagery',
+  logo: 'Detecting logo',
+  complete: 'Complete',
+  error: 'Could not extract',
 };
 
 export function ExtractionOverlay({ stage, error, onDismiss }: ExtractionOverlayProps) {
@@ -27,8 +27,7 @@ export function ExtractionOverlay({ stage, error, onDismiss }: ExtractionOverlay
       <div className="extraction-status">
         {stage === 'error' ? (
           <>
-            <span className="extraction-error-icon">!</span>
-            <p className="extraction-error-message">{error || 'Something went wrong'}</p>
+            <p className="extraction-error">{error || 'Something went wrong'}</p>
             {onDismiss && (
               <button onClick={onDismiss} className="extraction-dismiss">
                 Continue with defaults
@@ -36,10 +35,7 @@ export function ExtractionOverlay({ stage, error, onDismiss }: ExtractionOverlay
             )}
           </>
         ) : (
-          <>
-            <div className="extraction-spinner" />
-            <p className="extraction-message">{STAGE_MESSAGES[stage]}</p>
-          </>
+          <p className="extraction-message">{STAGE_MESSAGES[stage]}</p>
         )}
       </div>
     </div>
