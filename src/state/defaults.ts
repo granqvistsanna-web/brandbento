@@ -1,0 +1,56 @@
+import type { BrandAssets, CanvasState } from '@/types/brand';
+
+export const DEFAULT_COLORS = ['#111111', '#555555', '#F5F5F5', '#2563EB', '#FFFFFF'];
+export const DEFAULT_PRIMARY_FONT = 'Inter';
+export const DEFAULT_SECONDARY_FONT = 'Lora';
+
+export const DEFAULT_ASSETS: BrandAssets = {
+  colors: DEFAULT_COLORS,
+  colorsSource: 'default',
+  primaryFont: DEFAULT_PRIMARY_FONT,
+  secondaryFont: DEFAULT_SECONDARY_FONT,
+  fontsSource: 'default',
+  logo: null,
+  logoSource: 'default',
+  heroImage: null,
+  imagesSource: 'default',
+};
+
+export function createDefaultState(): CanvasState {
+  return {
+    version: 1,
+    sourceUrl: null,
+    assets: { ...DEFAULT_ASSETS },
+    extractedAt: null,
+    lastModified: Date.now(),
+  };
+}
+
+export function generateMonogram(url: string): string {
+  try {
+    const domain = new URL(url).hostname.replace('www.', '');
+    const initials = domain.split('.')[0].substring(0, 2).toUpperCase();
+
+    return `data:image/svg+xml,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#111"/>
+        <text x="50" y="55" font-family="Inter, sans-serif"
+              font-size="40" font-weight="700"
+              fill="#FFF" text-anchor="middle" dominant-baseline="middle">
+          ${initials}
+        </text>
+      </svg>
+    `)}`;
+  } catch {
+    return `data:image/svg+xml,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect width="100" height="100" fill="#111"/>
+        <text x="50" y="55" font-family="Inter, sans-serif"
+              font-size="40" font-weight="700"
+              fill="#FFF" text-anchor="middle" dominant-baseline="middle">
+          BB
+        </text>
+      </svg>
+    `)}`;
+  }
+}
