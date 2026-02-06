@@ -109,10 +109,14 @@ Plans:
   7. User can drag-and-drop or click to upload replacement image (JPG, PNG, WebP)
   8. Treatment presets (Original, Duotone, B&W, Hi-contrast, Soft, Grain) preview instantly on hover with thumbnails showing current image with filter applied
 
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Dependencies + types + color utilities (contrast, conversion, palette generator)
+- [ ] 04-02-PLAN.md — Color tile with swatches, picker, presets, and role assignment
+- [ ] 04-03-PLAN.md — Imagery tile with cover image, gradient fallback, and upload
+- [ ] 04-04-PLAN.md — Image treatment presets (Duotone, B&W, Hi-contrast, Soft, Grain)
+- [ ] 04-05-PLAN.md — Integration checkpoint and verification
 
 ### Phase 5: System View
 **Goal**: Users see a reactive UI preview showing how all brand assets work together, updating live as any asset changes
@@ -185,11 +189,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Foundation & Extraction | 4/4 | Complete | 2026-02-07 |
 | 2. Canvas System | 1/3 | In progress | - |
 | 3. Logo & Typography Tiles | 0/6 | Planned | - |
-| 4. Color & Imagery Tiles | 0/TBD | Not started | - |
+| 4. Color & Imagery Tiles | 0/5 | Planned | - |
 | 5. System View | 0/TBD | Not started | - |
 | 6. Workflows | 0/TBD | Not started | - |
 | 7. Polish | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 3 planning*
+*Last updated: 2026-02-07 after Phase 4 planning*
