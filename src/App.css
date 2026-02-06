@@ -233,8 +233,9 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: opacity 0.15s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: opacity 200ms ease-out, box-shadow 200ms ease-out, transform 200ms ease-out, filter 200ms ease-out;
 }
 
 /* UI Preview tile - spans 3 columns, row 3 */
@@ -244,8 +245,114 @@ body {
   min-height: 200px;
 }
 
-.tile:hover {
-  opacity: 0.9;
+/* Subtle lift on hover for non-editing tiles */
+.tile:hover:not(.tile-editing):not(.tile-dimmed) {
+  transform: translateY(-1px);
+}
+
+/* Dimmed state when another tile is editing */
+.tile-dimmed {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: saturate(0.7);
+}
+
+/* Editing state - elevated, prominent */
+.tile-editing {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+}
+
+/* ============================================
+   Frosted Glass Overlay - Premium Feel
+   ============================================ */
+
+.tile-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+  z-index: 5;
+  border-radius: inherit;
+}
+
+/* Show overlay on hover */
+.tile:hover:not(.tile-dimmed) .tile-overlay {
+  opacity: 1;
+}
+
+/* Frosted glass background - subtle, elegant */
+.tile-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border-radius: inherit;
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(12px)) {
+  .tile-overlay::before {
+    background: rgba(255, 255, 255, 0.94);
+  }
+}
+
+/* Overlay content - refined typography */
+.tile-overlay-label {
+  position: relative;
+  z-index: 1;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-600);
+}
+
+.tile-overlay-icon {
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-800);
+  padding: 6px 14px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+/* Hover state for edit button within overlay */
+.tile:hover .tile-overlay-icon {
+  background: var(--gray-50);
+  border-color: var(--gray-300);
+}
+
+/* Don't show overlay on loading tiles */
+.tile-loading .tile-overlay {
+  display: none;
+}
+
+/* Don't show overlay on UI Preview (it's not directly editable) */
+.tile-ui-preview .tile-overlay {
+  display: none;
+}
+
+.tile-ui-preview {
+  cursor: default;
+}
+
+/* UI Preview doesn't respond to hover lift */
+.tile-ui-preview:hover {
+  transform: none;
 }
 
 .tile:focus-within {
