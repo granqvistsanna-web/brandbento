@@ -1,4 +1,5 @@
 import { useCanvasStore } from '@/state/canvasState';
+import { EditPanel } from './EditPanel';
 
 interface TileProps {
   id: string;
@@ -89,6 +90,14 @@ export function Tile({
           <span className="tile-overlay-label">{label}</span>
           <span className="tile-overlay-icon">Edit</span>
         </div>
+      )}
+
+      {/* Edit panel - inline when editing */}
+      {isEditing && (
+        <EditPanel
+          title={label}
+          onClose={() => setEditingTile(null)}
+        />
       )}
     </div>
   );

@@ -16,6 +16,8 @@
   --gray-500: #737373;
   --gray-600: #525252;
   --gray-700: #404040;
+  --gray-800: #262626;
+  --gray-900: #171717;
 
   /* Typography — Inter only */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -355,9 +357,25 @@ body {
   transform: none;
 }
 
-.tile:focus-within {
-  outline: 1px solid var(--gray-300);
-  outline-offset: -1px;
+/* ============================================
+   Keyboard Focus Indicators - Elegant
+   ============================================ */
+
+/* Remove default outline */
+.tile:focus {
+  outline: none;
+}
+
+/* Focus-visible: only show for keyboard navigation - subtle but clear */
+.tile:focus-visible {
+  outline: 2px solid var(--gray-400);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Editing tile has different focus style */
+.tile-editing:focus-visible {
+  outline-color: var(--gray-600);
 }
 
 .tile-header {
@@ -660,4 +678,87 @@ body {
   .url-submit-button {
     width: 100%;
   }
+}
+
+/* ============================================
+   Edit Panel (Inline) - Premium Feel
+   ============================================ */
+
+.edit-panel {
+  position: absolute;
+  inset: 0;
+  background: var(--white);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  border-radius: inherit;
+  animation: editPanelIn 200ms ease-out;
+}
+
+@keyframes editPanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.edit-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.edit-panel-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+}
+
+.edit-panel-close {
+  padding: 6px 12px;
+  background: var(--gray-900);
+  border: none;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.edit-panel-close:hover {
+  background: var(--gray-800);
+}
+
+.edit-panel-close:active {
+  transform: scale(0.98);
+}
+
+.edit-panel-close:focus-visible {
+  outline: 2px solid var(--gray-400);
+  outline-offset: 2px;
+}
+
+.edit-panel-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-panel-placeholder {
+  font-size: 13px;
+  color: var(--gray-400);
+  text-align: center;
 }
