@@ -82,10 +82,15 @@ Plans:
   6. User can adjust weight, size scale, and line height via sliders with live preview and single undo step per drag
   7. Fonts load on-demand from Google Fonts API, with system fallback shown on load failure
 
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Dependencies + undo/redo middleware + state extensions + luminance service
+- [ ] 03-02-PLAN.md — Logo tile with edit panel (upload, variants, scale, background)
+- [ ] 03-03-PLAN.md — Google Fonts service + font picker with search and filters
+- [ ] 03-04-PLAN.md — Primary and secondary typography tiles display
+- [ ] 03-05-PLAN.md — Font edit panel with sliders (weight, size, line height)
+- [ ] 03-06-PLAN.md — Integration checkpoint and verification
 
 ### Phase 4: Color & Imagery Tiles
 **Goal**: Users can customize colors with WCAG contrast checking and apply imagery treatments with instant preview
@@ -179,7 +184,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Foundation & Extraction | 4/4 | Complete | 2026-02-07 |
 | 2. Canvas System | 0/3 | Planned | - |
-| 3. Logo & Typography Tiles | 0/TBD | Not started | - |
+| 3. Logo & Typography Tiles | 0/6 | Planned | - |
 | 4. Color & Imagery Tiles | 0/TBD | Not started | - |
 | 5. System View | 0/TBD | Not started | - |
 | 6. Workflows | 0/TBD | Not started | - |
@@ -187,4 +192,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 2 planning*
+*Last updated: 2026-02-07 after Phase 3 planning*
