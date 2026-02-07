@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
+// @ts-expect-error - useBrandStore is JS, will be migrated to TS later
 import { useBrandStore } from '../store/useBrandStore';
 
 export function useTheme() {
-  const theme = useBrandStore((state) => state.theme);
-  const setTheme = useBrandStore((state) => state.setTheme);
-  const resolvedTheme = useBrandStore((state) => state.resolvedTheme);
-  const setResolvedTheme = useBrandStore((state) => state.setResolvedTheme);
+  const theme = useBrandStore((state: any) => state.theme);
+  const setTheme = useBrandStore((state: any) => state.setTheme);
+  const resolvedTheme = useBrandStore((state: any) => state.resolvedTheme);
+  const setResolvedTheme = useBrandStore((state: any) => state.setResolvedTheme);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
