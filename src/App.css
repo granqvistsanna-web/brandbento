@@ -1019,3 +1019,110 @@ body {
   outline: none;
   box-shadow: 0 0 0 2px var(--gray-400);
 }
+
+/* ============================================
+   Logo Tile - Enhanced with Adaptive Background
+   ============================================ */
+
+.logo-tile-content {
+  position: relative;
+  padding: 24px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 300ms ease;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.logo-display-adaptive {
+  max-width: 100%;
+  max-height: 60px;
+  object-fit: contain;
+  transition: filter 200ms ease, transform 200ms ease;
+}
+
+.logo-luminance-loading {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ============================================
+   Logo Edit Panel
+   ============================================ */
+
+.logo-edit-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.logo-edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logo-upload-button {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--gray-900);
+  border: none;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 120ms ease, transform 100ms ease;
+}
+
+.logo-upload-button:hover {
+  background: var(--gray-800);
+}
+
+.logo-upload-button:active {
+  transform: scale(0.98);
+}
+
+.logo-upload-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--gray-400);
+}
+
+.logo-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.logo-upload-hint {
+  font-size: 10px;
+  color: var(--gray-400);
+  text-align: center;
+}
