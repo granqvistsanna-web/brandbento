@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 ## Current Position
 
 Phase: 8 of 9 (Dark/Light Mode)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-02-07 - Completed 08-03-PLAN.md
+Last activity: 2026-02-07 - Completed 08-04-PLAN.md
 
-Progress: [█████████░] ~53% (16 of ~30 plans)
+Progress: [█████████░] ~57% (17 of ~30 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
-- Average duration: ~7.6 min
-- Total execution time: ~2h 14min
+- Total plans completed: 17
+- Average duration: ~7.2 min
+- Total execution time: ~2h 16min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [█████████░] ~53% (16 of ~30 plans)
 | 01 | 4/4 ✓ | ~48 min | ~12 min |
 | 02 | 3/3 ✓ | ~19 min | ~6 min |
 | 03 | 6/6 ✓ | ~39 min | ~6.5 min |
-| 08 | 3/5   | ~10 min | ~3.3 min |
+| 08 | 4/5   | ~12 min | ~3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-05, 03-06, 08-01, 08-02, 08-03
-- Trend: Phase 8 executing quickly - theming infrastructure is straightforward
+- Last 5 plans: 03-06, 08-01, 08-02, 08-03, 08-04
+- Trend: Phase 8 executing rapidly - UI component integration is straightforward
 
 *Updated after each plan completion*
 
@@ -83,6 +83,9 @@ Recent decisions affecting current work:
 - 08-03: Light mode as default, dark mode as .dark class override
 - 08-03: 200ms transitions for smooth theme changes
 - 08-03: color-scheme property for native form controls
+- 08-04: ThemeToggle button shows resolved theme icon (Sun/Moon) not selected theme
+- 08-04: Dropdown uses check mark to indicate current selection
+- 08-04: Old darkModePreview toggle removed from toolbar in favor of new ThemeToggle
 
 ### Pending Todos
 
@@ -100,9 +103,9 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 08-03-PLAN.md (Phase 8 plan 3)
+Stopped at: Completed 08-04-PLAN.md (Phase 8 plan 4)
 Resume file: None
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-07 after 08-03 completion*
+*Last updated: 2026-02-07 after 08-04 completion*
