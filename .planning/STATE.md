@@ -33,7 +33,7 @@ Progress: [████████░░] ~43% (12 of ~28 plans)
 | 03 | 5/5 ✓ | ~27 min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01, 03-02, 03-03, 03-04, 03-05
+- Last 5 plans: 03-01, 03-02, 03-03, 03-05, 03-04
 - Trend: Phase 3 complete with all typography editing infrastructure
 
 *Updated after each plan completion*
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - 03-03: 3s timeout for font loading with graceful fallback
 - 03-03: Font names rendered in own typeface on hover (lazy load)
 - 03-03: useHoverPreview pattern for preview/commit without state mutation
+- 03-04: Primary tile uses large Aa glyph with full character set
+- 03-04: Secondary tile shows typography-themed body paragraphs
+- 03-04: previewFont prop pattern for hover preview without state mutation
 - 03-05: Weight availability dots on slider show available font weights
 - 03-05: TypographyTileWithPanel pattern for preview wiring to tiles
 
@@ -83,9 +86,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-05-PLAN.md
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-07 after 03-05 completion*
+*Last updated: 2026-02-07 after 03-04 completion*
