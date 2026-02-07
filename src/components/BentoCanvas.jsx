@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { useBrandStore, getContrastRatio } from "../store/useBrandStore";
 import { motion, AnimatePresence } from "motion/react";
-import { twMerge } from "tailwind-merge";
 import { BentoGrid } from './BentoGrid';
+import { BentoTile } from './BentoTile';
 
 // Smart text color based on background
 const getSmartTextColor = (bgColor, textColor) => {
@@ -275,7 +275,8 @@ const BrandTile = ({ tile, index }) => {
   };
 
   return (
-    <motion.div
+    <BentoTile
+      tileType={tile.type}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       role="button"
@@ -284,35 +285,34 @@ const BrandTile = ({ tile, index }) => {
         e.stopPropagation();
         setFocusedTile(tile.id);
       }}
-      className={twMerge(
-        "rounded-2xl overflow-hidden cursor-pointer relative group focus:outline-none focus:ring-2 focus:ring-black/5",
-        tile.colSpan === 2 ? "col-span-2" : "col-span-1",
-        tile.rowSpan === 2 ? "row-span-2" : "row-span-1",
-      )}
+      className="cursor-pointer group"
       style={tileStyle}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{
-        duration: 0.3,
-        delay: index * 0.05,
-        ease: "easeOut",
-      }}
-      whileHover={{ scale: 0.995 }}
-      key={`${tile.id}-${tile.type}`}
     >
-      {renderContent()}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{
+          duration: 0.3,
+          delay: index * 0.05,
+          ease: "easeOut",
+        }}
+        whileHover={{ scale: 0.995 }}
+        className="h-full w-full"
+      >
+        {renderContent()}
 
-      {/* Title only focus indicator */}
-      {isFocused && (
-        <motion.div
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute top-3 left-3 z-20 bg-white/95 px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-wider uppercase border border-[#E5E5E5] shadow-sm"
-        >
-          {tile.type} Focus
-        </motion.div>
-      )}
-    </motion.div>
+        {/* Focus indicator */}
+        {isFocused && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-3 left-3 z-20 bg-white/95 px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-wider uppercase border border-[#E5E5E5] shadow-sm"
+          >
+            {tile.type} Focus
+          </motion.div>
+        )}
+      </motion.div>
+    </BentoTile>
   );
 };
 
