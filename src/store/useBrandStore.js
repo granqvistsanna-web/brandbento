@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { getPaletteById } from "../data/colorPalettes";
 import { mapPaletteToBrand } from "../utils/colorMapping";
 
@@ -15,10 +16,14 @@ const DEFAULT_BRAND = {
   },
   colors: {
     bg: "#FFFFFF",
-    text: "#1A1A1A",
+    text: "#171717",
     primary: "#000000",
     accent: "#555555",
-    surface: "#F8F8F8",
+    surface: "#F5F5F5",
+    // Multiple surface options for moodboard variety
+    surfaces: ["#FFFFFF", "#F5F5F5", "#FAFAFA", "#F0F0F0"],
+    // Original palette colors for reference
+    paletteColors: [],
   },
   logo: {
     text: "BENTO",
@@ -47,6 +52,8 @@ const BRAND_PRESETS = {
       primary: "#3B82F6",
       accent: "#64748B",
       surface: "#FFFFFF",
+      surfaces: ["#FFFFFF", "#F1F5F9", "#E2E8F0", "#CBD5E1"],
+      paletteColors: [],
     },
     logo: {
       text: "TECH",
@@ -71,6 +78,8 @@ const BRAND_PRESETS = {
       primary: "#78716C",
       accent: "#A8A29E",
       surface: "#F5F5F4",
+      surfaces: ["#F5F5F4", "#FAFAF9", "#E7E5E4", "#D6D3D1"],
+      paletteColors: [],
     },
     logo: {
       text: "LUXE",
@@ -91,10 +100,12 @@ const BRAND_PRESETS = {
     },
     colors: {
       bg: "#FFFFFF",
-      text: "#0C4A6E",
+      text: "#171717",
       primary: "#0EA5E9",
       accent: "#7DD3FC",
       surface: "#F0F9FF",
+      surfaces: ["#F0F9FF", "#E0F2FE", "#BAE6FD", "#FFFFFF"],
+      paletteColors: [],
     },
     logo: {
       text: "UNITE",
@@ -119,6 +130,8 @@ const BRAND_PRESETS = {
       primary: "#F97316",
       accent: "#D946EF",
       surface: "#FFFFFF",
+      surfaces: ["#FFFFFF", "#FFF7ED", "#FEFCE8", "#FAF5FF"],
+      paletteColors: [],
     },
     logo: {
       text: "STUDIO",
@@ -145,10 +158,12 @@ const STARTER_TEMPLATES = [
       },
       colors: {
         bg: "#F5F7FA",
-        text: "#0F172A",
+        text: "#171717",
         primary: "#3B82F6",
         accent: "#64748B",
         surface: "#FFFFFF",
+        surfaces: ["#FFFFFF", "#F1F5F9", "#E2E8F0", "#DBEAFE"],
+        paletteColors: [],
       },
       logo: {
         text: "TECHCO",
@@ -235,6 +250,8 @@ const STARTER_TEMPLATES = [
         primary: "#78716C",
         accent: "#A8A29E",
         surface: "#F5F5F4",
+        surfaces: ["#F5F5F4", "#FAFAF9", "#E7E5E4", "#D6D3D1"],
+        paletteColors: [],
       },
       logo: {
         text: "MAISON",
@@ -330,6 +347,8 @@ const STARTER_TEMPLATES = [
         primary: "#F97316",
         accent: "#D946EF",
         surface: "#1A1A1A",
+        surfaces: ["#1A1A1A", "#262626", "#171717", "#2D2D2D"],
+        paletteColors: [],
       },
       logo: {
         text: "PIXEL",
@@ -419,10 +438,12 @@ const STARTER_TEMPLATES = [
       },
       colors: {
         bg: "#F0FDF4",
-        text: "#14532D",
+        text: "#171717",
         primary: "#16A34A",
         accent: "#86EFAC",
         surface: "#FFFFFF",
+        surfaces: ["#FFFFFF", "#DCFCE7", "#BBF7D0", "#F0FDF4"],
+        paletteColors: [],
       },
       logo: {
         text: "VIDA",
@@ -527,10 +548,12 @@ const STARTER_TEMPLATES = [
       },
       colors: {
         bg: "#FFFFFF",
-        text: "#000000",
+        text: "#171717",
         primary: "#000000",
         accent: "#666666",
         surface: "#F5F5F5",
+        surfaces: ["#F5F5F5", "#FAFAFA", "#E5E5E5", "#FFFFFF"],
+        paletteColors: [],
       },
       logo: {
         text: "JD",
@@ -885,22 +908,24 @@ const INITIAL_TILES = [
   },
 ];
 
-export const useBrandStore = create((set, get) => ({
-  brand: DEFAULT_BRAND,
-  tiles: INITIAL_TILES,
-  focusedTileId: null,
-  darkModePreview: false,
-  fontPreview: null, // { font: string, target: 'primary' | 'secondary' }
+export const useBrandStore = create(
+  persist(
+    (set, get) => ({
+      brand: DEFAULT_BRAND,
+      tiles: INITIAL_TILES,
+      focusedTileId: null,
+      darkModePreview: false,
+      fontPreview: null, // { font: string, target: 'primary' | 'secondary' }
 
-  // Theme state
-  theme: 'system', // 'light' | 'dark' | 'system'
-  resolvedTheme: 'light', // Computed theme based on system preference or explicit choice
+      // Theme state
+      theme: 'system', // 'light' | 'dark' | 'system'
+      resolvedTheme: 'light', // Computed theme based on system preference or explicit choice
 
-  // History
-  history: {
-    past: [],
-    future: [],
-  },
+      // History
+      history: {
+        past: [],
+        future: [],
+      },
 
   setFocusedTile: (id) => set({ focusedTileId: id }),
 
@@ -1077,4 +1102,14 @@ export const useBrandStore = create((set, get) => ({
       },
     });
   },
-}));
+    }),
+    {
+      name: 'brand-store',
+      partialize: (state) => ({
+        brand: state.brand,
+        tiles: state.tiles,
+        theme: state.theme,
+      }),
+    }
+  )
+);
