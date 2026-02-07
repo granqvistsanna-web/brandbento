@@ -156,10 +156,14 @@ Plans:
   6. Share Link generates URL with compressed canvas state, copies to clipboard with "Copied!" toast
   7. Shared link opens in read-only view with no edit panels or hover states
 
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 06-01: TBD
+- [ ] 06-01-PLAN.md — Dependencies + keyboard shortcuts hook
+- [ ] 06-02-PLAN.md — PNG export with html-to-image
+- [ ] 06-03-PLAN.md — Share link + toast + reset with confirmation
+- [ ] 06-04-PLAN.md — Read-only view for shared links
+- [ ] 06-05-PLAN.md — Verification checkpoint
 
 ### Phase 7: Polish
 **Goal**: First-time users understand how to use the tool, and all controls are keyboard accessible
@@ -239,11 +243,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 3. Logo & Typography Tiles | 3/3 | Complete | 2026-02-07 |
 | 4. Color & Imagery Tiles | 0/5 | Planned | - |
 | 5. System View | 0/3 | Planned | - |
-| 6. Workflows | 0/TBD | Not started | - |
+| 6. Workflows | 0/5 | Planned | - |
 | 7. Polish | 0/TBD | Not started | - |
 | 8. Dark/Light Mode | 5/5 | Complete | 2026-02-07 |
 | 9. Responsive Bento Layout | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 8 completion*
+*Last updated: 2026-02-07 after Phase 6 planning*
