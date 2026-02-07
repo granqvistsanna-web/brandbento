@@ -41,7 +41,6 @@ import {
   Minus,
   Plus,
   Info,
-  Swatches,
 } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { motion, AnimatePresence } from "motion/react";
@@ -785,7 +784,7 @@ const PaletteBrowser = () => {
   return (
     <Section
       title="Color Palettes"
-      icon={Swatches}
+      icon={Palette}
       defaultOpen={false}
       badge={<Badge variant="accent">{TOTAL_PALETTE_COUNT}</Badge>}
       noPadding
