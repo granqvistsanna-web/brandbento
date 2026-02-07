@@ -6,23 +6,23 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** See typography, color, imagery, and logo working together as a system, not isolated assets.
 
-**Current focus:** Phase 3 - Logo and Typography Tiles (Complete)
+**Current focus:** Phase 8 - Dark/Light Mode (In Progress)
 
 ## Current Position
 
-Phase: 3 of 7 (Logo and Typography Tiles)
-Plan: 6 of 6 in current phase
-Status: Phase complete (integration verified)
-Last activity: 2026-02-07 - Completed 03-06-PLAN.md
+Phase: 8 of 9 (Dark/Light Mode)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-07 - Completed 08-01-PLAN.md
 
-Progress: [████████░░] ~46% (13 of ~28 plans)
+Progress: [████████░░] ~47% (14 of ~30 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: ~8.2 min
-- Total execution time: ~1h 56min
+- Total plans completed: 14
+- Average duration: ~7.9 min
+- Total execution time: ~2h 4min
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [████████░░] ~46% (13 of ~28 plans)
 | 01 | 4/4 ✓ | ~48 min | ~12 min |
 | 02 | 3/3 ✓ | ~19 min | ~6 min |
 | 03 | 6/6 ✓ | ~39 min | ~6.5 min |
+| 08 | 1/3   | ~2 min  | ~2 min  |
 
 **Recent Trend:**
-- Last 5 plans: 03-02, 03-03, 03-04, 03-05, 03-06
-- Trend: Phase 3 fully complete with integration verification
+- Last 5 plans: 03-03, 03-04, 03-05, 03-06, 08-01
+- Trend: Phase 8 started - infrastructure tasks execute quickly
 
 *Updated after each plan completion*
 
@@ -74,21 +75,29 @@ Recent decisions affecting current work:
 - 03-04: previewFont prop pattern for hover preview without state mutation
 - 03-05: Weight availability dots on slider show available font weights
 - 03-05: TypographyTileWithPanel pattern for preview wiring to tiles
+- 08-01: Theme state in useBrandStore without persist middleware (to be added later)
+- 08-01: FOUC script reads 'brand-store' localStorage key
+- 08-01: Tailwind darkMode: 'selector' for class-based dark mode
 
 ### Pending Todos
 
-None yet.
+- [ ] Make sure bento looks great and like a bento, and is responsive
 
 ### Blockers/Concerns
 
-None yet.
+**Persist middleware missing from useBrandStore:** Theme preference won't survive page refresh until Zustand persist middleware is added. This should be addressed in 08-02 or a dedicated infrastructure task before theme toggle UI is implemented.
+
+### Roadmap Evolution
+
+- Phase 8 added: Implement dark/light mode theming
+- Phase 9 added: Responsive Bento Layout System (hole-free grid with presets, 100vh constraint, density modes)
 
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-06-PLAN.md (Phase 3 complete)
+Stopped at: Completed 08-01-PLAN.md (Phase 8 plan 1)
 Resume file: None
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-07 after 03-06 completion*
+*Last updated: 2026-02-07 after 08-01 completion*
