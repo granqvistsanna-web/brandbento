@@ -2,7 +2,140 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* === FIGMA-INSPIRED DESIGN SYSTEM === */
+
+  /* Sidebar (Light Theme - Default) */
+  --sidebar-bg: #FFFFFF;
+  --sidebar-bg-elevated: #F8F8F8;
+  --sidebar-bg-hover: #F0F0F0;
+  --sidebar-bg-active: #E8E8E8;
+  --sidebar-border: #E0E0E0;
+  --sidebar-border-subtle: #EBEBEB;
+  --sidebar-text: #1A1A1A;
+  --sidebar-text-secondary: #666666;
+  --sidebar-text-muted: #999999;
+
+  /* Canvas (Light Theme - Default) */
+  --canvas-bg: #F5F5F5;
+  --canvas-bg-dots: #E0E0E0;
+  --canvas-surface: #FFFFFF;
+  --canvas-border: #E5E5E5;
+  --canvas-text: #1A1A1A;
+  --canvas-text-secondary: #666666;
+
+  /* Accent Colors (Figma Blue) */
+  --accent: #0D99FF;
+  --accent-hover: #0B8CE5;
+  --accent-muted: rgba(13, 153, 255, 0.12);
+  --accent-subtle: rgba(13, 153, 255, 0.06);
+
+  /* Selection (Purple like Figma) */
+  --selection: #A259FF;
+  --selection-muted: rgba(162, 89, 255, 0.12);
+
+  /* Status Colors */
+  --success: #14AE5C;
+  --success-muted: rgba(20, 174, 92, 0.12);
+  --warning: #FFCD29;
+  --warning-muted: rgba(255, 205, 41, 0.12);
+  --error: #F24822;
+  --error-muted: rgba(242, 72, 34, 0.12);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
+  /* Sizing (Figma-like compact sizing) */
+  --control-height-xs: 24px;
+  --control-height-sm: 28px;
+  --control-height-md: 32px;
+  --control-height-lg: 36px;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Shadows (lighter for light mode) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.05);
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition-base: 150ms ease;
+  --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Z-index layers */
+  --z-canvas: 1;
+  --z-panel: 10;
+  --z-toolbar: 20;
+  --z-dropdown: 30;
+  --z-modal: 40;
+  --z-tooltip: 50;
+}
+
+/* === DARK MODE OVERRIDES === */
+.dark {
+  /* Sidebar (Dark Theme) */
+  --sidebar-bg: #1E1E1E;
+  --sidebar-bg-elevated: #252526;
+  --sidebar-bg-hover: #2D2D30;
+  --sidebar-bg-active: #37373D;
+  --sidebar-border: #3C3C3C;
+  --sidebar-border-subtle: #2D2D30;
+  --sidebar-text: #CCCCCC;
+  --sidebar-text-secondary: #9D9D9D;
+  --sidebar-text-muted: #6B6B6B;
+
+  /* Canvas (Dark Theme) */
+  --canvas-bg: #0D0D0D;
+  --canvas-bg-dots: #1A1A1A;
+  --canvas-surface: #141414;
+  --canvas-border: #262626;
+  --canvas-text: #FAFAFA;
+  --canvas-text-secondary: #A0A0A0;
+
+  /* Accent Colors (slightly brighter for dark mode) */
+  --accent: #0D99FF;
+  --accent-hover: #3AAFFF;
+  --accent-muted: rgba(13, 153, 255, 0.18);
+  --accent-subtle: rgba(13, 153, 255, 0.1);
+
+  /* Selection */
+  --selection: #A259FF;
+  --selection-muted: rgba(162, 89, 255, 0.18);
+
+  /* Status Colors (slightly more saturated for visibility) */
+  --success: #22C55E;
+  --success-muted: rgba(34, 197, 94, 0.18);
+  --warning: #FACC15;
+  --warning-muted: rgba(250, 204, 21, 0.18);
+  --error: #EF4444;
+  --error-muted: rgba(239, 68, 68, 0.18);
+
+  /* Shadows (deeper for dark mode) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.5);
+  --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
 @layer base {
+  html {
+    color-scheme: light;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   input, textarea, select, button {
     @apply outline-none focus:outline-none;
   }
@@ -11,6 +144,9 @@
 body {
   font-family: 'Inter', -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background-color: var(--canvas-bg);
+  color: var(--canvas-text);
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
