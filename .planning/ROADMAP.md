@@ -19,6 +19,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: System View** - UI preview tile showing everything working together
 - [ ] **Phase 6: Workflows** - Export, sharing, and toolbar actions
 - [ ] **Phase 7: Polish** - Onboarding flow and accessibility enhancements
+- [ ] **Phase 8: Dark/Light Mode** - Implement dark and light mode theming
+- [ ] **Phase 9: Responsive Bento Layout System** - Hole-free responsive grid with presets and 100vh constraint
 
 ## Phase Details
 
@@ -178,10 +180,57 @@ Plans:
 Plans:
 - [ ] 07-01: TBD
 
+### Phase 8: Dark/Light Mode
+**Goal**: Users can switch between dark and light mode themes with persisted preference
+
+**Depends on**: Phase 7
+
+**Requirements**: TBD (to be defined during planning)
+
+**Success Criteria** (what must be TRUE):
+  1. User can toggle between dark and light mode via a visible control
+  2. Theme preference persists across sessions (localStorage)
+  3. Initial theme respects system preference (prefers-color-scheme)
+  4. All UI components adapt correctly to both themes
+  5. Transitions between themes are smooth and non-jarring
+
+**Plans**: 5 plans in 4 waves
+
+Plans:
+- [ ] 08-01-PLAN.md — Foundation: theme state in store, Tailwind config, FOUC prevention
+- [ ] 08-02-PLAN.md — useTheme hook and app integration
+- [ ] 08-03-PLAN.md — CSS dark mode variants for UI chrome
+- [ ] 08-04-PLAN.md — ThemeToggle component in toolbar
+- [ ] 08-05-PLAN.md — Verification checkpoint
+
+### Phase 9: Responsive Bento Layout System
+**Goal**: Build a robust responsive bento grid that always fills a perfect rectangle with no holes, fits within 100vh, and supports multiple layout presets
+
+**Depends on**: Phase 8
+
+**Requirements**: TBD (to be defined during planning)
+
+**Success Criteria** (what must be TRUE):
+  1. Bento grid always forms a filled rectangle (no empty cells inside the bounding box) at every breakpoint
+  2. Grid fits within 100dvh/100vh with no vertical scrolling
+  3. Supports 3-5 layout presets (balanced, hero-left, hero-center, stacked, etc.)
+  4. Deterministic and stable layout - no janky rearrangement on minor width changes
+  5. Tiles never overflow the grid or overlap
+  6. Graceful degradation when tiles can't fit (span reduction or priority-based hiding)
+  7. Density parameter works correctly (cozy vs dense modes)
+  8. Mobile safe areas respected with proper padding
+  9. Debug mode available showing grid cell boundaries and tile IDs
+  10. Works with 6-14 tiles within the defined min/max range
+
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: TBD (run /gsd:plan-phase 9 to break down)
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -192,7 +241,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 5. System View | 0/3 | Planned | - |
 | 6. Workflows | 0/TBD | Not started | - |
 | 7. Polish | 0/TBD | Not started | - |
+| 8. Dark/Light Mode | 0/5 | Planned | - |
+| 9. Responsive Bento Layout | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 5 planning*
+*Last updated: 2026-02-07 after Phase 8 planning*
