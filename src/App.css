@@ -1346,3 +1346,60 @@ body {
   text-overflow: ellipsis;
   letter-spacing: 0.05em;
 }
+
+/* ============================================
+   Secondary Font Tile - Body Text Display
+   ============================================ */
+
+.secondary-font-content {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  overflow: hidden;
+}
+
+.secondary-font-specimen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+}
+
+.body-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.body-font-name {
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.body-meta {
+  font-size: 11px;
+  color: var(--gray-400);
+}
+
+.body-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.body-paragraph {
+  margin: 0;
+  color: var(--gray-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
