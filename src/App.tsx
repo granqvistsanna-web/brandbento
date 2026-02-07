@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-// @ts-ignore
-import BentoCanvas from "./components/BentoCanvas";
+import { BentoCanvas } from "./components/BentoCanvas";
 // @ts-ignore
 import ControlPanel from "./components/ControlPanel";
 // @ts-ignore
@@ -153,6 +152,113 @@ const AppLogo = () => (
     </div>
   </div>
 );
+
+// Export menu dropdown
+const ExportMenu = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const { brand } = useBrandStore();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleExport = (format: "css" | "json") => {
+    const { exportAsCSS, exportAsJSON } = require("./store/useBrandStore");
+    const content = format === "css" ? exportAsCSS(brand) : exportAsJSON(brand);
+    const filename = `brand-tokens.${format}`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <motion.button
+        onClick={() => setIsOpen(!isOpen)}
+        className="btn-figma btn-figma-primary"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <Download size={14} />
+        <span>Export</span>
+        <ChevronDown size={12} />
+      </motion.button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="absolute top-full right-0 mt-1 w-44 py-1 rounded-lg z-50"
+            style={{
+              background: "var(--sidebar-bg-elevated)",
+              border: "1px solid var(--sidebar-border)",
+              boxShadow: "var(--shadow-xl)",
+            }}
+          >
+            <button
+              onClick={() => handleExport("css")}
+              className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
+              style={{ color: "var(--sidebar-text)" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <span className="text-11">Export as CSS</span>
+              <span
+                className="ml-auto text-10 px-1.5 py-0.5 rounded"
+                style={{
+                  background: "var(--sidebar-bg-active)",
+                  color: "var(--sidebar-text-muted)",
+                }}
+              >
+                .css
+              </span>
+            </button>
+            <button
+              onClick={() => handleExport("json")}
+              className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
+              style={{ color: "var(--sidebar-text)" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <span className="text-11">Export as JSON</span>
+              <span
+                className="ml-auto text-10 px-1.5 py-0.5 rounded"
+                style={{
+                  background: "var(--sidebar-bg-active)",
+                  color: "var(--sidebar-text-muted)",
+                }}
+              >
+                .json
+              </span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // File menu dropdown
 const FileMenu = () => {
@@ -328,14 +434,7 @@ export default function App() {
             <span>Share</span>
           </motion.button>
 
-          <motion.button
-            className="btn-figma btn-figma-primary"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Download size={14} />
-            <span>Export</span>
-          </motion.button>
+          <ExportMenu />
 
           <ToolbarDivider />
 
@@ -364,15 +463,18 @@ export default function App() {
         {/* Left: Status */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <div
+            <motion.div
               className="w-2 h-2 rounded-full"
               style={{ background: "var(--success)" }}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.3 }}
+              key={history.past.length}
             />
             <span
-              className="text-[10px]"
+              className="text-[10px] flex items-center gap-1"
               style={{ color: "var(--sidebar-text-muted)" }}
             >
-              Ready
+              All changes saved
             </span>
           </div>
 
