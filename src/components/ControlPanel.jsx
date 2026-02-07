@@ -1407,7 +1407,7 @@ const ControlPanel = () => {
 
   return (
     <motion.div
-      className="h-full flex flex-col flex-shrink-0 relative"
+      className="h-full flex flex-col flex-shrink-0 relative overflow-hidden"
       style={{
         background: "var(--sidebar-bg)",
         borderRight: "1px solid var(--sidebar-border)",

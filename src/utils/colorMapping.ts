@@ -3,6 +3,11 @@
  *
  * Automatically maps palette colors to brand roles (bg, text, primary, accent, surface)
  * based on color analysis (lightness, saturation, hue).
+ *
+ * Enhanced for moodboard variety:
+ * - Multiple surface colors for tile backgrounds
+ * - Neutral text colors for readability
+ * - Full palette access for creative flexibility
  */
 
 export interface ColorAnalysis {
@@ -18,6 +23,10 @@ export interface BrandColorMapping {
   primary: string;
   accent: string;
   surface: string;
+  // Enhanced: multiple surface options for moodboard variety
+  surfaces: string[];
+  // The full palette colors for advanced usage
+  paletteColors: string[];
 }
 
 /**
@@ -98,17 +107,105 @@ export const analyzeColors = (colors: string[]): ColorAnalysis[] => {
 };
 
 /**
- * Calculate "vibrancy" score - combination of saturation and how far from extremes
- * Colors that are too light or too dark make poor primary colors
+ * Neutral color scales for text - true neutrals ensure readability
+ */
+const NEUTRAL_SCALES = {
+  light: {
+    100: '#FAFAFA',
+    200: '#F5F5F5',
+    300: '#E5E5E5',
+  },
+  dark: {
+    900: '#0A0A0A',
+    800: '#171717',
+    700: '#262626',
+  },
+};
+
+/**
+ * Check if a color is truly neutral (low saturation)
+ */
+const isNeutral = (color: ColorAnalysis): boolean => {
+  return color.s < 10;
+};
+
+/**
+ * Get best neutral text color based on background lightness
+ */
+const getNeutralText = (bgLightness: number, paletteColors: ColorAnalysis[]): string => {
+  if (bgLightness > 50) {
+    // Light background needs dark text
+    const neutralDark = paletteColors.find(c => isNeutral(c) && c.l < 25);
+    if (neutralDark) return neutralDark.hex;
+    return NEUTRAL_SCALES.dark[800];
+  } else {
+    // Dark background needs light text
+    const neutralLight = paletteColors.find(c => isNeutral(c) && c.l > 85);
+    if (neutralLight) return neutralLight.hex;
+    return NEUTRAL_SCALES.light[100];
+  }
+};
+
+/**
+ * Extract multiple surface colors from palette for moodboard variety
+ */
+const extractSurfaceColors = (
+  colors: ColorAnalysis[],
+  bgColor: ColorAnalysis,
+): string[] => {
+  const isLightMode = bgColor.l > 50;
+
+  // Filter for surface-suitable colors
+  const surfaceCandidates = colors.filter(c => {
+    if (c.hex === bgColor.hex) return false;
+
+    if (isLightMode) {
+      // Light mode: surfaces between 55-96% lightness
+      return c.l >= 55 && c.l <= 96;
+    } else {
+      // Dark mode: surfaces between 5-45% lightness
+      return c.l >= 5 && c.l <= 45;
+    }
+  });
+
+  // Sort by lightness difference from bg for depth variety
+  const sorted = surfaceCandidates.sort((a, b) => {
+    const aLightDiff = Math.abs(a.l - bgColor.l);
+    const bLightDiff = Math.abs(b.l - bgColor.l);
+    return bLightDiff - aLightDiff;
+  });
+
+  // Collect unique surfaces by hue/lightness groups
+  const uniqueSurfaces: string[] = [];
+  const seen = new Set<string>();
+
+  for (const color of sorted) {
+    const hueGroup = Math.round(color.h / 30) * 30;
+    const lightGroup = Math.round(color.l / 10) * 10;
+    const key = `${hueGroup}-${lightGroup}`;
+
+    if (!seen.has(key)) {
+      uniqueSurfaces.push(color.hex);
+      seen.add(key);
+    }
+
+    if (uniqueSurfaces.length >= 6) break;
+  }
+
+  // Fallback if no surfaces found
+  if (uniqueSurfaces.length === 0) {
+    uniqueSurfaces.push(bgColor.hex);
+  }
+
+  return uniqueSurfaces;
+};
+
+/**
+ * Calculate "vibrancy" score for primary/accent selection
  */
 const getVibrancyScore = (color: ColorAnalysis): number => {
-  // Penalize colors that are too light (>85%) or too dark (<15%)
   const lightnessScore = color.l > 85 || color.l < 15 ? 0 : 1;
-
-  // Saturation is key for primary colors
   const saturationScore = color.s / 100;
-
-  // Ideal lightness is around 40-60% for primary colors
   const idealLightnessProximity = 1 - Math.abs(color.l - 50) / 50;
 
   return saturationScore * lightnessScore * (0.5 + 0.5 * idealLightnessProximity);
@@ -119,88 +216,75 @@ const getVibrancyScore = (color: ColorAnalysis): number => {
  *
  * Strategy:
  * 1. Background: Lightest color (high lightness, low saturation preferred)
- * 2. Text: Darkest color (low lightness)
+ * 2. Text: NEUTRAL color (ensures readability - no colored text for body copy)
  * 3. Primary: Most vibrant/saturated color with medium lightness
  * 4. Accent: Second most vibrant color, or contrasting hue
- * 5. Surface: Second lightest, slightly darker than bg
+ * 5. Surface: Default surface slightly different from bg
+ * 6. Surfaces: MULTIPLE options for moodboard variety
  */
 export const mapPaletteToBrand = (colors: string[]): BrandColorMapping => {
   const analyzed = analyzeColors(colors);
 
   if (analyzed.length === 0) {
-    // Fallback to defaults if no valid colors
     return {
       bg: '#FFFFFF',
-      text: '#1A1A1A',
+      text: '#171717',
       primary: '#000000',
       accent: '#555555',
-      surface: '#F8F8F8',
+      surface: '#F5F5F5',
+      surfaces: ['#FFFFFF', '#F5F5F5', '#FAFAFA'],
+      paletteColors: [],
     };
   }
 
-  // Sort by lightness (for bg/text selection)
   const byLightness = [...analyzed].sort((a, b) => b.l - a.l);
-
-  // Sort by vibrancy (for primary/accent selection)
   const byVibrancy = [...analyzed].sort((a, b) => getVibrancyScore(b) - getVibrancyScore(a));
 
   // === BACKGROUND ===
-  // Prefer the lightest color, but also low saturation
   const bgCandidates = byLightness.filter(c => c.l >= 85);
   const bg = bgCandidates.length > 0
-    ? bgCandidates.sort((a, b) => a.s - b.s)[0] // Least saturated of the light colors
-    : byLightness[0]; // Fallback to lightest
+    ? bgCandidates.sort((a, b) => a.s - b.s)[0]
+    : byLightness[0];
 
-  // === TEXT ===
-  // Prefer the darkest color
-  const textCandidates = byLightness.filter(c => c.l <= 25);
-  const text = textCandidates.length > 0
-    ? textCandidates[textCandidates.length - 1] // Darkest
-    : byLightness[byLightness.length - 1]; // Fallback to darkest
+  // === TEXT (Neutral) ===
+  const textHex = getNeutralText(bg.l, analyzed);
 
   // === PRIMARY ===
-  // Most vibrant color, excluding bg and text
   const primaryCandidates = byVibrancy.filter(
-    c => c.hex !== bg.hex && c.hex !== text.hex && getVibrancyScore(c) > 0.1
+    c => c.hex !== bg.hex && getVibrancyScore(c) > 0.1
   );
   const primary = primaryCandidates.length > 0
     ? primaryCandidates[0]
-    : byVibrancy.find(c => c.hex !== bg.hex && c.hex !== text.hex) || byVibrancy[0];
+    : byVibrancy.find(c => c.hex !== bg.hex) || byVibrancy[0];
 
   // === ACCENT ===
-  // Second most vibrant, or a contrasting hue to primary
   const accentCandidates = byVibrancy.filter(
-    c => c.hex !== bg.hex && c.hex !== text.hex && c.hex !== primary.hex
+    c => c.hex !== bg.hex && c.hex !== primary.hex
   );
 
   let accent: ColorAnalysis;
   if (accentCandidates.length > 0) {
-    // Try to find a color with different hue from primary
     const differentHue = accentCandidates.find(c => {
       const hueDiff = Math.abs(c.h - primary.h);
-      return hueDiff > 30 && hueDiff < 330; // At least 30 degrees different
+      return hueDiff > 30 && hueDiff < 330;
     });
     accent = differentHue || accentCandidates[0];
   } else {
-    // Fallback: use a muted version of primary or text
     accent = primary;
   }
 
-  // === SURFACE ===
-  // Second lightest color, or slightly darker than bg
-  const surfaceCandidates = byLightness.filter(
-    c => c.hex !== bg.hex && c.l >= 70 && c.l < bg.l
-  );
-  const surface = surfaceCandidates.length > 0
-    ? surfaceCandidates[0]
-    : byLightness.find(c => c.hex !== bg.hex && c.l > 60) || bg;
+  // === SURFACES (Multiple for moodboard) ===
+  const surfaces = extractSurfaceColors(analyzed, bg);
+  const surface = surfaces[0] || bg.hex;
 
   return {
     bg: bg.hex,
-    text: text.hex,
+    text: textHex,
     primary: primary.hex,
     accent: accent.hex,
-    surface: surface.hex,
+    surface,
+    surfaces,
+    paletteColors: colors,
   };
 };
 

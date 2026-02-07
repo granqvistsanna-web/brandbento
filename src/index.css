@@ -167,3 +167,200 @@ body {
 main {
   overscroll-behavior: contain;
 }
+
+/* ============================================
+   Control Panel Component Styles
+   ============================================ */
+
+/* Property Row - Figma-style label/value layout */
+.prop-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.prop-label {
+  font-size: 11px;
+  color: var(--sidebar-text-secondary);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.prop-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Input - Figma-style compact input */
+.input-figma {
+  height: 28px;
+  padding: 0 8px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--sidebar-text);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.input-figma:hover {
+  border-color: var(--sidebar-border-subtle);
+}
+
+.input-figma:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-muted);
+}
+
+.input-figma::placeholder {
+  color: var(--sidebar-text-muted);
+}
+
+/* Icon Button */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--sidebar-text-secondary);
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.icon-btn:hover {
+  background: var(--sidebar-bg-hover);
+  color: var(--sidebar-text);
+}
+
+.icon-btn.active {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+/* Collapse Header */
+.collapse-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.collapse-header:hover {
+  background: var(--sidebar-bg-hover);
+}
+
+/* Tooltip */
+.tooltip {
+  padding: 6px 10px;
+  background: var(--sidebar-bg-elevated);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--sidebar-text);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.badge-muted {
+  background: var(--sidebar-bg-active);
+  color: var(--sidebar-text-muted);
+}
+
+.badge-accent {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+.badge-success {
+  background: var(--success-muted);
+  color: var(--success);
+}
+
+.badge-warning {
+  background: var(--warning-muted);
+  color: var(--warning);
+}
+
+.badge-error {
+  background: var(--error-muted);
+  color: var(--error);
+}
+
+/* Keyboard Shortcut */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--sidebar-bg-active);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--sidebar-text-muted);
+}
+
+/* Divider */
+.divider-h {
+  height: 1px;
+  background: var(--sidebar-border-subtle);
+}
+
+/* Scrollbar - Dark variant */
+.scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: var(--sidebar-bg-active);
+  border-radius: 3px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: var(--sidebar-border);
+}
+
+/* Transition utilities */
+.transition-fast {
+  transition: all 100ms ease;
+}
+
+/* Text size utilities */
+.text-10 {
+  font-size: 10px;
+}
+
+.text-11 {
+  font-size: 11px;
+}
+
+.text-12 {
+  font-size: 12px;
+}
