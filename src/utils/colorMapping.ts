@@ -21,29 +21,44 @@ export interface BrandColorMapping {
 }
 
 /**
+ * Parse hex color to RGB values
+ */
+const parseHex = (hex: string): { r: number; g: number; b: number } | null => {
+  // Try 6-character hex
+  let match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (match) {
+    return {
+      r: parseInt(match[1], 16),
+      g: parseInt(match[2], 16),
+      b: parseInt(match[3], 16),
+    };
+  }
+
+  // Try 3-character shorthand
+  match = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
+  if (match) {
+    return {
+      r: parseInt(match[1] + match[1], 16),
+      g: parseInt(match[2] + match[2], 16),
+      b: parseInt(match[3] + match[3], 16),
+    };
+  }
+
+  return null;
+};
+
+/**
  * Convert hex color to HSL values
  */
 export const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
-  // Support both 3-char (#FFF) and 6-char (#FFFFFF) hex codes
-  let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) {
-    // Try 3-character shorthand
-    const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
-    if (shorthand) {
-      result = [
-        '',
-        shorthand[1] + shorthand[1],
-        shorthand[2] + shorthand[2],
-        shorthand[3] + shorthand[3],
-      ];
-    } else {
-      return { h: 0, s: 0, l: 0 };
-    }
+  const rgb = parseHex(hex);
+  if (!rgb) {
+    return { h: 0, s: 0, l: 0 };
   }
 
-  const r = parseInt(result[1], 16) / 255;
-  const g = parseInt(result[2], 16) / 255;
-  const b = parseInt(result[3], 16) / 255;
+  const r = rgb.r / 255;
+  const g = rgb.g / 255;
+  const b = rgb.b / 255;
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -194,30 +209,14 @@ export const mapPaletteToBrand = (colors: string[]): BrandColorMapping => {
  */
 export const getContrastRatio = (color1: string, color2: string): number => {
   const getLuminance = (hex: string): number => {
-    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) {
-      const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
-      if (shorthand) {
-        result = [
-          '',
-          shorthand[1] + shorthand[1],
-          shorthand[2] + shorthand[2],
-          shorthand[3] + shorthand[3],
-        ];
-      } else {
-        return 0;
-      }
-    }
+    const rgb = parseHex(hex);
+    if (!rgb) return 0;
 
-    const rgb = [
-      parseInt(result[1], 16) / 255,
-      parseInt(result[2], 16) / 255,
-      parseInt(result[3], 16) / 255,
-    ].map((val) =>
+    const vals = [rgb.r / 255, rgb.g / 255, rgb.b / 255].map((val) =>
       val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4)
     );
 
-    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+    return 0.2126 * vals[0] + 0.7152 * vals[1] + 0.0722 * vals[2];
   };
 
   const l1 = getLuminance(color1);
