@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useLayoutStore } from '../store/useLayoutStore';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { LAYOUT_PRESETS } from '../config/layoutPresets';
