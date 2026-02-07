@@ -1,7 +1,33 @@
+// Color palette with semantic roles (60-30-10 rule)
+export interface ColorPalette {
+  primary: string;        // Main brand color (60% usage)
+  accent: string;         // Highlight color (10% usage)
+  background: string;     // Surface color (30% usage)
+  text: string;           // Body text color
+}
+
+// Image treatment preset types
+export type ImageTreatment =
+  | 'original'
+  | 'duotone'
+  | 'bw'
+  | 'hi-contrast'
+  | 'soft'
+  | 'grain';
+
+// Imagery tile state
+export interface ImageryTileState {
+  treatment: ImageTreatment;
+  colorOverlay: number;   // 0-60 (percentage)
+}
+
 export interface BrandAssets {
   // Colors
   colors: string[];
   colorsSource: 'extracted' | 'default';
+
+  // NEW: Semantic color roles (derived from colors array)
+  palette: ColorPalette;
 
   // Typography
   primaryFont: string;
@@ -15,6 +41,9 @@ export interface BrandAssets {
   // Imagery
   heroImage: string | null;  // URL or data URI
   imagesSource: 'extracted' | 'default';
+
+  // NEW: Image treatment state
+  imagery: ImageryTileState;
 }
 
 export interface CanvasState {

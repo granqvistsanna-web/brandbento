@@ -1,12 +1,25 @@
-import type { BrandAssets, CanvasState, TileSettings } from '@/types/brand';
+import type { BrandAssets, CanvasState, TileSettings, ColorPalette, ImageryTileState } from '@/types/brand';
 
 export const DEFAULT_COLORS = ['#111111', '#555555', '#F5F5F5', '#2563EB', '#FFFFFF'];
 export const DEFAULT_PRIMARY_FONT = 'Inter';
 export const DEFAULT_SECONDARY_FONT = 'Lora';
 
+export const defaultPalette: ColorPalette = {
+  primary: '#2563EB',
+  accent: '#7C3AED',
+  background: '#F5F5F5',
+  text: '#111111',
+};
+
+export const defaultImagery: ImageryTileState = {
+  treatment: 'original',
+  colorOverlay: 0,
+};
+
 export const DEFAULT_ASSETS: BrandAssets = {
   colors: DEFAULT_COLORS,
   colorsSource: 'default',
+  palette: defaultPalette,
   primaryFont: DEFAULT_PRIMARY_FONT,
   secondaryFont: DEFAULT_SECONDARY_FONT,
   fontsSource: 'default',
@@ -14,6 +27,7 @@ export const DEFAULT_ASSETS: BrandAssets = {
   logoSource: 'default',
   heroImage: null,
   imagesSource: 'default',
+  imagery: defaultImagery,
 };
 
 export const defaultTileSettings: TileSettings = {
