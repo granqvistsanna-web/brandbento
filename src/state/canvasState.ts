@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import type { CanvasState, BrandAssets, ExtractionStage, TypographyTileState } from '@/types/brand';
+import type { CanvasState, BrandAssets, ExtractionStage, TypographyTileState, ColorPalette, ImageTreatment } from '@/types/brand';
 import { persistState, loadState } from './persistence';
 import { createDefaultState } from './defaults';
 
@@ -29,6 +29,14 @@ interface CanvasStore extends CanvasState {
   setLogoBackground: (background: 'white' | 'dark' | 'primary' | 'auto') => void;
   setFontSettings: (role: 'primaryFont' | 'secondaryFont', settings: Partial<TypographyTileState>) => void;
   addRecentFont: (family: string) => void;
+
+  // Palette actions
+  setPalette: (palette: ColorPalette) => void;
+  setColorByRole: (role: keyof ColorPalette, color: string) => void;
+
+  // Imagery actions
+  setImageTreatment: (treatment: ImageTreatment) => void;
+  setColorOverlay: (overlay: number) => void;
 
   // Persistence
   hydrate: () => void;
@@ -117,6 +125,37 @@ export const useCanvasStore = create<CanvasStore>()(
           lastModified: Date.now(),
         };
       }),
+
+      // Palette actions
+      setPalette: (palette) => set((state) => ({
+        assets: { ...state.assets, palette },
+        lastModified: Date.now(),
+      })),
+
+      setColorByRole: (role, color) => set((state) => ({
+        assets: {
+          ...state.assets,
+          palette: { ...state.assets.palette, [role]: color },
+        },
+        lastModified: Date.now(),
+      })),
+
+      // Imagery actions
+      setImageTreatment: (treatment) => set((state) => ({
+        assets: {
+          ...state.assets,
+          imagery: { ...state.assets.imagery, treatment },
+        },
+        lastModified: Date.now(),
+      })),
+
+      setColorOverlay: (colorOverlay) => set((state) => ({
+        assets: {
+          ...state.assets,
+          imagery: { ...state.assets.imagery, colorOverlay },
+        },
+        lastModified: Date.now(),
+      })),
 
       hydrate: () => {
         const loaded = loadState();
