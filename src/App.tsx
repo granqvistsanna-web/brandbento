@@ -1,157 +1,47 @@
-import { useEffect, useCallback } from 'react';
-import { useCanvasStore, useTemporalStore } from '@/state/canvasState';
-import { extractBrand, type ExtractionProgress } from '@/services/brandExtractor';
-import { URLInput } from '@/components/URLInput';
-import { ColorTile, ImageTile } from '@/components/Tile';
-import { LogoTile } from '@/components/tiles/LogoTile';
-import { TypographyTileWithPanel } from '@/components/TypographyTileWithPanel';
-import { ExtractionOverlay } from '@/components/ExtractionOverlay';
-import { UIPreviewTile } from '@/components';
-import './App.css';
+import BentoCanvas from "./components/BentoCanvas";
+import ControlPanel from "./components/ControlPanel";
+import "./index.css";
 
-function App() {
-  const hydrate = useCanvasStore((state) => state.hydrate);
-  const assets = useCanvasStore((state) => state.assets);
-  const sourceUrl = useCanvasStore((state) => state.sourceUrl);
-  const extractionStage = useCanvasStore((state) => state.extractionStage);
-  const extractionError = useCanvasStore((state) => state.extractionError);
-
-  const setAssets = useCanvasStore((state) => state.setAssets);
-  const setSourceUrl = useCanvasStore((state) => state.setSourceUrl);
-  const setExtractionStage = useCanvasStore((state) => state.setExtractionStage);
-  const setExtractionError = useCanvasStore((state) => state.setExtractionError);
-
-  useEffect(() => {
-    hydrate();
-  }, [hydrate]);
-
-  const handleExtract = useCallback(async (url: string) => {
-    setSourceUrl(url);
-    setExtractionError(null);
-    setExtractionStage('fetching');
-
-    try {
-      const result = await extractBrand(url, (progress: ExtractionProgress) => {
-        setExtractionStage(progress.stage);
-        if (progress.assets) {
-          setAssets(progress.assets);
-        }
-        if (progress.error) {
-          setExtractionError(progress.error);
-        }
-      });
-
-      setAssets(result);
-      setExtractionStage('complete');
-
-      setTimeout(() => {
-        setExtractionStage('idle');
-      }, 1000);
-
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Extraction failed';
-      setExtractionError(message);
-      setExtractionStage('error');
-    }
-  }, [setAssets, setSourceUrl, setExtractionStage, setExtractionError]);
-
-  const handleDismissError = useCallback(() => {
-    setExtractionStage('idle');
-    setExtractionError(null);
-  }, [setExtractionStage, setExtractionError]);
-
-  const isExtracting = extractionStage !== 'idle' && extractionStage !== 'complete' && extractionStage !== 'error';
-
-  // Progressive loading states
-  const tileLoading = {
-    colors: extractionStage === 'fetching' || extractionStage === 'colors',
-    fonts: extractionStage === 'fetching' || extractionStage === 'colors' || extractionStage === 'fonts',
-    images: extractionStage === 'fetching' || extractionStage === 'colors' || extractionStage === 'fonts' || extractionStage === 'images',
-    logo: extractionStage === 'fetching' || extractionStage === 'colors' || extractionStage === 'fonts' || extractionStage === 'images' || extractionStage === 'logo',
-  };
-
-  // Temporal store for undo/redo
-  const temporal = useTemporalStore();
-  const pastLength = temporal.pastStates.length;
-  const futureLength = temporal.futureStates.length;
-
-  const handleUndo = useCallback(() => {
-    temporal.undo();
-  }, [temporal]);
-
-  const handleRedo = useCallback(() => {
-    temporal.redo();
-  }, [temporal]);
-
+export default function App() {
   return (
-    <div className="app">
-      <header className="app-header">
-        <span className="app-wordmark">Brand Bento</span>
-        <div className="undo-redo-controls">
-          <button
-            className="undo-redo-btn"
-            onClick={handleUndo}
-            disabled={pastLength === 0}
-            aria-label={`Undo (${pastLength} available)`}
-          >
-            Undo ({pastLength})
+    <div className="h-screen flex flex-col bg-white overflow-hidden selection:bg-black selection:text-white">
+      {/* Header Bar */}
+      <header className="h-16 border-b border-[#EEE] flex items-center justify-between px-8 bg-white z-20">
+        <div className="flex items-center gap-8">
+          <div className="flex flex-col">
+            <h1 className="text-[12px] font-bold tracking-[0.4em] uppercase text-black">
+              Brand Bento
+            </h1>
+            <span className="text-[9px] text-[#AAA] tracking-widest uppercase mt-0.5">
+              Global Moodboard Engine
+            </span>
+          </div>
+          <div className="h-4 w-px bg-[#EEE]" />
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] text-[#666] font-medium">
+              Draft Alpha
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <button className="text-[11px] font-bold uppercase tracking-widest text-black hover:opacity-50 transition-opacity">
+            Export Guide
           </button>
-          <button
-            className="undo-redo-btn"
-            onClick={handleRedo}
-            disabled={futureLength === 0}
-            aria-label={`Redo (${futureLength} available)`}
-          >
-            Redo ({futureLength})
+          <button className="bg-black text-white px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">
+            Publish Mood
           </button>
         </div>
       </header>
 
-      <main className="app-main">
-        <URLInput
-          onSubmit={handleExtract}
-          disabled={isExtracting}
-          initialValue={sourceUrl || ''}
-        />
+      {/* Main Layout */}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Left: Canvas */}
+        <BentoCanvas />
 
-        <div className="canvas">
-          <div className="bento-grid">
-            {/* Logo Tile - self-contained with edit panel */}
-            <LogoTile />
-
-            {/* Primary Typography Tile with Panel */}
-            <TypographyTileWithPanel role="primary" />
-
-            <ImageTile
-              image={assets.heroImage}
-              colors={assets.colors}
-              isLoading={isExtracting && tileLoading.images}
-              isDefault={assets.imagesSource === 'default'}
-            />
-
-            <ColorTile
-              colors={assets.colors}
-              isLoading={isExtracting && tileLoading.colors}
-              isDefault={assets.colorsSource === 'default'}
-            />
-
-            {/* Secondary Typography Tile with Panel */}
-            <TypographyTileWithPanel role="secondary" />
-
-            <UIPreviewTile
-              isLoading={isExtracting && tileLoading.logo}
-            />
-          </div>
-        </div>
-
-        <ExtractionOverlay
-          stage={extractionStage}
-          error={extractionError}
-          onDismiss={handleDismissError}
-        />
+        {/* Right: Control Panel */}
+        <ControlPanel />
       </main>
     </div>
   );
 }
-
-export default App;
