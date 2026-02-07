@@ -6,6 +6,7 @@ import { twMerge } from 'tailwind-merge';
 import type { TileSpan } from '../types/layout';
 import type { TileData, AdjustedTile } from '../utils/layoutFit';
 import { fitTilesToGrid, getAdjustedSpan } from '../utils/layoutFit';
+import { DebugGrid } from './DebugGrid';
 
 /**
  * Props for children-based rendering (existing pattern)
@@ -81,46 +82,49 @@ export const BentoGrid = (props: BentoGridProps) => {
   }
 
   return (
-    <div
-      className={twMerge(
-        // Viewport height with dvh and safe area handling
-        'h-[100dvh] max-h-[100dvh]',
-        // Mobile safe area padding
-        'pb-[env(safe-area-inset-bottom)]',
-        // Grid setup
-        'grid',
-        // Padding
-        density === 'cozy' ? 'p-4' : 'p-2',
-        // Overflow hidden to prevent scrolling
-        'overflow-hidden',
-        // Relative for debug indicator positioning
-        'relative',
-        // Optional custom class
-        className
-      )}
-      style={{
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gridTemplateRows: `repeat(${rows}, ${rowHeight}px)`,
-        gap: `${gap}px`,
-        // Fallback for browsers without dvh
-        height: '100vh',
-      }}
-    >
-      {content}
+    <div className="relative h-[100dvh] max-h-[100dvh]" style={{ height: '100vh' }}>
+      <div
+        className={twMerge(
+          // Full size within container
+          'h-full w-full',
+          // Mobile safe area padding
+          'pb-[env(safe-area-inset-bottom)]',
+          // Grid setup
+          'grid',
+          // Padding
+          density === 'cozy' ? 'p-4' : 'p-2',
+          // Overflow hidden to prevent scrolling
+          'overflow-hidden',
+          // Relative for hidden tile indicator positioning
+          'relative',
+          // Optional custom class
+          className
+        )}
+        style={{
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          gridTemplateRows: `repeat(${rows}, ${rowHeight}px)`,
+          gap: `${gap}px`,
+        }}
+      >
+        {content}
 
-      {/* Debug mode: show hidden tile count */}
-      {debugMode && hiddenCount > 0 && (
-        <div
-          className={twMerge(
-            'absolute bottom-2 right-2',
-            'px-2 py-1 rounded',
-            'bg-amber-500/90 text-white text-xs font-medium',
-            'pointer-events-none'
-          )}
-        >
-          {hiddenCount} tile{hiddenCount > 1 ? 's' : ''} hidden
-        </div>
-      )}
+        {/* Debug mode: show hidden tile count */}
+        {debugMode && hiddenCount > 0 && (
+          <div
+            className={twMerge(
+              'absolute bottom-2 right-2',
+              'px-2 py-1 rounded',
+              'bg-amber-500/90 text-white text-xs font-medium',
+              'pointer-events-none'
+            )}
+          >
+            {hiddenCount} tile{hiddenCount > 1 ? 's' : ''} hidden
+          </div>
+        )}
+      </div>
+
+      {/* Debug grid overlay */}
+      <DebugGrid />
     </div>
   );
 };
