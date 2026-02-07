@@ -6,6 +6,7 @@ import {
   exportAsCSS,
   exportAsJSON,
 } from "../store/useBrandStore";
+import { useLayoutStore } from "../store/useLayoutStore";
 import {
   PALETTE_SECTIONS,
   ROLE_DESCRIPTIONS,
@@ -849,6 +850,7 @@ const PresetCard = ({ name, brand, isActive, onClick }) => (
 
 const GlobalControls = () => {
   const { brand, updateBrand, loadPreset } = useBrandStore();
+  const { density, debugMode, preset: layoutPreset, setDensity, toggleDebug, setPreset: setLayoutPreset } = useLayoutStore();
 
   const handleChange = (section, key, value, isCommit = false) => {
     updateBrand(
@@ -1110,6 +1112,62 @@ const GlobalControls = () => {
           </div>
         </div>
       </Section>
+
+      {/* Layout */}
+      <Section title="Layout" icon={LayoutGrid} defaultOpen={false}>
+        {/* Density Toggle */}
+        <PropRow label="Density">
+          <SegmentedControl
+            options={[
+              { value: "cozy", label: "Cozy" },
+              { value: "dense", label: "Dense" },
+            ]}
+            value={density}
+            onChange={setDensity}
+          />
+        </PropRow>
+
+        {/* Preset Selector */}
+        <PropRow label="Preset">
+          <select
+            value={layoutPreset}
+            onChange={(e) => setLayoutPreset(e.target.value)}
+            className="flex-1 h-8 px-2 rounded-md text-11 transition-fast"
+            style={{
+              background: "var(--sidebar-bg)",
+              border: "1px solid var(--sidebar-border)",
+              color: "var(--sidebar-text)",
+            }}
+          >
+            <option value="balanced">Balanced</option>
+            <option value="heroLeft">Hero Left</option>
+            <option value="heroCenter">Hero Center</option>
+            <option value="stacked">Stacked</option>
+          </select>
+        </PropRow>
+
+        {/* Debug Mode Toggle */}
+        <div className="prop-row">
+          <span className="prop-label">Debug Grid</span>
+          <div className="prop-value">
+            <button
+              onClick={toggleDebug}
+              className="relative w-10 h-5 rounded-full transition-colors"
+              style={{
+                background: debugMode ? "var(--accent)" : "var(--sidebar-bg-active)",
+              }}
+            >
+              <span
+                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full shadow transition-transform"
+                style={{
+                  background: "var(--sidebar-bg-elevated)",
+                  transform: debugMode ? "translateX(20px)" : "translateX(0)",
+                }}
+              />
+            </button>
+          </div>
+        </div>
+      </Section>
     </>
   );
 };
@@ -1162,12 +1220,19 @@ const TileControls = ({ tile }) => {
             Edit content
           </p>
         </div>
-        <button
+        <motion.button
           onClick={() => setFocusedTile(null)}
-          className="icon-btn"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-11 font-medium transition-fast"
+          style={{
+            background: "var(--accent-muted)",
+            color: "var(--accent)",
+          }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <X size={14} />
-        </button>
+          <Check size={12} />
+          Done
+        </motion.button>
       </div>
 
       {/* Tile type */}
