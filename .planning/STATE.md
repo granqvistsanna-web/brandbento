@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 ## Current Position
 
 Phase: 3 of 7 (Logo and Typography Tiles)
-Plan: 3 of 3 in current phase
+Plan: 5 of 5 in current phase
 Status: Phase complete
-Last activity: 2026-02-07 - Completed 03-03-PLAN.md
+Last activity: 2026-02-07 - Completed 03-05-PLAN.md
 
-Progress: [████████░░] ~36% (10 of ~28 plans)
+Progress: [████████░░] ~43% (12 of ~28 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: ~10 min
-- Total execution time: ~1h 40min
+- Total plans completed: 12
+- Average duration: ~9 min
+- Total execution time: ~1h 44min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [████████░░] ~36% (10 of ~28 plans)
 |-------|-------|-------|----------|
 | 01 | 4/4 ✓ | ~48 min | ~12 min |
 | 02 | 3/3 ✓ | ~19 min | ~6 min |
-| 03 | 3/3 ✓ | ~25 min | ~8 min |
+| 03 | 5/5 ✓ | ~27 min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03, 03-01, 03-02, 03-03
-- Trend: Phase 3 complete, font picker and services ready
+- Last 5 plans: 03-01, 03-02, 03-03, 03-04, 03-05
+- Trend: Phase 3 complete with all typography editing infrastructure
 
 *Updated after each plan completion*
 
@@ -69,6 +69,8 @@ Recent decisions affecting current work:
 - 03-03: 3s timeout for font loading with graceful fallback
 - 03-03: Font names rendered in own typeface on hover (lazy load)
 - 03-03: useHoverPreview pattern for preview/commit without state mutation
+- 03-05: Weight availability dots on slider show available font weights
+- 03-05: TypographyTileWithPanel pattern for preview wiring to tiles
 
 ### Pending Todos
 
@@ -81,9 +83,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-03-PLAN.md
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-07 after 03-03 completion*
+*Last updated: 2026-02-07 after 03-05 completion*
