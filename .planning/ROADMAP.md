@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: System View** - UI preview tile showing everything working together
 - [ ] **Phase 6: Workflows** - Export, sharing, and toolbar actions
 - [ ] **Phase 7: Polish** - Onboarding flow and accessibility enhancements
-- [ ] **Phase 8: Dark/Light Mode** - Implement dark and light mode theming
+- [x] **Phase 8: Dark/Light Mode** - Implement dark and light mode theming
 - [ ] **Phase 9: Responsive Bento Layout System** - Hole-free responsive grid with presets and 100vh constraint
 
 ## Phase Details
@@ -197,11 +197,11 @@ Plans:
 **Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 08-01-PLAN.md — Foundation: theme state in store, Tailwind config, FOUC prevention
-- [ ] 08-02-PLAN.md — useTheme hook and app integration
-- [ ] 08-03-PLAN.md — CSS dark mode variants for UI chrome
-- [ ] 08-04-PLAN.md — ThemeToggle component in toolbar
-- [ ] 08-05-PLAN.md — Verification checkpoint
+- [x] 08-01-PLAN.md — Foundation: theme state in store, Tailwind config, FOUC prevention
+- [x] 08-02-PLAN.md — useTheme hook and app integration
+- [x] 08-03-PLAN.md — CSS dark mode variants for UI chrome
+- [x] 08-04-PLAN.md — ThemeToggle component in toolbar
+- [x] 08-05-PLAN.md — Verification checkpoint
 
 ### Phase 9: Responsive Bento Layout System
 **Goal**: Build a robust responsive bento grid that always fills a perfect rectangle with no holes, fits within 100vh, and supports multiple layout presets
@@ -241,9 +241,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 5. System View | 0/3 | Planned | - |
 | 6. Workflows | 0/TBD | Not started | - |
 | 7. Polish | 0/TBD | Not started | - |
-| 8. Dark/Light Mode | 0/5 | Planned | - |
+| 8. Dark/Light Mode | 5/5 | Complete | 2026-02-07 |
 | 9. Responsive Bento Layout | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 8 planning*
+*Last updated: 2026-02-07 after Phase 8 completion*
