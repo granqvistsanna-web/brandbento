@@ -6,216 +6,850 @@ import {
   exportAsCSS,
   exportAsJSON,
 } from "../store/useBrandStore";
-import { Download, Palette, Moon, Sun, Pipette, X, Check } from "lucide-react";
+import {
+  PALETTE_SECTIONS,
+  ROLE_DESCRIPTIONS,
+  TOTAL_PALETTE_COUNT,
+} from "../data/colorPalettes";
+import {
+  Download,
+  ChevronRight,
+  ChevronDown,
+  Type,
+  Droplet,
+  Sparkles,
+  Layers,
+  Image,
+  FileText,
+  Box,
+  LayoutGrid,
+  Wand2,
+  Copy,
+  Check,
+  X,
+  Pipette,
+  PanelLeftClose,
+  PanelLeft,
+  Palette,
+  Settings,
+  Sliders,
+  Hash,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Bold,
+  Minus,
+  Plus,
+  Info,
+  Swatches,
+} from "lucide-react";
 import { HexColorPicker } from "react-colorful";
+import { motion, AnimatePresence } from "motion/react";
 
-const ControlSection = ({ title, children }) => (
-  <div className="mb-8">
-    <h3 className="text-[11px] font-semibold tracking-[0.15em] text-[#999] uppercase mb-4">
-      {title}
-    </h3>
-    <div className="space-y-4">{children}</div>
+// ============================================
+// FIGMA-STYLE MICRO COMPONENTS
+// ============================================
+
+const Kbd = ({ children }) => <span className="kbd">{children}</span>;
+
+const Badge = ({ children, variant = "muted" }) => (
+  <span className={`badge badge-${variant}`}>{children}</span>
+);
+
+const Tooltip = ({ children, content, position = "right" }) => {
+  const [show, setShow] = useState(false);
+
+  const positions = {
+    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
+    right: "left-full top-1/2 -translate-y-1/2 ml-2",
+    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
+    left: "right-full top-1/2 -translate-y-1/2 mr-2",
+  };
+
+  return (
+    <div
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.1 }}
+            className={`absolute ${positions[position]} tooltip z-50`}
+          >
+            {content}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const IconButton = ({
+  icon: Icon,
+  onClick,
+  active,
+  tooltip,
+  size = 14,
+  disabled,
+}) => (
+  <Tooltip content={tooltip} position="right">
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`icon-btn ${active ? "active" : ""}`}
+      style={{ opacity: disabled ? 0.3 : 1 }}
+    >
+      <Icon size={size} />
+    </button>
+  </Tooltip>
+);
+
+// ============================================
+// COLLAPSIBLE SECTION
+// ============================================
+
+const Section = ({
+  title,
+  icon: Icon,
+  children,
+  badge,
+  defaultOpen = true,
+  noPadding = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div
+      style={{
+        borderBottom: "1px solid var(--sidebar-border-subtle)",
+      }}
+    >
+      {/* Section Header */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full collapse-header"
+      >
+        <motion.div
+          animate={{ rotate: isOpen ? 90 : 0 }}
+          transition={{ duration: 0.15 }}
+          style={{ color: "var(--sidebar-text-muted)" }}
+        >
+          <ChevronRight size={12} />
+        </motion.div>
+
+        {Icon && (
+          <Icon
+            size={14}
+            style={{
+              color: isOpen
+                ? "var(--accent)"
+                : "var(--sidebar-text-secondary)",
+            }}
+          />
+        )}
+
+        <span
+          className="flex-1 text-left text-11 font-medium"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          {title}
+        </span>
+
+        {badge && <div>{badge}</div>}
+      </button>
+
+      {/* Section Content */}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className={noPadding ? "" : "px-3 pb-3 space-y-3"}>
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ============================================
+// FORM CONTROLS - FIGMA STYLE
+// ============================================
+
+const PropRow = ({ label, children, hint }) => (
+  <div className="prop-row">
+    <span className="prop-label">{label}</span>
+    <div className="prop-value">{children}</div>
+    {hint && (
+      <span className="text-[10px]" style={{ color: "var(--sidebar-text-muted)" }}>
+        {hint}
+      </span>
+    )}
   </div>
 );
 
-const Label = ({ children }) => (
-  <label className="block text-[13px] font-medium text-[#333] mb-2">
-    {children}
-  </label>
-);
-
-const Input = ({ ...props }) => (
+const Input = ({ value, onChange, placeholder, type = "text", mono, ...props }) => (
   <input
+    type={type}
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    className="input-figma flex-1"
+    style={{ fontFamily: mono ? "var(--font-mono)" : "inherit" }}
     {...props}
-    className="w-full bg-white border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-[14px] focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
   />
 );
 
-const Select = ({ children, ...props }) => (
-  <select
-    {...props}
-    className="w-full bg-white border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-[14px] focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2716%27 height=%2716%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23999%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-10"
-  >
-    {children}
-  </select>
+const TextArea = ({ value, onChange, placeholder, rows = 3 }) => (
+  <textarea
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    rows={rows}
+    className="input-figma w-full resize-none"
+    style={{ height: "auto", padding: "8px 10px" }}
+  />
 );
 
-const ColorInput = ({
+// Compact number input with +/- buttons
+const NumberInput = ({
+  value,
+  onChange,
+  onBlur,
+  min,
+  max,
+  step = 1,
+  unit = "",
+  label,
+}) => {
+  const handleIncrement = () => {
+    const newVal = Math.min(max, value + step);
+    onChange(newVal);
+    onBlur?.();
+  };
+
+  const handleDecrement = () => {
+    const newVal = Math.max(min, value - step);
+    onChange(newVal);
+    onBlur?.();
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      {label && <span className="prop-label">{label}</span>}
+      <div
+        className="flex items-center rounded-md overflow-hidden"
+        style={{
+          background: "var(--sidebar-bg)",
+          border: "1px solid var(--sidebar-border)",
+        }}
+      >
+        <button
+          onClick={handleDecrement}
+          className="w-6 h-7 flex items-center justify-center transition-fast"
+          style={{ color: "var(--sidebar-text-secondary)" }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "transparent")
+          }
+        >
+          <Minus size={10} />
+        </button>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          onBlur={onBlur}
+          min={min}
+          max={max}
+          step={step}
+          className="w-10 h-7 text-center text-11 bg-transparent border-none font-mono"
+          style={{ color: "var(--sidebar-text)" }}
+        />
+        <button
+          onClick={handleIncrement}
+          className="w-6 h-7 flex items-center justify-center transition-fast"
+          style={{ color: "var(--sidebar-text-secondary)" }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = "transparent")
+          }
+        >
+          <Plus size={10} />
+        </button>
+      </div>
+      {unit && (
+        <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+          {unit}
+        </span>
+      )}
+    </div>
+  );
+};
+
+// Slider with track fill
+const Slider = ({ value, onChange, onBlur, min, max, step = 1, label, unit = "" }) => {
+  const percentage = ((value - min) / (max - min)) * 100;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-11" style={{ color: "var(--sidebar-text-secondary)" }}>
+          {label}
+        </span>
+        <span
+          className="text-11 font-mono"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          {typeof value === "number" ? value.toFixed(step < 1 ? 2 : 0) : value}
+          {unit}
+        </span>
+      </div>
+      <div className="relative h-4 flex items-center">
+        <div
+          className="absolute h-1 rounded-full w-full"
+          style={{ background: "var(--sidebar-bg-active)" }}
+        />
+        <div
+          className="absolute h-1 rounded-full"
+          style={{
+            width: `${percentage}%`,
+            background: "var(--accent)",
+          }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          onMouseUp={onBlur}
+          onTouchEnd={onBlur}
+          className="absolute w-full h-4 opacity-0 cursor-pointer"
+        />
+        <div
+          className="absolute w-3 h-3 rounded-full border-2 pointer-events-none"
+          style={{
+            left: `calc(${percentage}% - 6px)`,
+            background: "var(--sidebar-bg-elevated)",
+            borderColor: "var(--accent)",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Segmented control
+const SegmentedControl = ({ options, value, onChange }) => (
+  <div
+    className="flex rounded-md overflow-hidden"
+    style={{
+      background: "var(--sidebar-bg)",
+      border: "1px solid var(--sidebar-border)",
+    }}
+  >
+    {options.map((opt) => (
+      <button
+        key={opt.value}
+        onClick={() => onChange(opt.value)}
+        className="flex-1 h-7 text-10 font-medium transition-fast"
+        style={{
+          background:
+            value === opt.value ? "var(--accent-muted)" : "transparent",
+          color:
+            value === opt.value
+              ? "var(--accent)"
+              : "var(--sidebar-text-secondary)",
+        }}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ============================================
+// FONT SELECTOR - COMPACT DROPDOWN
+// ============================================
+
+const FontSelector = ({ label, value, onChange, fonts }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <PropRow label={label}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex-1 h-8 px-2 rounded-md flex items-center justify-between transition-fast"
+          style={{
+            background: "var(--sidebar-bg)",
+            border: `1px solid ${isOpen ? "var(--accent)" : "var(--sidebar-border)"}`,
+            color: "var(--sidebar-text)",
+          }}
+        >
+          <span className="text-11 truncate" style={{ fontFamily: value }}>
+            {value}
+          </span>
+          <ChevronDown
+            size={12}
+            style={{ color: "var(--sidebar-text-muted)" }}
+          />
+        </button>
+      </PropRow>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="absolute left-0 right-0 top-full mt-1 py-1 rounded-lg z-50 max-h-48 overflow-y-auto scrollbar-dark"
+            style={{
+              background: "var(--sidebar-bg-elevated)",
+              border: "1px solid var(--sidebar-border)",
+              boxShadow: "var(--shadow-xl)",
+            }}
+          >
+            {fonts.map((font) => (
+              <button
+                key={font}
+                onClick={() => {
+                  onChange(font);
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
+                style={{
+                  background: value === font ? "var(--accent-muted)" : "transparent",
+                  color: value === font ? "var(--accent)" : "var(--sidebar-text)",
+                }}
+                onMouseEnter={(e) => {
+                  if (value !== font) {
+                    e.currentTarget.style.background = "var(--sidebar-bg-hover)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background =
+                    value === font ? "var(--accent-muted)" : "transparent";
+                }}
+              >
+                <span className="text-11" style={{ fontFamily: font }}>
+                  {font}
+                </span>
+                {value === font && (
+                  <Check size={12} style={{ marginLeft: "auto" }} />
+                )}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ============================================
+// COLOR SWATCH - COMPACT WITH PICKER
+// ============================================
+
+const ColorSwatch = ({
   label,
   value,
   onChange,
   onBlur,
   showContrast,
   contrastWith,
+  hint,
 }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [localValue, setLocalValue] = useState(value);
-  const pickerRef = useRef(null);
+  const ref = useRef(null);
 
   const contrast =
     showContrast && contrastWith ? getContrastRatio(value, contrastWith) : null;
   const passesAA = contrast >= 4.5;
   const passesAAA = contrast >= 7;
 
-  // Color presets
-  const presets = [
-    "#000000",
-    "#FFFFFF",
-    "#EF4444",
-    "#F97316",
-    "#F59E0B",
-    "#84CC16",
-    "#10B981",
-    "#06B6D4",
-    "#3B82F6",
-    "#6366F1",
-    "#8B5CF6",
-    "#EC4899",
-  ];
-
-  // Close picker when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
         setShowPicker(false);
-        if (localValue !== value) {
-          onChange({ target: { value: localValue } });
-          onBlur();
-        }
+        onBlur?.();
       }
     };
-
     if (showPicker) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showPicker, localValue, value, onChange, onBlur]);
-
-  useEffect(() => {
-    setLocalValue(value);
-  }, [value]);
+  }, [showPicker, onBlur]);
 
   const handlePickerChange = (newColor) => {
     setLocalValue(newColor);
     onChange({ target: { value: newColor } });
   };
 
-  const handleInputChange = (e) => {
-    setLocalValue(e.target.value);
-    onChange(e);
-  };
-
-  const handlePresetClick = (color) => {
-    setLocalValue(color);
-    onChange({ target: { value: color } });
-    onBlur();
-  };
+  const presets = [
+    "#000000", "#FFFFFF", "#F24822", "#FF7262",
+    "#FFCD29", "#14AE5C", "#0D99FF", "#A259FF",
+    "#1E1E1E", "#9D9D9D", "#E5E5E5", "#F5F5F5",
+  ];
 
   return (
-    <div className="space-y-2.5">
-      <Label>{label}</Label>
-      <div className="flex items-center gap-3">
-        <div className="relative flex-shrink-0" ref={pickerRef}>
-          <button
-            type="button"
-            onClick={() => setShowPicker(!showPicker)}
-            className="w-12 h-12 rounded-xl border-2 border-[#E5E5E5] hover:border-black transition-all relative group shadow-sm"
-            style={{ backgroundColor: value }}
-          >
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10 rounded-[10px]">
-              <Pipette size={18} className="text-white drop-shadow-lg" />
-            </div>
-          </button>
-
-          {showPicker && (
-            <div className="absolute left-0 top-16 z-50 bg-white rounded-2xl shadow-2xl border border-[#E5E5E5] p-5 space-y-4 w-[240px]">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[12px] font-semibold text-[#666] uppercase tracking-wider">
-                  Color Picker
-                </span>
-                <button
-                  onClick={() => setShowPicker(false)}
-                  className="text-[#999] hover:text-black transition-colors"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <HexColorPicker
-                color={localValue}
-                onChange={handlePickerChange}
-                style={{ width: "100%", height: "160px" }}
+    <div className="relative" ref={ref}>
+      <div className="prop-row">
+        <span className="prop-label flex items-center gap-1">
+          {label}
+          {hint && (
+            <Tooltip content={hint} position="right">
+              <Info
+                size={10}
+                style={{ color: "var(--sidebar-text-muted)", cursor: "help" }}
               />
-
-              {/* Preset swatches */}
-              <div className="pt-4 border-t border-[#F0F0F0]">
-                <div className="text-[11px] font-semibold text-[#999] tracking-wider uppercase mb-3">
-                  Quick Colors
-                </div>
-                <div className="grid grid-cols-6 gap-2">
-                  {presets.map((preset) => (
-                    <button
-                      key={preset}
-                      onClick={() => handlePresetClick(preset)}
-                      className="w-8 h-8 rounded-lg border-2 border-[#E5E5E5] hover:scale-110 hover:border-black transition-all shadow-sm"
-                      style={{ backgroundColor: preset }}
-                      title={preset}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+            </Tooltip>
           )}
-        </div>
-
-        <div className="flex-1">
-          <Input
-            value={localValue}
-            onChange={handleInputChange}
-            onBlur={onBlur}
-            placeholder="#000000"
-          />
+        </span>
+        <div className="prop-value">
+          <button
+            onClick={() => setShowPicker(!showPicker)}
+            className="flex items-center gap-2 flex-1 h-8 px-2 rounded-md transition-fast"
+            style={{
+              background: "var(--sidebar-bg)",
+              border: `1px solid ${showPicker ? "var(--accent)" : "var(--sidebar-border)"}`,
+            }}
+          >
+            <div
+              className="w-5 h-5 rounded"
+              style={{
+                background: value,
+                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.1)",
+              }}
+            />
+            <span
+              className="text-11 font-mono uppercase flex-1 text-left"
+              style={{ color: "var(--sidebar-text)" }}
+            >
+              {value}
+            </span>
+            {showContrast && contrast && (
+              <span
+                className={`badge badge-${passesAAA ? "success" : passesAA ? "warning" : "error"}`}
+              >
+                {contrast.toFixed(1)}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
-      {showContrast && contrast && (
-        <div className="flex items-center gap-2 text-[11px] pt-1">
-          <span className="text-[#666] font-medium">
-            Contrast: {contrast.toFixed(2)}:1
-          </span>
-          {passesAAA && (
-            <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
-              <Check size={12} />
-              AAA
-            </span>
-          )}
-          {passesAA && !passesAAA && (
-            <span className="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
-              <Check size={12} />
-              AA
-            </span>
-          )}
-          {!passesAA && (
-            <span className="bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-semibold">
-              Fail
-            </span>
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {showPicker && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="absolute left-0 right-0 top-full mt-1 p-3 rounded-lg z-50"
+            style={{
+              background: "var(--sidebar-bg-elevated)",
+              border: "1px solid var(--sidebar-border)",
+              boxShadow: "var(--shadow-xl)",
+            }}
+          >
+            {/* Hex input */}
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={localValue}
+                onChange={(e) => handlePickerChange(e.target.value)}
+                className="input-figma flex-1 font-mono uppercase"
+              />
+              <button
+                onClick={() => navigator.clipboard.writeText(localValue)}
+                className="icon-btn"
+              >
+                <Copy size={12} />
+              </button>
+            </div>
+
+            {/* Color picker */}
+            <div className="rounded-md overflow-hidden mb-3">
+              <HexColorPicker
+                color={localValue}
+                onChange={handlePickerChange}
+                style={{ width: "100%", height: "140px" }}
+              />
+            </div>
+
+            {/* Presets */}
+            <div className="grid grid-cols-6 gap-1.5">
+              {presets.map((preset) => (
+                <button
+                  key={preset}
+                  onClick={() => {
+                    handlePickerChange(preset);
+                    onBlur?.();
+                  }}
+                  className="aspect-square rounded transition-fast"
+                  style={{
+                    background: preset,
+                    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.1)",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.1)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
+// ============================================
+// PALETTE CARD - Shows color swatches for a palette
+// ============================================
+
+const PaletteCard = ({ palette, onClick }) => {
+  // Show up to 6 colors in the preview
+  const previewColors = palette.colors.slice(0, 6);
+
+  return (
+    <motion.button
+      onClick={onClick}
+      className="w-full p-2 rounded-md flex items-center gap-2 transition-fast group"
+      style={{
+        background: "var(--sidebar-bg)",
+        border: "1px solid var(--sidebar-border)",
+      }}
+      whileHover={{
+        borderColor: "var(--accent)",
+        background: "var(--sidebar-bg-hover)",
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {/* Color swatches preview */}
+      <div className="flex -space-x-0.5">
+        {previewColors.map((color, i) => (
+          <div
+            key={i}
+            className="w-4 h-4 rounded-full first:rounded-l last:rounded-r"
+            style={{
+              background: color,
+              border: "1px solid rgba(0,0,0,0.1)",
+              zIndex: previewColors.length - i,
+            }}
+          />
+        ))}
+        {palette.colors.length > 6 && (
+          <div
+            className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-medium"
+            style={{
+              background: "var(--sidebar-bg-active)",
+              color: "var(--sidebar-text-muted)",
+            }}
+          >
+            +{palette.colors.length - 6}
+          </div>
+        )}
+      </div>
+      <span
+        className="text-10 flex-1 text-left truncate group-hover:text-accent transition-fast"
+        style={{ color: "var(--sidebar-text-secondary)" }}
+      >
+        {palette.name}
+      </span>
+    </motion.button>
+  );
+};
+
+// ============================================
+// PALETTE SECTION - Collapsible group by mood
+// ============================================
+
+const PaletteSection = ({ section, onSelectPalette }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div
+      style={{
+        borderBottom: "1px solid var(--sidebar-border-subtle)",
+      }}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-2 flex items-center gap-2 transition-fast"
+        style={{
+          background: isOpen ? "var(--sidebar-bg-hover)" : "transparent",
+        }}
+      >
+        <motion.div
+          animate={{ rotate: isOpen ? 90 : 0 }}
+          transition={{ duration: 0.15 }}
+          style={{ color: "var(--sidebar-text-muted)" }}
+        >
+          <ChevronRight size={10} />
+        </motion.div>
+        <span
+          className="text-11 font-medium flex-1 text-left"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          {section.name}
+        </span>
+        <span
+          className="text-[9px] px-1.5 py-0.5 rounded"
+          style={{
+            background: "var(--sidebar-bg-active)",
+            color: "var(--sidebar-text-muted)",
+          }}
+        >
+          {section.palettes.length}
+        </span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="px-3 pb-2 space-y-1">
+              {/* Personality tag */}
+              <div
+                className="text-[9px] italic mb-2"
+                style={{ color: "var(--sidebar-text-muted)" }}
+              >
+                {section.personality}
+              </div>
+              {/* Palette cards */}
+              {section.palettes.map((palette) => (
+                <PaletteCard
+                  key={palette.id}
+                  palette={palette}
+                  onClick={() => onSelectPalette(palette.id)}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ============================================
+// PALETTE BROWSER - Full browser section
+// ============================================
+
+const PaletteBrowser = () => {
+  const { applyPalette } = useBrandStore();
+
+  return (
+    <Section
+      title="Color Palettes"
+      icon={Swatches}
+      defaultOpen={false}
+      badge={<Badge variant="accent">{TOTAL_PALETTE_COUNT}</Badge>}
+      noPadding
+    >
+      <div
+        className="max-h-64 overflow-y-auto scrollbar-dark"
+        style={{ marginTop: "-4px" }}
+      >
+        {PALETTE_SECTIONS.map((section) => (
+          <PaletteSection
+            key={section.id}
+            section={section}
+            onSelectPalette={applyPalette}
+          />
+        ))}
+      </div>
+    </Section>
+  );
+};
+
+// ============================================
+// PRESET CARDS
+// ============================================
+
+const PresetCard = ({ name, brand, isActive, onClick }) => (
+  <motion.button
+    onClick={onClick}
+    className="w-full p-2 rounded-md flex items-center gap-2 transition-fast"
+    style={{
+      background: isActive ? "var(--accent-muted)" : "var(--sidebar-bg)",
+      border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
+    }}
+    whileHover={{ scale: 1.01 }}
+    whileTap={{ scale: 0.99 }}
+  >
+    {/* Color preview */}
+    <div className="flex -space-x-1">
+      {[brand.colors.bg, brand.colors.text, brand.colors.primary].map(
+        (color, i) => (
+          <div
+            key={i}
+            className="w-4 h-4 rounded-full"
+            style={{
+              background: color,
+              border: "2px solid var(--sidebar-bg-elevated)",
+              zIndex: 3 - i,
+            }}
+          />
+        )
+      )}
+    </div>
+    <span className="text-11 flex-1 text-left" style={{ color: "var(--sidebar-text)" }}>
+      {name}
+    </span>
+    {isActive && <Check size={12} style={{ color: "var(--accent)" }} />}
+  </motion.button>
+);
+
+// ============================================
+// GLOBAL CONTROLS
+// ============================================
+
 const GlobalControls = () => {
-  const {
-    brand,
-    updateBrand,
-    loadPreset,
-    darkModePreview,
-    toggleDarkMode,
-    setFontPreview,
-  } = useBrandStore();
-  const [showColorHarmony, setShowColorHarmony] = useState(false);
+  const { brand, updateBrand, loadPreset } = useBrandStore();
 
   const handleChange = (section, key, value, isCommit = false) => {
     updateBrand(
@@ -225,19 +859,8 @@ const GlobalControls = () => {
           [key]: value,
         },
       },
-      isCommit,
+      isCommit
     );
-  };
-
-  const handleExport = (type) => {
-    const content = type === "css" ? exportAsCSS(brand) : exportAsJSON(brand);
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `brand-tokens.${type === "css" ? "css" : "json"}`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const fonts = [
@@ -251,164 +874,146 @@ const GlobalControls = () => {
     "Playfair Display",
   ];
 
-  const harmony = getColorHarmony(brand.colors.primary);
+  const presets = [
+    { key: "default", name: "Minimal" },
+    { key: "techStartup", name: "Tech" },
+    { key: "luxuryRetail", name: "Luxury" },
+    { key: "communityNonprofit", name: "Community" },
+    { key: "creativeStudio", name: "Creative" },
+  ];
+
+  const presetBrands = {
+    default: {
+      colors: { bg: "#FFFFFF", text: "#1A1A1A", primary: "#000000" },
+    },
+    techStartup: {
+      colors: { bg: "#F5F7FA", text: "#0F172A", primary: "#3B82F6" },
+    },
+    luxuryRetail: {
+      colors: { bg: "#FDFCFA", text: "#1C1917", primary: "#78716C" },
+    },
+    communityNonprofit: {
+      colors: { bg: "#FFFFFF", text: "#0C4A6E", primary: "#0EA5E9" },
+    },
+    creativeStudio: {
+      colors: { bg: "#FAFAFA", text: "#171717", primary: "#F97316" },
+    },
+  };
 
   return (
     <>
-      <ControlSection title="Quick Actions">
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            onClick={toggleDarkMode}
-            className="flex flex-col items-center justify-center gap-2 px-4 py-3.5 text-[12px] font-semibold border-2 border-[#E5E5E5] rounded-xl hover:bg-[#FAFAFA] hover:border-black transition-all"
-          >
-            {darkModePreview ? <Sun size={18} /> : <Moon size={18} />}
-            <span className="text-[11px]">
-              {darkModePreview ? "Light" : "Dark"}
-            </span>
-          </button>
-          <button
-            onClick={() => handleExport("css")}
-            className="flex flex-col items-center justify-center gap-2 px-4 py-3.5 text-[12px] font-semibold border-2 border-[#E5E5E5] rounded-xl hover:bg-[#FAFAFA] hover:border-black transition-all"
-          >
-            <Download size={18} />
-            <span className="text-[11px]">CSS</span>
-          </button>
-          <button
-            onClick={() => handleExport("json")}
-            className="flex flex-col items-center justify-center gap-2 px-4 py-3.5 text-[12px] font-semibold border-2 border-[#E5E5E5] rounded-xl hover:bg-[#FAFAFA] hover:border-black transition-all"
-          >
-            <Download size={18} />
-            <span className="text-[11px]">JSON</span>
-          </button>
+      {/* Quick Start */}
+      <Section
+        title="Quick Start"
+        icon={Wand2}
+        defaultOpen={false}
+        badge={<Badge variant="accent">{presets.length}</Badge>}
+      >
+        <div className="grid grid-cols-2 gap-1.5">
+          {presets.map((preset) => (
+            <PresetCard
+              key={preset.key}
+              name={preset.name}
+              brand={presetBrands[preset.key]}
+              isActive={false}
+              onClick={() => loadPreset(preset.key)}
+            />
+          ))}
         </div>
-      </ControlSection>
+      </Section>
 
-      <ControlSection title="Brand Presets">
-        <Select onChange={(e) => loadPreset(e.target.value)} defaultValue="">
-          <option value="" disabled>
-            Select a preset...
-          </option>
-          <option value="default">Clean & Minimal</option>
-          <option value="techStartup">Tech Startup</option>
-          <option value="luxuryRetail">Luxury Retail</option>
-          <option value="communityNonprofit">Community Nonprofit</option>
-          <option value="creativeStudio">Creative Studio</option>
-        </Select>
-      </ControlSection>
+      {/* Color Palettes */}
+      <PaletteBrowser />
 
-      <ControlSection title="Typography">
-        <div>
-          <Label>Primary Font (Headline)</Label>
-          <Select
-            value={brand.typography.primary}
-            onChange={(e) =>
-              handleChange("typography", "primary", e.target.value, true)
-            }
-          >
-            {fonts.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label>Secondary Font (Body)</Label>
-          <Select
-            value={brand.typography.secondary}
-            onChange={(e) =>
-              handleChange("typography", "secondary", e.target.value, true)
-            }
-          >
-            {fonts.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div>
-          <Label>Letter Spacing</Label>
-          <Select
+      {/* Typography */}
+      <Section title="Typography" icon={Type}>
+        <FontSelector
+          label="Headline"
+          value={brand.typography.primary}
+          onChange={(font) => handleChange("typography", "primary", font, true)}
+          fonts={fonts}
+        />
+
+        <FontSelector
+          label="Body"
+          value={brand.typography.secondary}
+          onChange={(font) => handleChange("typography", "secondary", font, true)}
+          fonts={fonts}
+        />
+
+        <PropRow label="Spacing">
+          <SegmentedControl
+            options={[
+              { value: "tight", label: "Tight" },
+              { value: "normal", label: "Normal" },
+              { value: "wide", label: "Wide" },
+            ]}
             value={brand.typography.letterSpacing}
-            onChange={(e) =>
-              handleChange("typography", "letterSpacing", e.target.value, true)
+            onChange={(val) =>
+              handleChange("typography", "letterSpacing", val, true)
             }
-          >
-            <option value="tight">Tight (-0.02em)</option>
-            <option value="normal">Normal (0)</option>
-            <option value="wide">Wide (0.05em)</option>
-          </Select>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Scale Ratio</Label>
-            <Input
-              type="number"
-              step="0.05"
-              value={brand.typography.scale}
-              onChange={(e) =>
-                handleChange(
-                  "typography",
-                  "scale",
-                  parseFloat(e.target.value),
-                  false,
-                )
-              }
-              onBlur={() =>
-                handleChange(
-                  "typography",
-                  "scale",
-                  brand.typography.scale,
-                  true,
-                )
-              }
-            />
-          </div>
-          <div>
-            <Label>Base Size</Label>
-            <Input
-              type="number"
-              value={brand.typography.baseSize}
-              onChange={(e) =>
-                handleChange(
-                  "typography",
-                  "baseSize",
-                  parseInt(e.target.value),
-                  false,
-                )
-              }
-              onBlur={() =>
-                handleChange(
-                  "typography",
-                  "baseSize",
-                  brand.typography.baseSize,
-                  true,
-                )
-              }
-            />
-          </div>
-        </div>
-      </ControlSection>
+          />
+        </PropRow>
 
-      <ControlSection title="Colors">
-        <ColorInput
+        <Slider
+          label="Scale"
+          value={brand.typography.scale}
+          onChange={(val) => handleChange("typography", "scale", val, false)}
+          onBlur={() =>
+            handleChange("typography", "scale", brand.typography.scale, true)
+          }
+          min={1.1}
+          max={1.5}
+          step={0.01}
+        />
+
+        <Slider
+          label="Base Size"
+          value={brand.typography.baseSize}
+          onChange={(val) =>
+            handleChange("typography", "baseSize", Math.round(val), false)
+          }
+          onBlur={() =>
+            handleChange("typography", "baseSize", brand.typography.baseSize, true)
+          }
+          min={14}
+          max={20}
+          step={1}
+          unit="px"
+        />
+      </Section>
+
+      {/* Colors */}
+      <Section
+        title="Colors"
+        icon={Droplet}
+        badge={
+          getContrastRatio(brand.colors.text, brand.colors.bg) >= 4.5 ? (
+            <Badge variant="success">AA</Badge>
+          ) : (
+            <Badge variant="error">Low</Badge>
+          )
+        }
+      >
+        <ColorSwatch
           label="Background"
           value={brand.colors.bg}
           onChange={(e) => handleChange("colors", "bg", e.target.value, false)}
           onBlur={() => handleChange("colors", "bg", brand.colors.bg, true)}
+          hint={ROLE_DESCRIPTIONS.bg}
         />
-        <ColorInput
+
+        <ColorSwatch
           label="Text"
           value={brand.colors.text}
-          onChange={(e) =>
-            handleChange("colors", "text", e.target.value, false)
-          }
+          onChange={(e) => handleChange("colors", "text", e.target.value, false)}
           onBlur={() => handleChange("colors", "text", brand.colors.text, true)}
-          showContrast={true}
+          showContrast
           contrastWith={brand.colors.bg}
+          hint={ROLE_DESCRIPTIONS.text}
         />
-        <ColorInput
+
+        <ColorSwatch
           label="Primary"
           value={brand.colors.primary}
           onChange={(e) =>
@@ -417,11 +1022,25 @@ const GlobalControls = () => {
           onBlur={() =>
             handleChange("colors", "primary", brand.colors.primary, true)
           }
-          showContrast={true}
+          showContrast
           contrastWith={brand.colors.bg}
+          hint={ROLE_DESCRIPTIONS.primary}
         />
-        <ColorInput
-          label="Surface / Accents"
+
+        <ColorSwatch
+          label="Accent"
+          value={brand.colors.accent}
+          onChange={(e) =>
+            handleChange("colors", "accent", e.target.value, false)
+          }
+          onBlur={() =>
+            handleChange("colors", "accent", brand.colors.accent, true)
+          }
+          hint={ROLE_DESCRIPTIONS.accent}
+        />
+
+        <ColorSwatch
+          label="Surface"
           value={brand.colors.surface}
           onChange={(e) =>
             handleChange("colors", "surface", e.target.value, false)
@@ -429,103 +1048,76 @@ const GlobalControls = () => {
           onBlur={() =>
             handleChange("colors", "surface", brand.colors.surface, true)
           }
+          hint={ROLE_DESCRIPTIONS.surface}
         />
+      </Section>
 
-        <button
-          onClick={() => setShowColorHarmony(!showColorHarmony)}
-          className="flex items-center gap-2 text-[13px] font-semibold text-[#666] hover:text-black transition-colors mt-2 py-2"
-        >
-          <Palette size={16} />
-          {showColorHarmony ? "Hide" : "Show"} Color Harmony
-        </button>
-
-        {showColorHarmony && (
-          <div className="space-y-4 mt-2 p-4 bg-[#FAFAFA] rounded-xl border border-[#F0F0F0]">
-            <div>
-              <Label>Analogous Colors</Label>
-              <div className="flex gap-2">
-                {harmony.analogous.map((color, i) => (
-                  <button
-                    key={i}
-                    onClick={() =>
-                      handleChange("colors", "accent", color, true)
-                    }
-                    className="flex-1 h-10 rounded-lg border-2 border-[#E5E5E5] hover:scale-105 hover:border-black transition-all shadow-sm"
-                    style={{ backgroundColor: color }}
-                    title={`Use ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>Complementary</Label>
-              <button
-                onClick={() =>
-                  handleChange("colors", "accent", harmony.complementary, true)
-                }
-                className="w-full h-10 rounded-lg border-2 border-[#E5E5E5] hover:scale-105 hover:border-black transition-all shadow-sm"
-                style={{ backgroundColor: harmony.complementary }}
-                title={`Use ${harmony.complementary}`}
-              />
-            </div>
-            <div>
-              <Label>Triadic Colors</Label>
-              <div className="flex gap-2">
-                {harmony.triadic.map((color, i) => (
-                  <button
-                    key={i}
-                    onClick={() =>
-                      handleChange("colors", "accent", color, true)
-                    }
-                    className="flex-1 h-10 rounded-lg border-2 border-[#E5E5E5] hover:scale-105 hover:border-black transition-all shadow-sm"
-                    style={{ backgroundColor: color }}
-                    title={`Use ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </ControlSection>
-
-      <ControlSection title="Logo System">
-        <div>
-          <Label>Mark Text</Label>
+      {/* Logo */}
+      <Section title="Logo" icon={Sparkles} defaultOpen={false}>
+        <PropRow label="Text">
           <Input
             value={brand.logo.text}
             onChange={(e) => handleChange("logo", "text", e.target.value, true)}
+            placeholder="BRAND"
           />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Mark Padding</Label>
-            <Input
-              type="number"
-              value={brand.logo.padding}
-              onChange={(e) =>
-                handleChange("logo", "padding", parseInt(e.target.value), false)
-              }
-              onBlur={() =>
-                handleChange("logo", "padding", brand.logo.padding, true)
-              }
-            />
+        </PropRow>
+
+        <Slider
+          label="Size"
+          value={brand.logo.size}
+          onChange={(val) =>
+            handleChange("logo", "size", Math.round(val), false)
+          }
+          onBlur={() => handleChange("logo", "size", brand.logo.size, true)}
+          min={16}
+          max={36}
+          step={1}
+          unit="px"
+        />
+
+        <Slider
+          label="Padding"
+          value={brand.logo.padding}
+          onChange={(val) =>
+            handleChange("logo", "padding", Math.round(val), false)
+          }
+          onBlur={() =>
+            handleChange("logo", "padding", brand.logo.padding, true)
+          }
+          min={8}
+          max={28}
+          step={1}
+          unit="px"
+        />
+
+        {/* Logo preview */}
+        <div
+          className="p-4 rounded-md flex items-center justify-center"
+          style={{ background: "var(--sidebar-bg-active)" }}
+        >
+          <div
+            style={{
+              fontFamily: brand.typography.primary,
+              fontSize: `${brand.logo.size}px`,
+              padding: `${brand.logo.padding}px`,
+              backgroundColor: brand.colors.bg,
+              color: brand.colors.primary,
+              letterSpacing: "0.15em",
+              fontWeight: "800",
+              borderRadius: "6px",
+            }}
+          >
+            {brand.logo.text}
           </div>
-          <div>
-            <Label>Mark Size</Label>
-            <Input
-              type="number"
-              value={brand.logo.size}
-              onChange={(e) =>
-                handleChange("logo", "size", parseInt(e.target.value), false)
-              }
-              onBlur={() => handleChange("logo", "size", brand.logo.size, true)}
-            />
-          </div>
         </div>
-      </ControlSection>
+      </Section>
     </>
   );
 };
+
+// ============================================
+// TILE CONTROLS
+// ============================================
 
 const TileControls = ({ tile }) => {
   const { updateTile, setFocusedTile, swapTileType } = useBrandStore();
@@ -535,186 +1127,412 @@ const TileControls = ({ tile }) => {
   };
 
   const tileTypes = [
-    { value: "hero", label: "Hero" },
-    { value: "editorial", label: "Editorial" },
-    { value: "product", label: "Product" },
-    { value: "ui-preview", label: "UI Preview" },
-    { value: "image", label: "Image" },
-    { value: "utility", label: "Utility" },
-    { value: "logo", label: "Logo" },
+    { value: "hero", label: "Hero", icon: Layers },
+    { value: "editorial", label: "Editorial", icon: FileText },
+    { value: "product", label: "Product", icon: Box },
+    { value: "ui-preview", label: "UI", icon: LayoutGrid },
+    { value: "image", label: "Image", icon: Image },
+    { value: "utility", label: "Utility", icon: Hash },
+    { value: "logo", label: "Logo", icon: Sparkles },
   ];
+
+  const currentType = tileTypes.find((t) => t.value === tile.type);
+  const CurrentIcon = currentType?.icon || Layers;
 
   return (
     <>
-      <div className="mb-8 flex items-center justify-between pb-4 border-b border-[#F0F0F0]">
-        <div>
-          <h2 className="text-[16px] font-bold text-black capitalize">
-            {tile.type}
+      {/* Tile header */}
+      <div
+        className="px-3 py-3 flex items-center gap-3"
+        style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
+      >
+        <div
+          className="w-8 h-8 rounded-md flex items-center justify-center"
+          style={{ background: "var(--accent-muted)", color: "var(--accent)" }}
+        >
+          <CurrentIcon size={14} />
+        </div>
+        <div className="flex-1">
+          <h2
+            className="text-12 font-medium capitalize"
+            style={{ color: "var(--sidebar-text)" }}
+          >
+            {tile.type.replace("-", " ")} Tile
           </h2>
-          <p className="text-[12px] text-[#999] mt-0.5">Tile Editor</p>
+          <p className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+            Edit content
+          </p>
         </div>
         <button
           onClick={() => setFocusedTile(null)}
-          className="text-[#999] hover:text-black transition-colors p-1"
+          className="icon-btn"
         >
-          <X size={20} />
+          <X size={14} />
         </button>
       </div>
 
-      <ControlSection title="Tile Type">
-        <Select
-          value={tile.type}
-          onChange={(e) => swapTileType(tile.id, e.target.value)}
-        >
-          {tileTypes.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </Select>
-        <p className="text-[11px] text-[#999] italic leading-relaxed bg-amber-50 border border-amber-100 rounded-lg p-3">
-          Changing tile type will reset its content to defaults.
-        </p>
-      </ControlSection>
+      {/* Tile type */}
+      <Section title="Type" icon={LayoutGrid} defaultOpen={false}>
+        <div className="grid grid-cols-4 gap-1">
+          {tileTypes.map((type) => {
+            const TypeIcon = type.icon;
+            const isSelected = tile.type === type.value;
 
-      <ControlSection title="Content Editor">
+            return (
+              <button
+                key={type.value}
+                onClick={() => swapTileType(tile.id, type.value)}
+                className="flex flex-col items-center gap-1 p-2 rounded-md transition-fast"
+                style={{
+                  background: isSelected
+                    ? "var(--accent-muted)"
+                    : "var(--sidebar-bg)",
+                  border: `1px solid ${isSelected ? "var(--accent)" : "var(--sidebar-border)"}`,
+                  color: isSelected ? "var(--accent)" : "var(--sidebar-text-secondary)",
+                }}
+              >
+                <TypeIcon size={14} />
+                <span className="text-[9px]">{type.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Content */}
+      <Section title="Content" icon={FileText}>
         {tile.content.headline !== undefined && (
-          <div>
-            <Label>Headline</Label>
+          <PropRow label="Headline">
             <Input
               value={tile.content.headline}
               onChange={(e) => handleChange("headline", e.target.value)}
+              placeholder="Enter headline..."
             />
-          </div>
+          </PropRow>
         )}
+
         {tile.content.subcopy !== undefined && (
-          <div>
-            <Label>Subcopy</Label>
+          <PropRow label="Subcopy">
             <Input
               value={tile.content.subcopy}
               onChange={(e) => handleChange("subcopy", e.target.value)}
+              placeholder="Supporting text..."
             />
-          </div>
+          </PropRow>
         )}
+
         {tile.content.body !== undefined && (
           <div>
-            <Label>Body Paragraph</Label>
-            <textarea
+            <span
+              className="text-11 block mb-1.5"
+              style={{ color: "var(--sidebar-text-secondary)" }}
+            >
+              Body
+            </span>
+            <TextArea
               value={tile.content.body}
               onChange={(e) => handleChange("body", e.target.value)}
-              className="w-full bg-white border border-[#E5E5E5] rounded-lg px-3 py-2.5 text-[14px] focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all min-h-[120px] resize-none"
+              placeholder="Body content..."
             />
           </div>
         )}
+
         {tile.content.cta !== undefined && (
-          <div>
-            <Label>CTA Label</Label>
+          <PropRow label="Button">
             <Input
               value={tile.content.cta}
               onChange={(e) => handleChange("cta", e.target.value)}
+              placeholder="Call to action..."
             />
-          </div>
+          </PropRow>
         )}
+
+        {tile.content.label !== undefined && (
+          <PropRow label="Label">
+            <Input
+              value={tile.content.label}
+              onChange={(e) => handleChange("label", e.target.value)}
+              placeholder="Label..."
+            />
+          </PropRow>
+        )}
+
+        {tile.content.price !== undefined && (
+          <PropRow label="Price">
+            <Input
+              value={tile.content.price}
+              onChange={(e) => handleChange("price", e.target.value)}
+              placeholder="$99"
+            />
+          </PropRow>
+        )}
+
         {tile.content.image !== undefined && (
           <div>
-            <Label>Image URL</Label>
+            <span
+              className="text-11 block mb-1.5"
+              style={{ color: "var(--sidebar-text-secondary)" }}
+            >
+              Image URL
+            </span>
             <Input
               value={tile.content.image}
               onChange={(e) => handleChange("image", e.target.value)}
-              placeholder="https://..."
+              placeholder="https://images.unsplash.com/..."
             />
+            {tile.content.image && (
+              <div
+                className="mt-2 h-20 rounded-md overflow-hidden"
+                style={{ background: "var(--sidebar-bg-active)" }}
+              >
+                <img
+                  src={tile.content.image}
+                  alt=""
+                  className="w-full h-full object-cover opacity-80"
+                />
+              </div>
+            )}
           </div>
         )}
+
+        {tile.content.overlayText !== undefined && (
+          <PropRow label="Overlay">
+            <Input
+              value={tile.content.overlayText}
+              onChange={(e) => handleChange("overlayText", e.target.value)}
+              placeholder="Overlay text..."
+            />
+          </PropRow>
+        )}
+
         {tile.content.items !== undefined && (
           <div>
-            <Label>List Items (comma separated)</Label>
-            <Input
+            <span
+              className="text-11 block mb-1.5"
+              style={{ color: "var(--sidebar-text-secondary)" }}
+            >
+              List Items
+            </span>
+            <TextArea
               value={tile.content.items.join(", ")}
               onChange={(e) =>
                 handleChange(
                   "items",
-                  e.target.value.split(",").map((s) => s.trim()),
+                  e.target.value.split(",").map((s) => s.trim())
                 )
               }
+              placeholder="Item 1, Item 2, Item 3"
             />
           </div>
         )}
-      </ControlSection>
 
-      <div className="pt-6 border-t border-[#F0F0F0]">
-        <p className="text-[11px] text-[#999] leading-relaxed italic bg-blue-50 border border-blue-100 rounded-lg p-3">
-          Styles are currently governed by the global brand system. Per-tile
-          overrides are disabled for MVP.
-        </p>
+        {tile.content.headerTitle !== undefined && (
+          <PropRow label="Header">
+            <Input
+              value={tile.content.headerTitle}
+              onChange={(e) => handleChange("headerTitle", e.target.value)}
+              placeholder="Header..."
+            />
+          </PropRow>
+        )}
+
+        {tile.content.buttonLabel !== undefined && (
+          <PropRow label="Button">
+            <Input
+              value={tile.content.buttonLabel}
+              onChange={(e) => handleChange("buttonLabel", e.target.value)}
+              placeholder="Submit"
+            />
+          </PropRow>
+        )}
+
+        {tile.content.inputPlaceholder !== undefined && (
+          <PropRow label="Placeholder">
+            <Input
+              value={tile.content.inputPlaceholder}
+              onChange={(e) =>
+                handleChange("inputPlaceholder", e.target.value)
+              }
+              placeholder="Search..."
+            />
+          </PropRow>
+        )}
+      </Section>
+
+      {/* Footer note */}
+      <div
+        className="px-3 py-3 flex items-center gap-2"
+        style={{ borderTop: "1px solid var(--sidebar-border-subtle)" }}
+      >
+        <Palette size={12} style={{ color: "var(--sidebar-text-muted)" }} />
+        <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+          Styles controlled by brand settings
+        </span>
       </div>
     </>
   );
 };
 
+// ============================================
+// MAIN CONTROL PANEL
+// ============================================
+
 const ControlPanel = () => {
   const { focusedTileId, tiles, undo, redo, history } = useBrandStore();
   const focusedTile = tiles.find((t) => t.id === focusedTileId);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Keyboard shortcuts
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
         undo();
-      } else if ((e.metaKey || e.ctrlKey) && e.key === "z" && e.shiftKey) {
+      } else if (
+        (e.metaKey || e.ctrlKey) &&
+        ((e.key === "z" && e.shiftKey) || e.key === "Z")
+      ) {
         e.preventDefault();
         redo();
-      } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "Z") {
+      } else if (e.key === "Escape" && focusedTileId) {
+        useBrandStore.getState().setFocusedTile(null);
+      } else if ((e.metaKey || e.ctrlKey) && e.key === "\\") {
         e.preventDefault();
-        redo();
+        setIsCollapsed((prev) => !prev);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, focusedTileId]);
 
   return (
-    <div className="w-[360px] h-full bg-[#FAFAFA] border-l border-[#E5E5E5] flex flex-col flex-shrink-0">
-      <div className="h-20 flex items-center justify-between px-6 border-b border-[#E5E5E5] bg-white">
-        <div>
-          <span className="text-[13px] font-bold tracking-[0.1em] uppercase text-black">
-            Bento Controls
-          </span>
-          <p className="text-[11px] text-[#999] mt-0.5">Design System</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={undo}
-            disabled={history.past.length === 0}
-            className={`text-[11px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
-              history.past.length === 0
-                ? "text-[#CCC] bg-[#F5F5F5]"
-                : "text-black bg-white border border-[#E5E5E5] hover:bg-[#FAFAFA]"
-            }`}
-            title="Undo (Cmd+Z)"
-          >
-            Undo
-          </button>
-          <button
-            onClick={redo}
-            disabled={history.future.length === 0}
-            className={`text-[11px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
-              history.future.length === 0
-                ? "text-[#CCC] bg-[#F5F5F5]"
-                : "text-black bg-white border border-[#E5E5E5] hover:bg-[#FAFAFA]"
-            }`}
-            title="Redo (Cmd+Shift+Z)"
-          >
-            Redo
-          </button>
-        </div>
-      </div>
+    <motion.div
+      className="h-full flex flex-col flex-shrink-0 relative"
+      style={{
+        background: "var(--sidebar-bg)",
+        borderRight: "1px solid var(--sidebar-border)",
+      }}
+      initial={false}
+      animate={{ width: isCollapsed ? 48 : 280 }}
+      transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+    >
+      {/* Collapse toggle */}
+      <motion.button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 rounded-full flex items-center justify-center"
+        style={{
+          background: "var(--sidebar-bg-elevated)",
+          border: "1px solid var(--sidebar-border)",
+          boxShadow: "var(--shadow-md)",
+          color: "var(--sidebar-text-secondary)",
+        }}
+        whileHover={{ scale: 1.1, color: "var(--sidebar-text)" }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <motion.div
+          animate={{ rotate: isCollapsed ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronRight size={12} />
+        </motion.div>
+      </motion.button>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
-        {focusedTile ? <TileControls tile={focusedTile} /> : <GlobalControls />}
-      </div>
-    </div>
+      {isCollapsed ? (
+        /* Collapsed state */
+        <div className="flex flex-col items-center py-3 gap-1">
+          <IconButton
+            icon={PanelLeft}
+            tooltip="Expand"
+            onClick={() => setIsCollapsed(false)}
+          />
+          <div className="divider-h w-6 my-1" />
+          <IconButton icon={Sliders} tooltip="Brand" />
+          <IconButton icon={Type} tooltip="Typography" />
+          <IconButton icon={Droplet} tooltip="Colors" />
+          <IconButton icon={Sparkles} tooltip="Logo" />
+        </div>
+      ) : (
+        /* Expanded state */
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Panel header */}
+          <div
+            className="px-3 py-2 flex items-center justify-between flex-shrink-0"
+            style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
+          >
+            <span
+              className="text-11 font-medium"
+              style={{ color: "var(--sidebar-text)" }}
+            >
+              {focusedTile ? "Tile Properties" : "Design"}
+            </span>
+            <div className="flex items-center gap-1">
+              <span
+                className="text-10 px-2 py-0.5 rounded"
+                style={{
+                  background: "var(--sidebar-bg-hover)",
+                  color: "var(--sidebar-text-muted)",
+                }}
+              >
+                {history.past.length} edits
+              </span>
+            </div>
+          </div>
+
+          {/* Panel content */}
+          <div className="flex-1 overflow-y-auto scrollbar-dark">
+            <AnimatePresence mode="wait">
+              {focusedTile ? (
+                <motion.div
+                  key="tile"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <TileControls tile={focusedTile} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="global"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <GlobalControls />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Panel footer */}
+          <div
+            className="px-3 py-2 flex items-center justify-between flex-shrink-0"
+            style={{
+              borderTop: "1px solid var(--sidebar-border-subtle)",
+              background: "var(--sidebar-bg-elevated)",
+            }}
+          >
+            <div className="flex items-center gap-1">
+              <Kbd></Kbd>
+              <span className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
+                Z
+              </span>
+            </div>
+            <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+              Undo/Redo
+            </span>
+            <div className="flex items-center gap-1">
+              <Kbd></Kbd>
+              <span className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
+                \
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 };
 

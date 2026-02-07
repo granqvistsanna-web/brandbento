@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { getPaletteById } from "../data/colorPalettes";
+import { mapPaletteToBrand } from "../utils/colorMapping";
 
 const DEFAULT_BRAND = {
   typography: {
@@ -155,6 +157,16 @@ const STARTER_TEMPLATES = [
       },
     },
     tiles: [
+      // Row 1: Logo small, Hero wide, Image tall
+      {
+        id: "logo-1",
+        type: "logo",
+        content: {
+          label: "Since 2024",
+        },
+        colSpan: 1,
+        rowSpan: 1,
+      },
       {
         id: "hero-1",
         type: "hero",
@@ -177,18 +189,20 @@ const STARTER_TEMPLATES = [
           overlayText: "Innovation",
         },
         colSpan: 1,
-        rowSpan: 2,
+        rowSpan: 3,
       },
+      // Row 2: Editorial under logo
       {
         id: "editorial-1",
         type: "editorial",
         content: {
           headline: "Innovation first",
-          body: "We believe technology should empower everyone. Our platform makes complex AI simple.",
+          body: "We believe technology should empower everyone.",
         },
         colSpan: 1,
-        rowSpan: 1,
+        rowSpan: 2,
       },
+      // Row 3: UI Preview wide, Product
       {
         id: "ui-preview-1",
         type: "ui-preview",
@@ -198,37 +212,6 @@ const STARTER_TEMPLATES = [
           inputPlaceholder: "Enter API key...",
         },
         colSpan: 2,
-        rowSpan: 1,
-      },
-      {
-        id: "product-1",
-        type: "product",
-        content: {
-          label: "Pro Plan",
-          price: "$49/mo",
-          image:
-            "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=500&auto=format&fit=crop",
-        },
-        colSpan: 1,
-        rowSpan: 1,
-      },
-      {
-        id: "utility-1",
-        type: "utility",
-        content: {
-          headline: "Core Features",
-          items: ["Real-time Analytics", "API Access", "Custom Integrations"],
-        },
-        colSpan: 1,
-        rowSpan: 1,
-      },
-      {
-        id: "logo-1",
-        type: "logo",
-        content: {
-          label: "Powered by AI",
-        },
-        colSpan: 1,
         rowSpan: 1,
       },
     ],
@@ -260,6 +243,7 @@ const STARTER_TEMPLATES = [
       },
     },
     tiles: [
+      // Asymmetric luxury layout - 4 cols x 3 rows
       {
         id: "image-1",
         type: "image",
@@ -268,8 +252,39 @@ const STARTER_TEMPLATES = [
             "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=1000&auto=format&fit=crop",
           overlayText: "Spring 2026",
         },
+        colSpan: 2,
+        rowSpan: 2,
+      },
+      {
+        id: "logo-1",
+        type: "logo",
+        content: {
+          label: "Est. 1923",
+        },
+        colSpan: 1,
+        rowSpan: 1,
+      },
+      {
+        id: "product-1",
+        type: "product",
+        content: {
+          label: "Signature Piece",
+          price: "$2,400",
+          image:
+            "https://images.unsplash.com/photo-1591561954555-607968c989ab?q=80&w=500&auto=format&fit=crop",
+        },
         colSpan: 1,
         rowSpan: 2,
+      },
+      {
+        id: "editorial-1",
+        type: "editorial",
+        content: {
+          headline: "Heritage meets modernity",
+          body: "Each piece tells a story of craftsmanship.",
+        },
+        colSpan: 1,
+        rowSpan: 1,
       },
       {
         id: "hero-1",
@@ -282,28 +297,6 @@ const STARTER_TEMPLATES = [
             "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1000&auto=format&fit=crop",
         },
         colSpan: 2,
-        rowSpan: 2,
-      },
-      {
-        id: "product-1",
-        type: "product",
-        content: {
-          label: "Signature Piece",
-          price: "$2,400",
-          image:
-            "https://images.unsplash.com/photo-1591561954555-607968c989ab?q=80&w=500&auto=format&fit=crop",
-        },
-        colSpan: 1,
-        rowSpan: 1,
-      },
-      {
-        id: "editorial-1",
-        type: "editorial",
-        content: {
-          headline: "Heritage meets modernity",
-          body: "Each piece tells a story of craftsmanship passed down through generations.",
-        },
-        colSpan: 2,
         rowSpan: 1,
       },
       {
@@ -312,15 +305,6 @@ const STARTER_TEMPLATES = [
         content: {
           headline: "Services",
           items: ["Personal Styling", "Custom Orders", "Lifetime Warranty"],
-        },
-        colSpan: 1,
-        rowSpan: 1,
-      },
-      {
-        id: "logo-1",
-        type: "logo",
-        content: {
-          label: "Est. 1923",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -447,6 +431,7 @@ const STARTER_TEMPLATES = [
       },
     },
     tiles: [
+      // Row 1: Image wide + Logo + Hero tall (starts)
       {
         id: "image-1",
         type: "image",
@@ -456,6 +441,50 @@ const STARTER_TEMPLATES = [
           overlayText: "Mindfulness",
         },
         colSpan: 2,
+        rowSpan: 2,
+      },
+      {
+        id: "logo-1",
+        type: "logo",
+        content: {
+          label: "Wellness",
+        },
+        colSpan: 1,
+        rowSpan: 1,
+      },
+      {
+        id: "hero-1",
+        type: "hero",
+        content: {
+          headline: "Your wellness journey",
+          subcopy: "Natural, sustainable, transformative",
+          cta: "Begin Today",
+          image:
+            "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
+        },
+        colSpan: 1,
+        rowSpan: 3,
+      },
+      // Row 2: Editorial
+      {
+        id: "editorial-1",
+        type: "editorial",
+        content: {
+          headline: "Holistic healing",
+          body: "Treating the whole person—mind, body, and spirit.",
+        },
+        colSpan: 1,
+        rowSpan: 1,
+      },
+      // Row 3: Utility + Product + UI
+      {
+        id: "utility-1",
+        type: "utility",
+        content: {
+          headline: "Benefits",
+          items: ["100% Natural", "Certified Organic", "Carbon Neutral"],
+        },
+        colSpan: 1,
         rowSpan: 1,
       },
       {
@@ -468,39 +497,6 @@ const STARTER_TEMPLATES = [
             "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=500&auto=format&fit=crop",
         },
         colSpan: 1,
-        rowSpan: 2,
-      },
-      {
-        id: "hero-1",
-        type: "hero",
-        content: {
-          headline: "Your wellness journey starts here",
-          subcopy: "Natural, sustainable, transformative",
-          cta: "Begin Today",
-          image:
-            "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
-        },
-        colSpan: 1,
-        rowSpan: 2,
-      },
-      {
-        id: "editorial-1",
-        type: "editorial",
-        content: {
-          headline: "Holistic healing",
-          body: "We believe in treating the whole person—mind, body, and spirit in harmony.",
-        },
-        colSpan: 2,
-        rowSpan: 1,
-      },
-      {
-        id: "utility-1",
-        type: "utility",
-        content: {
-          headline: "Benefits",
-          items: ["100% Natural", "Certified Organic", "Carbon Neutral"],
-        },
-        colSpan: 1,
         rowSpan: 1,
       },
       {
@@ -510,15 +506,6 @@ const STARTER_TEMPLATES = [
           headerTitle: "Your Plan",
           buttonLabel: "Start",
           inputPlaceholder: "Enter your goal...",
-        },
-        colSpan: 1,
-        rowSpan: 1,
-      },
-      {
-        id: "logo-1",
-        type: "logo",
-        content: {
-          label: "Wellness",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -634,8 +621,22 @@ const STARTER_TEMPLATES = [
 
 // Color harmony helpers
 const hexToHSL = (hex) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return { h: 0, s: 0, l: 0 };
+  // Support both 3-char (#FFF) and 6-char (#FFFFFF) hex codes
+  let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) {
+    // Try 3-character shorthand
+    const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
+    if (shorthand) {
+      result = [
+        null,
+        shorthand[1] + shorthand[1],
+        shorthand[2] + shorthand[2],
+        shorthand[3] + shorthand[3],
+      ];
+    } else {
+      return { h: 0, s: 0, l: 0 };
+    }
+  }
 
   let r = parseInt(result[1], 16) / 255;
   let g = parseInt(result[2], 16) / 255;
@@ -661,6 +662,9 @@ const hexToHSL = (hex) => {
         break;
       case b:
         h = ((r - g) / d + 4) / 6;
+        break;
+      default:
+        h = 0;
         break;
     }
   }
@@ -729,8 +733,22 @@ export const getColorHarmony = (baseColor) => {
 // Contrast calculation (WCAG)
 export const getContrastRatio = (color1, color2) => {
   const getLuminance = (hex) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return 0;
+    // Support both 3-char (#FFF) and 6-char (#FFFFFF) hex codes
+    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) {
+      // Try 3-character shorthand
+      const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
+      if (shorthand) {
+        result = [
+          null,
+          shorthand[1] + shorthand[1],
+          shorthand[2] + shorthand[2],
+          shorthand[3] + shorthand[3],
+        ];
+      } else {
+        return 0;
+      }
+    }
 
     const rgb = [
       parseInt(result[1], 16) / 255,
@@ -915,6 +933,25 @@ export const useBrandStore = create((set, get) => ({
     });
   },
 
+  applyPalette: (paletteId) => {
+    const { brand, tiles, history } = get();
+    const palette = getPaletteById(paletteId);
+    if (!palette) return;
+
+    const colorMapping = mapPaletteToBrand(palette.colors);
+
+    set({
+      brand: {
+        ...brand,
+        colors: colorMapping,
+      },
+      history: {
+        past: [...history.past, { brand, tiles }],
+        future: [],
+      },
+    });
+  },
+
   swapTileType: (tileId, newType) => {
     const { brand, tiles, history } = get();
     const tile = tiles.find((t) => t.id === tileId);
@@ -980,19 +1017,23 @@ export const useBrandStore = create((set, get) => ({
     }
   },
 
-  updateTile: (tileId, newContent) => {
+  updateTile: (tileId, newContent, isCommit = true) => {
     const { brand, tiles, history } = get();
     const newTiles = tiles.map((t) =>
       t.id === tileId ? { ...t, content: { ...t.content, ...newContent } } : t,
     );
 
-    set({
-      tiles: newTiles,
-      history: {
-        past: [...history.past, { brand, tiles }],
-        future: [],
-      },
-    });
+    if (isCommit) {
+      set({
+        tiles: newTiles,
+        history: {
+          past: [...history.past, { brand, tiles }],
+          future: [],
+        },
+      });
+    } else {
+      set({ tiles: newTiles });
+    }
   },
 
   undo: () => {
