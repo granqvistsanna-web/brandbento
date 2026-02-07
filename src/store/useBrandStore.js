@@ -892,6 +892,10 @@ export const useBrandStore = create((set, get) => ({
   darkModePreview: false,
   fontPreview: null, // { font: string, target: 'primary' | 'secondary' }
 
+  // Theme state
+  theme: 'system', // 'light' | 'dark' | 'system'
+  resolvedTheme: 'light', // Computed theme based on system preference or explicit choice
+
   // History
   history: {
     past: [],
@@ -905,6 +909,10 @@ export const useBrandStore = create((set, get) => ({
 
   setFontPreview: (font, target) =>
     set({ fontPreview: font ? { font, target } : null }),
+
+  setTheme: (theme) => set({ theme }),
+
+  setResolvedTheme: (resolved) => set({ resolvedTheme: resolved }),
 
   loadRandomTemplate: () => {
     const randomTemplate =
