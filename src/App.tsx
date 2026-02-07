@@ -6,6 +6,7 @@ import ControlPanel from "./components/ControlPanel";
 // @ts-ignore
 import { useBrandStore } from "./store/useBrandStore";
 import { useTheme } from "./hooks/useTheme";
+import { ThemeToggle } from "./components/ThemeToggle";
 import {
   ChevronDown,
   RotateCcw,
@@ -14,8 +15,6 @@ import {
   Share2,
   Layers,
   Grid3X3,
-  Moon,
-  Sun,
   Maximize2,
   HelpCircle,
 } from "lucide-react";
@@ -246,7 +245,7 @@ export default function App() {
   // Initialize theme management
   useTheme();
 
-  const { undo, redo, history, darkModePreview, toggleDarkMode, loadRandomTemplate } =
+  const { undo, redo, history, loadRandomTemplate } =
     useBrandStore();
 
   return (
@@ -303,12 +302,7 @@ export default function App() {
 
           <ToolbarDivider />
 
-          <ToolbarButton
-            icon={darkModePreview ? Sun : Moon}
-            label={darkModePreview ? "Light Mode" : "Dark Mode"}
-            onClick={toggleDarkMode}
-            active={darkModePreview}
-          />
+          <ThemeToggle />
 
           <ToolbarButton
             icon={Layers}
