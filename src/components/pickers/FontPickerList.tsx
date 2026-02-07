@@ -1,5 +1,5 @@
-import { memo, useCallback, useRef } from 'react';
-import { FixedSizeList as List } from 'react-window';
+import { memo, useCallback } from 'react';
+import { List, useListRef, type RowComponentProps } from 'react-window';
 import type { GoogleFontMeta } from '@/data/googleFontsMetadata';
 import { loadFont, isFontLoaded } from '@/services/googleFonts';
 
@@ -17,6 +17,56 @@ const ITEM_HEIGHT = 48;
 // Track which fonts have been loaded for preview
 const previewLoadedFonts = new Set<string>();
 
+// RowProps interface for react-window v2
+interface FontRowProps {
+  fonts: GoogleFontMeta[];
+  selectedFont: string;
+  recentFonts: string[];
+  onSelect: (family: string) => void;
+  handleHover: (family: string | null) => void;
+}
+
+// Row component for react-window v2
+function FontRow({
+  index,
+  style,
+  fonts,
+  selectedFont,
+  recentFonts,
+  onSelect,
+  handleHover,
+}: RowComponentProps<FontRowProps>) {
+  const font = fonts[index];
+  const isSelected = font.family === selectedFont;
+  const isRecent = recentFonts.includes(font.family);
+  const isLoaded = previewLoadedFonts.has(font.family) || isFontLoaded(font.family);
+
+  return (
+    <div
+      style={style}
+      className={`font-picker-row ${isSelected ? 'selected' : ''}`}
+      onClick={() => onSelect(font.family)}
+      onMouseEnter={() => handleHover(font.family)}
+      onMouseLeave={() => handleHover(null)}
+      role="option"
+      aria-selected={isSelected}
+    >
+      <span
+        className="font-picker-name"
+        style={{
+          fontFamily: isLoaded ? `"${font.family}", system-ui` : 'system-ui'
+        }}
+      >
+        {font.family}
+      </span>
+      <div className="font-picker-meta">
+        {isRecent && <span className="font-picker-badge recent">Recent</span>}
+        <span className="font-picker-category">{font.category}</span>
+      </div>
+    </div>
+  );
+}
+
 export const FontPickerList = memo(function FontPickerList({
   fonts,
   selectedFont,
@@ -25,7 +75,7 @@ export const FontPickerList = memo(function FontPickerList({
   onHover,
   height
 }: FontPickerListProps) {
-  const listRef = useRef<List>(null);
+  const listRef = useListRef(null);
 
   // Load font when hovering for preview
   const handleHover = useCallback((family: string | null) => {
@@ -39,49 +89,21 @@ export const FontPickerList = memo(function FontPickerList({
     onHover(family);
   }, [onHover]);
 
-  // Row renderer for virtualized list
-  const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const font = fonts[index];
-    const isSelected = font.family === selectedFont;
-    const isRecent = recentFonts.includes(font.family);
-    const isLoaded = previewLoadedFonts.has(font.family) || isFontLoaded(font.family);
-
-    return (
-      <div
-        style={style}
-        className={`font-picker-row ${isSelected ? 'selected' : ''}`}
-        onClick={() => onSelect(font.family)}
-        onMouseEnter={() => handleHover(font.family)}
-        onMouseLeave={() => handleHover(null)}
-        role="option"
-        aria-selected={isSelected}
-      >
-        <span
-          className="font-picker-name"
-          style={{
-            fontFamily: isLoaded ? `"${font.family}", system-ui` : 'system-ui'
-          }}
-        >
-          {font.family}
-        </span>
-        <div className="font-picker-meta">
-          {isRecent && <span className="font-picker-badge recent">Recent</span>}
-          <span className="font-picker-category">{font.category}</span>
-        </div>
-      </div>
-    );
-  }, [fonts, selectedFont, recentFonts, onSelect, handleHover]);
-
   return (
-    <List
-      ref={listRef}
-      height={height}
-      itemCount={fonts.length}
-      itemSize={ITEM_HEIGHT}
-      width="100%"
+    <List<FontRowProps>
+      listRef={listRef}
+      defaultHeight={height}
+      rowCount={fonts.length}
+      rowHeight={ITEM_HEIGHT}
       overscanCount={5}
-    >
-      {Row}
-    </List>
+      rowComponent={FontRow}
+      rowProps={{
+        fonts,
+        selectedFont,
+        recentFonts,
+        onSelect,
+        handleHover,
+      }}
+    />
   );
 });

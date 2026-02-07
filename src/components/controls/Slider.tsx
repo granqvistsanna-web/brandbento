@@ -26,7 +26,7 @@ export function Slider({
   formatValue = (v) => `${v}%`,
   className = '',
 }: SliderProps) {
-  const [isDragging, setIsDragging] = useState(false);
+  const [, setIsDragging] = useState(false);
   const pausedRef = useRef(false);
   const temporal = useTemporalStore();
 

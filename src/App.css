@@ -74,6 +74,9 @@ body {
 
 .app-header {
   padding: var(--space-6) var(--space-8);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .app-wordmark {
@@ -81,6 +84,40 @@ body {
   font-weight: var(--font-weight-medium);
   color: var(--gray-600);
   letter-spacing: -0.01em;
+}
+
+/* Undo/Redo Controls */
+.undo-redo-controls {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.undo-redo-btn {
+  padding: var(--space-2) var(--space-3);
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  color: var(--gray-600);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.undo-redo-btn:hover:not(:disabled) {
+  background: var(--gray-50);
+  border-color: var(--gray-300);
+}
+
+.undo-redo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.undo-redo-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--gray-400);
 }
 
 /* ============================================
@@ -1402,4 +1439,86 @@ body {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+}
+
+/* ============================================
+   Typography Tile With Panel Wrapper
+   ============================================ */
+
+.typography-tile-with-panel {
+  position: relative;
+  display: contents; /* Let children participate in grid directly */
+}
+
+.typography-tile-with-panel .tile-primary-type {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.typography-tile-with-panel .tile-secondary-type {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Edit panel container for typography tiles */
+.typography-tile-with-panel .edit-panel-container {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+/* ============================================
+   Font Edit Panel
+   ============================================ */
+
+.font-edit-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding: 4px 0;
+  overflow-y: auto;
+  max-height: calc(100% - 60px);
+}
+
+.font-edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.font-edit-section-title {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 4px;
+}
+
+/* Weight slider with availability dots */
+.weight-slider-container {
+  position: relative;
+}
+
+.weight-dots {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-top: 4px;
+}
+
+.weight-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gray-200);
+}
+
+.weight-dot.available {
+  background: var(--gray-500);
+}
+
+.weight-dot.current {
+  background: var(--gray-900);
 }

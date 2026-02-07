@@ -1,8 +1,10 @@
 import { useEffect, useCallback } from 'react';
-import { useCanvasStore } from '@/state/canvasState';
+import { useCanvasStore, useTemporalStore } from '@/state/canvasState';
 import { extractBrand, type ExtractionProgress } from '@/services/brandExtractor';
 import { URLInput } from '@/components/URLInput';
-import { LogoTile, FontTile, ColorTile, ImageTile } from '@/components/Tile';
+import { ColorTile, ImageTile } from '@/components/Tile';
+import { LogoTile } from '@/components/tiles/LogoTile';
+import { TypographyTileWithPanel } from '@/components/TypographyTileWithPanel';
 import { ExtractionOverlay } from '@/components/ExtractionOverlay';
 import { UIPreviewTile } from '@/components';
 import './App.css';
@@ -68,10 +70,41 @@ function App() {
     logo: extractionStage === 'fetching' || extractionStage === 'colors' || extractionStage === 'fonts' || extractionStage === 'images' || extractionStage === 'logo',
   };
 
+  // Temporal store for undo/redo
+  const temporal = useTemporalStore();
+  const pastLength = temporal.pastStates.length;
+  const futureLength = temporal.futureStates.length;
+
+  const handleUndo = useCallback(() => {
+    temporal.undo();
+  }, [temporal]);
+
+  const handleRedo = useCallback(() => {
+    temporal.redo();
+  }, [temporal]);
+
   return (
     <div className="app">
       <header className="app-header">
         <span className="app-wordmark">Brand Bento</span>
+        <div className="undo-redo-controls">
+          <button
+            className="undo-redo-btn"
+            onClick={handleUndo}
+            disabled={pastLength === 0}
+            aria-label={`Undo (${pastLength} available)`}
+          >
+            Undo ({pastLength})
+          </button>
+          <button
+            className="undo-redo-btn"
+            onClick={handleRedo}
+            disabled={futureLength === 0}
+            aria-label={`Redo (${futureLength} available)`}
+          >
+            Redo ({futureLength})
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
@@ -83,18 +116,11 @@ function App() {
 
         <div className="canvas">
           <div className="bento-grid">
-            <LogoTile
-              logo={assets.logo}
-              isLoading={isExtracting && tileLoading.logo}
-              isDefault={assets.logoSource === 'default'}
-            />
+            {/* Logo Tile - self-contained with edit panel */}
+            <LogoTile />
 
-            <FontTile
-              fontName={assets.primaryFont}
-              variant="primary"
-              isLoading={isExtracting && tileLoading.fonts}
-              isDefault={assets.fontsSource === 'default'}
-            />
+            {/* Primary Typography Tile with Panel */}
+            <TypographyTileWithPanel role="primary" />
 
             <ImageTile
               image={assets.heroImage}
@@ -109,12 +135,8 @@ function App() {
               isDefault={assets.colorsSource === 'default'}
             />
 
-            <FontTile
-              fontName={assets.secondaryFont}
-              variant="secondary"
-              isLoading={isExtracting && tileLoading.fonts}
-              isDefault={assets.fontsSource === 'default'}
-            />
+            {/* Secondary Typography Tile with Panel */}
+            <TypographyTileWithPanel role="secondary" />
 
             <UIPreviewTile
               isLoading={isExtracting && tileLoading.logo}
