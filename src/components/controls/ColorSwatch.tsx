@@ -5,7 +5,7 @@ interface ColorSwatchProps {
   color: string;
   role: keyof ColorPalette;
   isSelected?: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 const ROLE_LABELS: Record<keyof ColorPalette, string> = {

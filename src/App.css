@@ -1522,3 +1522,56 @@ body {
 .weight-dot.current {
   background: var(--gray-900);
 }
+
+/* ============================================
+   Color Tile - Palette Display & Editing
+   ============================================ */
+
+.color-tile-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.color-swatches {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.color-edit-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.color-picker-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+/* Color Picker - react-colorful overrides */
+.color-picker-container .react-colorful {
+  width: 100% !important;
+  height: 180px !important;
+}
+
+.color-picker-container .react-colorful__saturation {
+  border-radius: 6px 6px 0 0;
+}
+
+.color-picker-container .react-colorful__hue {
+  height: 14px;
+  border-radius: 0 0 6px 6px;
+}
+
+.color-picker-container .react-colorful__saturation-pointer,
+.color-picker-container .react-colorful__hue-pointer {
+  width: 18px;
+  height: 18px;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
