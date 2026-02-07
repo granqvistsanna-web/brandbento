@@ -38,11 +38,46 @@ export function loadStateFromLocalStorage(): CanvasState | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
-    return JSON.parse(stored) as CanvasState;
+
+    const parsed = JSON.parse(stored);
+
+    // Validate the parsed data has the expected shape
+    if (!isValidCanvasState(parsed)) {
+      console.warn('Invalid state data in localStorage, clearing corrupted data');
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(`${STORAGE_KEY}:timestamp`);
+      return null;
+    }
+
+    return parsed as CanvasState;
   } catch (error) {
     console.error('Failed to load from localStorage', error);
     return null;
   }
+}
+
+function isValidCanvasState(data: unknown): boolean {
+  // Check that it's an object
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
+
+  const obj = data as Record<string, unknown>;
+
+  // Check that required properties exist
+  if (!('version' in obj) || typeof obj.version !== 'number') {
+    return false;
+  }
+
+  if (!('assets' in obj) || typeof obj.assets !== 'object' || obj.assets === null) {
+    return false;
+  }
+
+  if (!('tileSettings' in obj) || typeof obj.tileSettings !== 'object' || obj.tileSettings === null) {
+    return false;
+  }
+
+  return true;
 }
 
 export function persistState(state: CanvasState): void {
@@ -54,19 +89,16 @@ export function loadState(): CanvasState {
   // URL takes precedence (for sharing)
   const urlState = loadStateFromURL();
   if (urlState) {
-    console.log('Loaded state from URL');
     return urlState;
   }
 
   // Fallback to localStorage
   const localState = loadStateFromLocalStorage();
   if (localState) {
-    console.log('Loaded state from localStorage');
     return localState;
   }
 
   // No state found, use defaults
-  console.log('No state found, using defaults');
   return createDefaultState();
 }
 

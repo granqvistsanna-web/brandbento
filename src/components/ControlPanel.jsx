@@ -1377,7 +1377,7 @@ const TileControls = ({ tile }) => {
 // ============================================
 
 const ControlPanel = () => {
-  const { focusedTileId, tiles, undo, redo, history } = useBrandStore();
+  const { focusedTileId, tiles, undo, redo, history, setFocusedTile } = useBrandStore();
   const focusedTile = tiles.find((t) => t.id === focusedTileId);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -1394,7 +1394,7 @@ const ControlPanel = () => {
         e.preventDefault();
         redo();
       } else if (e.key === "Escape" && focusedTileId) {
-        useBrandStore.getState().setFocusedTile(null);
+        setFocusedTile(null);
       } else if ((e.metaKey || e.ctrlKey) && e.key === "\\") {
         e.preventDefault();
         setIsCollapsed((prev) => !prev);
@@ -1403,7 +1403,7 @@ const ControlPanel = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, focusedTileId]);
+  }, [undo, redo, focusedTileId, setFocusedTile]);
 
   return (
     <motion.div

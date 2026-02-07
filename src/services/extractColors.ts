@@ -30,7 +30,8 @@ export async function extractColors(doc: Document): Promise<ExtractedColors> {
     return { colors: Array.from(colors).slice(0, 10), source: 'stylesheet' };
   }
 
-  throw new Error('Insufficient colors extracted');
+  // Return default colors instead of throwing, consistent with other extractors
+  return { colors: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'], source: 'stylesheet' };
 }
 
 function extractFromCSSVariables(doc: Document): string[] {

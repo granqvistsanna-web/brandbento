@@ -99,7 +99,7 @@ export const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
  */
 export const analyzeColors = (colors: string[]): ColorAnalysis[] => {
   return colors
-    .filter(hex => /^#[0-9A-Fa-f]{3,6}$/.test(hex)) // Only valid hex colors
+    .filter(hex => /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) // Only valid hex colors
     .map(hex => ({
       hex: hex.toUpperCase(),
       ...hexToHSL(hex),
