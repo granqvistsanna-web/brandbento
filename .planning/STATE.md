@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 ## Current Position
 
 Phase: 4 of 9 (Color & Imagery Tiles)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-02-07 - Completed 04-02-PLAN.md
+Last activity: 2026-02-07 - Completed 04-04-PLAN.md
 
-Progress: [██████████░] ~70% (21 of ~30 plans)
+Progress: [██████████░] ~73% (22 of ~30 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
-- Average duration: ~6.9 min
-- Total execution time: ~2h 31min
+- Total plans completed: 22
+- Average duration: ~6.7 min
+- Total execution time: ~2h 33min
 
 **By Phase:**
 
@@ -31,12 +31,12 @@ Progress: [██████████░] ~70% (21 of ~30 plans)
 | 01 | 4/4 ✓ | ~48 min | ~12 min |
 | 02 | 3/3 ✓ | ~19 min | ~6 min |
 | 03 | 6/6 ✓ | ~39 min | ~6.5 min |
-| 04 | 3/5 | ~10 min | ~3.3 min |
+| 04 | 4/5 | ~12 min | ~3 min |
 | 08 | 5/5 ✓ | ~17 min | ~3.4 min |
 
 **Recent Trend:**
-- Last 5 plans: 08-05, 04-01, 04-02, 04-03
-- Trend: Fast UI component completion (~3-4 min), color and imagery tiles complete
+- Last 5 plans: 04-01, 04-02, 04-03, 04-04
+- Trend: Fast UI component completion (~2-3 min), image treatments complete
 
 *Updated after each plan completion*
 
@@ -100,6 +100,9 @@ Recent decisions affecting current work:
 - 04-03: Images resized to max 1920px and converted to JPEG 85% for smaller data URI
 - 04-03: Gradient uses 40%/30% opacity on primary/accent for subtle appearance
 - 04-03: ImageUpload overlay always present, shown on hover
+- 04-04: DuotoneFilter uses CSS mix-blend-mode (darken + lighten) for GPU-accelerated duotone
+- 04-04: GrainFilter uses SVG feTurbulence with unique filter ID per instance
+- 04-04: TreatmentPresets uses committedRef for proper hover reversion
 
 ### Pending Todos
 
@@ -117,9 +120,9 @@ None - Phase 8 complete with all blockers resolved.
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 04-02-PLAN.md (Color tile with picker and presets)
+Stopped at: Completed 04-04-PLAN.md (Image treatments with duotone and grain)
 Resume file: None
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-07 after 04-02 completion*
+*Last updated: 2026-02-07 after 04-04 completion*

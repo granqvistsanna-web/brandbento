@@ -111,10 +111,10 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Dependencies + types + color utilities (contrast, conversion, palette generator)
-- [ ] 04-02-PLAN.md — Color tile with swatches, picker, presets, and role assignment
-- [ ] 04-03-PLAN.md — Imagery tile with cover image, gradient fallback, and upload
-- [ ] 04-04-PLAN.md — Image treatment presets (Duotone, B&W, Hi-contrast, Soft, Grain)
+- [x] 04-01-PLAN.md — Dependencies + types + color utilities (contrast, conversion, palette generator)
+- [x] 04-02-PLAN.md — Color tile with swatches, picker, presets, and role assignment
+- [x] 04-03-PLAN.md — Imagery tile with cover image, gradient fallback, and upload
+- [x] 04-04-PLAN.md — Image treatment presets (Duotone, B&W, Hi-contrast, Soft, Grain)
 - [ ] 04-05-PLAN.md — Integration checkpoint and verification
 
 ### Phase 5: System View
@@ -245,7 +245,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 1. Foundation & Extraction | 4/4 | Complete | 2026-02-07 |
 | 2. Canvas System | 3/3 | Complete | 2026-02-07 |
 | 3. Logo & Typography Tiles | 3/3 | Complete | 2026-02-07 |
-| 4. Color & Imagery Tiles | 0/5 | Planned | - |
+| 4. Color & Imagery Tiles | 4/5 | In progress | - |
 | 5. System View | 0/3 | Planned | - |
 | 6. Workflows | 0/5 | Planned | - |
 | 7. Polish | 0/TBD | Not started | - |
