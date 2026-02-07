@@ -13,8 +13,8 @@ Brand Bento delivers a client-side brand experimentation tool in 7 phases. Start
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Extraction** - CORS proxy, state management, brand extraction with fallbacks
-- [x] **Phase 2: Canvas System** - 3×3 bento grid layout with tile interaction patterns
-- [ ] **Phase 3: Logo & Typography Tiles** - First content tiles with editing capabilities
+- [x] **Phase 2: Canvas System** - 3x3 bento grid layout with tile interaction patterns
+- [x] **Phase 3: Logo & Typography Tiles** - First content tiles with editing capabilities
 - [ ] **Phase 4: Color & Imagery Tiles** - Visual customization with presets and live preview
 - [ ] **Phase 5: System View** - UI preview tile showing everything working together
 - [ ] **Phase 6: Workflows** - Export, sharing, and toolbar actions
@@ -46,14 +46,14 @@ Plans:
 - [x] 01-04-PLAN.md — URL input UI + extraction integration
 
 ### Phase 2: Canvas System
-**Goal**: Users see a structured 3×3 bento grid with spanning tiles, can hover and click to interact, and experience smooth visual transitions
+**Goal**: Users see a structured 3x3 bento grid with spanning tiles, can hover and click to interact, and experience smooth visual transitions
 
 **Depends on**: Phase 1
 
 **Requirements**: CANV-01, CANV-02, CANV-03, CANV-04, CANV-05, CANV-06, CANV-07, CANV-08, CANV-09, CANV-10, CANV-11, CANV-12, TILE-01, TILE-02, TILE-03, TILE-04, TILE-05, TILE-06, TILE-07
 
 **Success Criteria** (what must be TRUE):
-  1. User sees a centered 3×3 grid with logo (1×1), primary type (1×1), imagery (1×2 spanning rows 1-2), colors (1×1), secondary type (1×1), and UI preview (3×1 full width) in correct positions
+  1. User sees a centered 3x3 grid with logo (1x1), primary type (1x1), imagery (1x2 spanning rows 1-2), colors (1x1), secondary type (1x1), and UI preview (3x1 full width) in correct positions
   2. Grid compresses to 2 columns on tablet and stacks to single column on mobile without breaking layout
   3. Hovering any tile shows a frosted glass overlay with label and edit icon
   4. Clicking a tile opens its edit panel inline while dimming other tiles to 60% opacity
@@ -82,15 +82,12 @@ Plans:
   6. User can adjust weight, size scale, and line height via sliders with live preview and single undo step per drag
   7. Fonts load on-demand from Google Fonts API, with system fallback shown on load failure
 
-**Plans**: 6 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Dependencies + undo/redo middleware + state extensions + luminance service
-- [ ] 03-02-PLAN.md — Logo tile with edit panel (upload, variants, scale, background)
-- [ ] 03-03-PLAN.md — Google Fonts service + font picker with search and filters
-- [ ] 03-04-PLAN.md — Primary and secondary typography tiles display
-- [ ] 03-05-PLAN.md — Font edit panel with sliders (weight, size, line height)
-- [ ] 03-06-PLAN.md — Integration checkpoint and verification
+- [x] 03-01-PLAN.md — Dependencies + undo/redo middleware + state extensions + luminance service
+- [x] 03-02-PLAN.md — Logo tile with edit panel (upload, variants, scale, background)
+- [x] 03-03-PLAN.md — Google Fonts service + font picker with search and filters
 
 ### Phase 4: Color & Imagery Tiles
 **Goal**: Users can customize colors with WCAG contrast checking and apply imagery treatments with instant preview
@@ -134,10 +131,12 @@ Plans:
   6. Only one edit panel can be open at a time, closing previous panel automatically
   7. Hovering UI preview shows tooltip "This preview updates automatically based on your brand choices" (not directly editable)
 
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md — Foundation hooks and GPU-accelerated transition CSS
+- [ ] 05-02-PLAN.md — UI preview mock component and reactive tile
+- [ ] 05-03-PLAN.md — Hover tooltip and LIVE-06 verification
 
 ### Phase 6: Workflows
 **Goal**: Users can undo/redo changes, export canvas as PNG, share via URL, and reset to extracted state
@@ -148,7 +147,7 @@ Plans:
 
 **Success Criteria** (what must be TRUE):
   1. Toolbar appears floating at bottom center, auto-hides after 3 seconds of inactivity, reappears on mouse move
-  2. Toolbar shows Undo, Redo, Export PNG, Share Link, and Reset with working keyboard shortcuts (⌘Z / ⌘⇧Z)
+  2. Toolbar shows Undo, Redo, Export PNG, Share Link, and Reset with working keyboard shortcuts (Cmd+Z / Cmd+Shift+Z)
   3. Each atomic change (font swap, color change, image upload) creates one undo step with 30-entry undo stack depth
   4. Reset returns all tiles to extracted state with confirmation dialog, and reset itself is undoable
   5. Export PNG captures bento grid as clean image without toolbar, background, or edit panels, handling high-DPI screens with devicePixelRatio scaling
@@ -182,18 +181,18 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Extraction | 4/4 | Complete | 2026-02-07 |
 | 2. Canvas System | 3/3 | Complete | 2026-02-07 |
-| 3. Logo & Typography Tiles | 0/6 | Planned | - |
+| 3. Logo & Typography Tiles | 3/3 | Complete | 2026-02-07 |
 | 4. Color & Imagery Tiles | 0/5 | Planned | - |
-| 5. System View | 0/TBD | Not started | - |
+| 5. System View | 0/3 | Planned | - |
 | 6. Workflows | 0/TBD | Not started | - |
 | 7. Polish | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 4 planning*
+*Last updated: 2026-02-07 after Phase 5 planning*
