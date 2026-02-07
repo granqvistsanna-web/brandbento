@@ -3,3 +3,4 @@ export { Tile, ColorTile, FontTile, LogoTile, ImageTile } from './Tile';
 export { ExtractionOverlay } from './ExtractionOverlay';
 export { UIPreviewTile } from './tiles/UIPreviewTile';
 export { EditPanel } from './EditPanel';
+export { TypographyTileWithPanel } from './TypographyTileWithPanel';
