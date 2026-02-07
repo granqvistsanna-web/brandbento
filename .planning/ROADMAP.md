@@ -226,10 +226,14 @@ Plans:
   9. Debug mode available showing grid cell boundaries and tile IDs
   10. Works with 6-14 tiles within the defined min/max range
 
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
 
 Plans:
-- [ ] 09-01: TBD (run /gsd:plan-phase 9 to break down)
+- [ ] 09-01-PLAN.md — Layout infrastructure: types, grid presets, layout store, viewport/breakpoint hooks
+- [ ] 09-02-PLAN.md — Responsive BentoGrid component with 100dvh viewport fitting
+- [ ] 09-03-PLAN.md — BentoTile wrapper with responsive spans per breakpoint
+- [ ] 09-04-PLAN.md — Density modes, debug overlay, and layout controls
+- [ ] 09-05-PLAN.md — Verification checkpoint
 
 ## Progress
 
@@ -246,8 +250,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 6. Workflows | 0/5 | Planned | - |
 | 7. Polish | 0/TBD | Not started | - |
 | 8. Dark/Light Mode | 5/5 | Complete | 2026-02-07 |
-| 9. Responsive Bento Layout | 0/TBD | Not started | - |
+| 9. Responsive Bento Layout | 0/5 | Planned | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 6 planning*
+*Last updated: 2026-02-07 after Phase 9 planning*
