@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useBrandStore, getContrastRatio } from "../store/useBrandStore";
 import { motion, AnimatePresence } from "motion/react";
 import { twMerge } from "tailwind-merge";
+import { BentoGrid } from './BentoGrid';
 
 // Smart text color based on background
 const getSmartTextColor = (bgColor, textColor) => {
@@ -326,28 +327,26 @@ const BentoCanvas = () => {
 
   return (
     <div
-      className="flex-1 overflow-auto transition-colors duration-300"
+      className="flex-1 transition-colors duration-300"
       style={{ backgroundColor: darkModePreview ? "#050505" : "#FAFAFA" }}
       onClick={() => setFocusedTile(null)}
     >
-      <div className="min-h-full flex items-center justify-center p-12">
-        <div className="w-full max-w-[1600px]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={darkModePreview ? "dark" : "light"}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="grid grid-cols-4 auto-rows-[280px] gap-4"
-            >
-              {tiles.map((tile, index) => (
-                <BrandTile key={tile.id} tile={tile} index={index} />
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={darkModePreview ? "dark" : "light"}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="h-full"
+        >
+          <BentoGrid>
+            {tiles.map((tile, index) => (
+              <BrandTile key={tile.id} tile={tile} index={index} />
+            ))}
+          </BentoGrid>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };
