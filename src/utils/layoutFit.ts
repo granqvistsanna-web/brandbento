@@ -108,8 +108,7 @@ function getTileArea(tile: AdjustedTile): number {
  */
 export function fitTilesToGrid(
   tiles: TileData[],
-  gridConfig: GridConfig,
-  _breakpoint: BreakpointName
+  gridConfig: GridConfig
 ): TileFitResult {
   const { columns, rows } = gridConfig;
   const totalCells = columns * rows;

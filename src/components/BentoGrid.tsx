@@ -58,7 +58,7 @@ export const BentoGrid = (props: BentoGridProps) => {
   if ('tiles' in props && props.tiles && props.renderTile) {
     // Tile-based rendering with fitting logic
     const gridConfig = { columns, rows };
-    const fitResult = fitTilesToGrid(props.tiles, gridConfig, breakpoint);
+    const fitResult = fitTilesToGrid(props.tiles, gridConfig);
 
     hiddenCount = fitResult.hiddenTiles.length;
 

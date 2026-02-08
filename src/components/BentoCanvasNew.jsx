@@ -3,13 +3,44 @@ import { BentoGridNew } from "./BentoGridNew";
 import { BentoTileEmpty } from "./BentoTileEmpty";
 import { useBrandStore } from "../store/useBrandStore";
 
+// Tile Imports
+import { IdentityTile } from "./tiles/IdentityTile";
+import { EditorialTile } from "./tiles/EditorialTile";
+import { SocialPostTile } from "./tiles/SocialPostTile";
+import { InterfaceTile } from "./tiles/InterfaceTile";
+import { ColorTile } from "./tiles/ColorTile"; // Keeping for 'colors' slot momentarily or replacing?
+
 /**
  * Canvas with responsive bento grid – filled rectangle, no holes.
  * Uses theme-aware background (var(--canvas-bg)) for light/dark mode.
- * Starts with empty tiles; content can be wired in later.
  */
 const BentoCanvasNew = () => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
+
+  const renderTile = (id) => {
+    switch (id) {
+      case 'hero':
+      case 'a': // Balanced layout
+        return <IdentityTile />;
+      case 'editorial':
+      case 'b': // Balanced layout
+        return <EditorialTile />;
+      case 'image':
+      case 'd': // Balanced Layout
+        return <SocialPostTile />;
+      case 'buttons':
+      case 'c':
+        return <InterfaceTile />;
+      // Fallback for others
+      case 'logo':
+        // Small logo slot
+        return <div className="w-full h-full bg-white flex items-center justify-center font-bold">Logo</div>;
+      case 'colors':
+        return <ColorTile />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
@@ -18,15 +49,25 @@ const BentoCanvasNew = () => {
       onClick={() => setFocusedTile(null)}
     >
       <BentoGridNew
-        renderSlot={(placement) => (
-          <BentoTileEmpty
-            slotId={placement.id}
-            onClick={(e) => {
+        renderSlot={(placement) => {
+          const content = renderTile(placement.id);
+          return content ? (
+            <div className="w-full h-full" onClick={(e) => {
               e.stopPropagation();
               setFocusedTile(placement.id);
-            }}
-          />
-        )}
+            }}>
+              {content}
+            </div>
+          ) : (
+            <BentoTileEmpty
+              slotId={placement.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                setFocusedTile(placement.id);
+              }}
+            />
+          );
+        }}
       />
     </div>
   );

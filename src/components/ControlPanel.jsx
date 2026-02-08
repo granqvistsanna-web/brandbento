@@ -126,14 +126,16 @@ const Section = ({
 
   return (
     <div
+      className="group"
       style={{
-        borderBottom: "1px solid var(--sidebar-border-subtle)",
+        borderBottom: isOpen ? "1px solid var(--sidebar-border-subtle)" : "none",
+        borderTop: "1px solid transparent",
       }}
     >
       {/* Section Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full collapse-header"
+        className="w-full collapse-header transition-colors hover:bg-[var(--sidebar-bg-hover)]"
       >
         <motion.div
           animate={{ rotate: isOpen ? 90 : 0 }}
@@ -155,7 +157,7 @@ const Section = ({
         )}
 
         <span
-          className="flex-1 text-left text-11 font-medium"
+          className="flex-1 text-left text-11 font-medium select-none"
           style={{ color: "var(--sidebar-text)" }}
         >
           {title}
@@ -812,21 +814,25 @@ const PaletteBrowser = () => {
 const PresetCard = ({ name, brand, isActive, onClick }) => (
   <motion.button
     onClick={onClick}
-    className="w-full p-2 rounded-md flex items-center gap-2 transition-fast"
+    className="w-full p-2.5 rounded-lg flex items-center gap-2.5 transition-all group relative overflow-hidden"
     style={{
       background: isActive ? "var(--accent-muted)" : "var(--sidebar-bg)",
       border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
     }}
-    whileHover={{ scale: 1.01 }}
-    whileTap={{ scale: 0.99 }}
+    whileHover={{
+      borderColor: isActive ? "var(--accent)" : "var(--sidebar-border-hover)",
+      y: -1,
+      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+    }}
+    whileTap={{ scale: 0.98, y: 0 }}
   >
     {/* Color preview */}
-    <div className="flex -space-x-1">
+    <div className="flex -space-x-1.5 shrink-0">
       {[brand.colors.bg, brand.colors.text, brand.colors.primary].map(
         (color, i) => (
           <div
             key={i}
-            className="w-4 h-4 rounded-full"
+            className="w-5 h-5 rounded-full shadow-sm"
             style={{
               background: color,
               border: "2px solid var(--sidebar-bg-elevated)",
@@ -836,10 +842,14 @@ const PresetCard = ({ name, brand, isActive, onClick }) => (
         )
       )}
     </div>
-    <span className="text-11 flex-1 text-left" style={{ color: "var(--sidebar-text)" }}>
+    <span className="text-11 font-medium flex-1 text-left truncate" style={{ color: "var(--sidebar-text)" }}>
       {name}
     </span>
-    {isActive && <Check size={12} style={{ color: "var(--accent)" }} />}
+    {isActive && (
+      <div className="w-4 h-4 rounded-full flex items-center justify-center bg-[var(--accent)] text-white shadow-sm">
+        <Check size={10} strokeWidth={3} />
+      </div>
+    )}
   </motion.button>
 );
 
@@ -909,7 +919,7 @@ const GlobalControls = () => {
         defaultOpen={false}
         badge={<Badge variant="accent">{presets.length}</Badge>}
       >
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-1 gap-2">
           {presets.map((preset) => (
             <PresetCard
               key={preset.key}
@@ -1466,6 +1476,22 @@ const ControlPanel = () => {
   const focusedTile = tiles.find((t) => t.id === focusedTileId);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1498,7 +1524,7 @@ const ControlPanel = () => {
         borderRight: "1px solid var(--sidebar-border)",
       }}
       initial={false}
-      animate={{ width: isCollapsed ? 48 : 280 }}
+      animate={{ width: isCollapsed ? 48 : 300 }}
       transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
     >
       {/* Collapse toggle */}

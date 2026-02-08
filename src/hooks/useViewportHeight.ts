@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 
 export const useViewportHeight = (): string => {
-  const [vh, setVh] = useState('100vh');
+  // Initialize state based on support check to avoid effect update
+  const [vh] = useState(() => {
+    if (typeof window !== 'undefined' && CSS.supports('height', '100dvh')) {
+      return '100dvh';
+    }
+    return '100vh';
+  });
 
   useEffect(() => {
     // Check if dvh is supported
     const supportsDvh = CSS.supports('height', '100dvh');
 
-    if (supportsDvh) {
-      setVh('100dvh');
-    } else {
+    if (!supportsDvh) {
       // Fallback: set CSS custom property for older browsers
       const updateVh = () => {
         const vh = window.innerHeight * 0.01;

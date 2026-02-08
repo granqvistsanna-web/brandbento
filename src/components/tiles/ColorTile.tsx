@@ -1,139 +1,70 @@
+import { useBrandStore } from '@/store/useBrandStore';
+import { motion } from 'motion/react';
+import { Copy } from 'lucide-react';
 import { useState } from 'react';
-import { useCanvasStore } from '@/state/canvasState';
-import { ColorSwatch } from '@/components/controls/ColorSwatch';
-import { ContrastBadge } from '@/components/controls/ContrastBadge';
-import { ColorPicker } from '@/components/pickers/ColorPicker';
-import { PalettePresets } from '@/components/pickers/PalettePresets';
-import { EditPanel } from '@/components/EditPanel';
-import type { ColorPalette } from '@/types/brand';
-
-const ROLE_ORDER: (keyof ColorPalette)[] = ['primary', 'accent', 'background', 'text'];
 
 export function ColorTile() {
-  const palette = useCanvasStore(state => state.assets.palette);
-  const colors = useCanvasStore(state => state.assets.colors);
-  const colorsSource = useCanvasStore(state => state.assets.colorsSource);
-  const editingTileId = useCanvasStore(state => state.editingTileId);
-  const setEditingTile = useCanvasStore(state => state.setEditingTile);
-  const extractionStage = useCanvasStore(state => state.extractionStage);
+  const brand = useBrandStore((state) => state.brand);
+  const colors = brand.colors;
 
-  const [selectedRole, setSelectedRole] = useState<keyof ColorPalette | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const isEditing = editingTileId === 'colors';
-  const isDimmed = editingTileId !== null && !isEditing;
-  const isLoading = extractionStage === 'fetching' || extractionStage === 'colors';
-  const isDefault = colorsSource === 'default';
+  const displayColors = [
+    { name: 'Primary', value: colors.primary, textColor: '#FFFFFF' },
+    { name: 'Accent', value: colors.accent, textColor: '#000000' },
+    { name: 'Surface', value: colors.surface, textColor: '#000000' },
+    { name: 'Background', value: colors.bg, textColor: '#000000', border: true },
+  ];
 
-  const handleClick = () => {
-    setEditingTile(isEditing ? null : 'colors');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setEditingTile(isEditing ? null : 'colors');
-    }
-    if (e.key === 'Escape' && isEditing) {
-      e.preventDefault();
-      setEditingTile(null);
-    }
-  };
-
-  const handleSwatchClick = (role: keyof ColorPalette) => {
-    setSelectedRole(role === selectedRole ? null : role);
-  };
-
-  const handleClosePicker = () => {
-    setSelectedRole(null);
-  };
-
-  const handleRoleChange = (newRole: keyof ColorPalette) => {
-    setSelectedRole(newRole);
+  const handleCopy = (color: string) => {
+    navigator.clipboard.writeText(color);
+    setCopied(color);
+    setTimeout(() => setCopied(null), 1500);
   };
 
   return (
-    <div
-      className={`tile tile-colors ${isLoading ? 'tile-loading' : ''} ${
-        isDimmed ? 'tile-dimmed' : ''
-      } ${isEditing ? 'tile-editing' : ''}`}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={isDimmed ? -1 : 0}
-      role="button"
-      aria-label={`Colors tile - ${
-        isEditing ? 'press Enter or Escape to close' : 'press Enter to edit'
-      }`}
-      aria-pressed={isEditing}
-    >
-      <div className="tile-header">
-        <span className="tile-label">Colors</span>
-        <ContrastBadge palette={palette} />
+    <div className="w-full h-full p-4 bg-white flex flex-col gap-2 overflow-hidden">
+      <div className="flex justify-between items-center mb-1">
+        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Palette</h3>
       </div>
 
-      <div className="tile-content color-tile-content">
-        {/* Color swatches stacked by role */}
-        <div className="color-swatches">
-          {ROLE_ORDER.map((role) => (
-            <ColorSwatch
-              key={role}
-              color={palette[role]}
-              role={role}
-              isSelected={selectedRole === role}
-              onClick={(e) => {
-                if (isEditing) {
-                  e.stopPropagation();
-                  handleSwatchClick(role);
-                }
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Frosted glass overlay - only show on hover when not editing */}
-      {!isEditing && !isLoading && (
-        <div className="tile-overlay">
-          <span className="tile-overlay-label">Colors</span>
-          <span className="tile-overlay-icon">Edit</span>
-        </div>
-      )}
-
-      {/* Default indicator */}
-      {isDefault && !isEditing && (
-        <span className="tile-status absolute top-2 right-2">default</span>
-      )}
-
-      {/* Edit panel - inline when editing */}
-      {isEditing && (
-        <EditPanel title="Colors" onClose={() => setEditingTile(null)}>
-          <div className="color-edit-panel" onClick={(e) => e.stopPropagation()}>
-            {/* Color picker (shown when swatch selected) */}
-            {selectedRole && (
-              <div className="color-picker-wrapper mb-4">
-                <ColorPicker
-                  colorRole={selectedRole}
-                  onClose={handleClosePicker}
-                  onRoleChange={handleRoleChange}
-                />
-              </div>
-            )}
-
-            {!selectedRole && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-                Click a color swatch above to edit it
-              </p>
-            )}
-
-            {/* Palette presets */}
-            <div className="pt-4 border-t border-neutral-100 dark:border-neutral-700">
-              <span className="text-xs text-neutral-400 dark:text-neutral-500 mb-2 block">
-                Presets
+      <div className="grid grid-cols-2 gap-2 flex-1">
+        {displayColors.map((color) => (
+          <motion.button
+            key={color.name}
+            className={`relative rounded-lg p-3 flex flex-col justify-between text-left group transition-all ${color.border ? 'border border-gray-100' : ''
+              }`}
+            style={{ backgroundColor: color.value }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleCopy(color.value)}
+          >
+            <span
+              className="text-[10px] font-medium opacity-60 uppercase"
+              style={{ color: color.textColor }}
+            >
+              {color.name}
+            </span>
+            <div className="flex justify-between items-end">
+              <span
+                className="text-xs font-semibold"
+                style={{ color: color.textColor }}
+              >
+                {color.value}
               </span>
-              <PalettePresets baseColors={colors} />
+              {copied === color.value ? (
+                <span className="text-[10px]" style={{ color: color.textColor }}>Copied!</span>
+              ) : (
+                <Copy
+                  size={12}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: color.textColor }}
+                />
+              )}
             </div>
-          </div>
-        </EditPanel>
-      )}
+          </motion.button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -19,7 +19,8 @@ export type TileType =
   | 'utility'
   | 'image'
   | 'ui-preview'
-  | 'fullImage';
+  | 'fullImage'
+  | 'landscape';
 
 export interface TileSpan {
   colSpan: number;
@@ -52,7 +53,7 @@ export interface LayoutPreset {
     cozy: number;
     dense: number;
   };
-  tileSpans: Record<TileType, BreakpointSpans>;
+  tileSpans: Partial<Record<TileType, BreakpointSpans>>;
 }
 
 export interface LayoutState {

@@ -30,6 +30,11 @@ const DEFAULT_BRAND = {
     padding: 16,
     size: 24,
   },
+  imagery: {
+    url: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000&auto=format&fit=crop",
+    style: "default", // default, grayscale, tint
+    overlay: 0,
+  },
 };
 
 // Brand Presets
@@ -933,181 +938,181 @@ export const useBrandStore = create(
         future: [],
       },
 
-  setFocusedTile: (id) => set({ focusedTileId: id }),
+      setFocusedTile: (id) => set({ focusedTileId: id }),
 
-  toggleDarkMode: () =>
-    set((state) => ({ darkModePreview: !state.darkModePreview })),
+      toggleDarkMode: () =>
+        set((state) => ({ darkModePreview: !state.darkModePreview })),
 
-  setFontPreview: (font, target) =>
-    set({ fontPreview: font ? { font, target } : null }),
+      setFontPreview: (font, target) =>
+        set({ fontPreview: font ? { font, target } : null }),
 
-  setTheme: (theme) => set({ theme }),
+      setTheme: (theme) => set({ theme }),
 
-  setResolvedTheme: (resolved) => set({ resolvedTheme: resolved }),
+      setResolvedTheme: (resolved) => set({ resolvedTheme: resolved }),
 
-  loadRandomTemplate: () => {
-    const randomTemplate =
-      STARTER_TEMPLATES[Math.floor(Math.random() * STARTER_TEMPLATES.length)];
-    set({
-      brand: randomTemplate.brand,
-      tiles: randomTemplate.tiles,
-      history: {
-        past: [],
-        future: [],
+      loadRandomTemplate: () => {
+        const randomTemplate =
+          STARTER_TEMPLATES[Math.floor(Math.random() * STARTER_TEMPLATES.length)];
+        set({
+          brand: randomTemplate.brand,
+          tiles: randomTemplate.tiles,
+          history: {
+            past: [],
+            future: [],
+          },
+        });
       },
-    });
-  },
 
-  loadPreset: (presetName) => {
-    const { brand, tiles, history } = get();
-    const preset = BRAND_PRESETS[presetName];
-    if (!preset) return;
+      loadPreset: (presetName) => {
+        const { brand, tiles, history } = get();
+        const preset = BRAND_PRESETS[presetName];
+        if (!preset) return;
 
-    set({
-      brand: preset,
-      history: {
-        past: [...history.past, { brand, tiles }],
-        future: [],
+        set({
+          brand: preset,
+          history: {
+            past: [...history.past, { brand, tiles }],
+            future: [],
+          },
+        });
       },
-    });
-  },
 
-  applyPalette: (paletteId) => {
-    const { brand, tiles, history } = get();
-    const palette = getPaletteById(paletteId);
-    if (!palette) return;
+      applyPalette: (paletteId) => {
+        const { brand, tiles, history } = get();
+        const palette = getPaletteById(paletteId);
+        if (!palette) return;
 
-    const colorMapping = mapPaletteToBrand(palette.colors);
+        const colorMapping = mapPaletteToBrand(palette.colors);
 
-    set({
-      brand: {
-        ...brand,
-        colors: colorMapping,
+        set({
+          brand: {
+            ...brand,
+            colors: colorMapping,
+          },
+          history: {
+            past: [...history.past, { brand, tiles }],
+            future: [],
+          },
+        });
       },
-      history: {
-        past: [...history.past, { brand, tiles }],
-        future: [],
+
+      swapTileType: (tileId, newType) => {
+        const { brand, tiles, history } = get();
+        const tile = tiles.find((t) => t.id === tileId);
+        if (!tile) return;
+
+        // Default content based on type
+        const defaultContent = {
+          hero: {
+            headline: "New Hero",
+            subcopy: "Hero subcopy",
+            cta: "Click here",
+          },
+          editorial: { headline: "New Editorial", body: "Editorial body text" },
+          product: {
+            label: "Product",
+            price: "$99",
+            image:
+              "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=500",
+          },
+          "ui-preview": {
+            headerTitle: "UI",
+            buttonLabel: "Submit",
+            inputPlaceholder: "Search...",
+          },
+          image: {
+            image:
+              "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000",
+            overlayText: "Image",
+          },
+          utility: { headline: "Features", items: ["Item 1", "Item 2", "Item 3"] },
+          logo: { label: "Brand" },
+        };
+
+        const newTiles = tiles.map((t) =>
+          t.id === tileId
+            ? { ...t, type: newType, content: defaultContent[newType] || {} }
+            : t,
+        );
+
+        set({
+          tiles: newTiles,
+          history: {
+            past: [...history.past, { brand, tiles }],
+            future: [],
+          },
+        });
       },
-    });
-  },
 
-  swapTileType: (tileId, newType) => {
-    const { brand, tiles, history } = get();
-    const tile = tiles.find((t) => t.id === tileId);
-    if (!tile) return;
+      // Actions with undo
+      updateBrand: (newBrand, isCommit = true) => {
+        const { brand, history } = get();
 
-    // Default content based on type
-    const defaultContent = {
-      hero: {
-        headline: "New Hero",
-        subcopy: "Hero subcopy",
-        cta: "Click here",
+        if (isCommit) {
+          set({
+            brand: { ...brand, ...newBrand },
+            history: {
+              past: [...history.past, { brand, tiles: get().tiles }],
+              future: [],
+            },
+          });
+        } else {
+          set({ brand: { ...brand, ...newBrand } });
+        }
       },
-      editorial: { headline: "New Editorial", body: "Editorial body text" },
-      product: {
-        label: "Product",
-        price: "$99",
-        image:
-          "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=500",
+
+      updateTile: (tileId, newContent, isCommit = true) => {
+        const { brand, tiles, history } = get();
+        const newTiles = tiles.map((t) =>
+          t.id === tileId ? { ...t, content: { ...t.content, ...newContent } } : t,
+        );
+
+        if (isCommit) {
+          set({
+            tiles: newTiles,
+            history: {
+              past: [...history.past, { brand, tiles }],
+              future: [],
+            },
+          });
+        } else {
+          set({ tiles: newTiles });
+        }
       },
-      "ui-preview": {
-        headerTitle: "UI",
-        buttonLabel: "Submit",
-        inputPlaceholder: "Search...",
+
+      undo: () => {
+        const { history, brand, tiles } = get();
+        if (history.past.length === 0) return;
+
+        const previous = history.past[history.past.length - 1];
+        const newPast = history.past.slice(0, history.past.length - 1);
+
+        set({
+          brand: previous.brand,
+          tiles: previous.tiles,
+          history: {
+            past: newPast,
+            future: [{ brand, tiles }, ...history.future],
+          },
+        });
       },
-      image: {
-        image:
-          "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000",
-        overlayText: "Image",
+
+      redo: () => {
+        const { history, brand, tiles } = get();
+        if (history.future.length === 0) return;
+
+        const next = history.future[0];
+        const newFuture = history.future.slice(1);
+
+        set({
+          brand: next.brand,
+          tiles: next.tiles,
+          history: {
+            past: [...history.past, { brand, tiles }],
+            future: newFuture,
+          },
+        });
       },
-      utility: { headline: "Features", items: ["Item 1", "Item 2", "Item 3"] },
-      logo: { label: "Brand" },
-    };
-
-    const newTiles = tiles.map((t) =>
-      t.id === tileId
-        ? { ...t, type: newType, content: defaultContent[newType] || {} }
-        : t,
-    );
-
-    set({
-      tiles: newTiles,
-      history: {
-        past: [...history.past, { brand, tiles }],
-        future: [],
-      },
-    });
-  },
-
-  // Actions with undo
-  updateBrand: (newBrand, isCommit = true) => {
-    const { brand, history } = get();
-
-    if (isCommit) {
-      set({
-        brand: { ...brand, ...newBrand },
-        history: {
-          past: [...history.past, { brand, tiles: get().tiles }],
-          future: [],
-        },
-      });
-    } else {
-      set({ brand: { ...brand, ...newBrand } });
-    }
-  },
-
-  updateTile: (tileId, newContent, isCommit = true) => {
-    const { brand, tiles, history } = get();
-    const newTiles = tiles.map((t) =>
-      t.id === tileId ? { ...t, content: { ...t.content, ...newContent } } : t,
-    );
-
-    if (isCommit) {
-      set({
-        tiles: newTiles,
-        history: {
-          past: [...history.past, { brand, tiles }],
-          future: [],
-        },
-      });
-    } else {
-      set({ tiles: newTiles });
-    }
-  },
-
-  undo: () => {
-    const { history, brand, tiles } = get();
-    if (history.past.length === 0) return;
-
-    const previous = history.past[history.past.length - 1];
-    const newPast = history.past.slice(0, history.past.length - 1);
-
-    set({
-      brand: previous.brand,
-      tiles: previous.tiles,
-      history: {
-        past: newPast,
-        future: [{ brand, tiles }, ...history.future],
-      },
-    });
-  },
-
-  redo: () => {
-    const { history, brand, tiles } = get();
-    if (history.future.length === 0) return;
-
-    const next = history.future[0];
-    const newFuture = history.future.slice(1);
-
-    set({
-      brand: next.brand,
-      tiles: next.tiles,
-      history: {
-        past: [...history.past, { brand, tiles }],
-        future: newFuture,
-      },
-    });
-  },
     }),
     {
       name: 'brand-store',
