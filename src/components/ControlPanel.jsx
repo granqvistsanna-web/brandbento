@@ -863,11 +863,17 @@ const LayoutPreview = ({ preset, isActive }) => {
   if (!config) return null;
 
   const { columns, rows, placements } = config;
-  const cellSize = 12;
+
+  // Fixed display size for all previews
+  const displaySize = 44;
+  const padding = 3;
   const gap = 2;
-  const padding = 2;
-  const width = columns * cellSize + (columns - 1) * gap + padding * 2;
-  const height = rows * cellSize + (rows - 1) * gap + padding * 2;
+
+  // Calculate cell size to fit within fixed dimensions
+  const availableWidth = displaySize - padding * 2;
+  const availableHeight = displaySize - padding * 2;
+  const cellWidth = (availableWidth - (columns - 1) * gap) / columns;
+  const cellHeight = (availableHeight - (rows - 1) * gap) / rows;
 
   // Find the hero/largest tile for visual emphasis
   const heroId = placements.reduce((largest, p) => {
@@ -878,9 +884,9 @@ const LayoutPreview = ({ preset, isActive }) => {
 
   return (
     <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      width={displaySize}
+      height={displaySize}
+      viewBox={`0 0 ${displaySize} ${displaySize}`}
       className="transition-transform duration-150"
       style={{ filter: isActive ? 'none' : 'saturate(0)' }}
     >
@@ -888,17 +894,17 @@ const LayoutPreview = ({ preset, isActive }) => {
       <rect
         x={0}
         y={0}
-        width={width}
-        height={height}
-        rx={3}
+        width={displaySize}
+        height={displaySize}
+        rx={4}
         fill={isActive ? 'var(--accent-muted)' : 'var(--sidebar-bg-active)'}
-        opacity={0.5}
+        opacity={0.4}
       />
       {placements.map((p) => {
-        const x = padding + (p.colStart - 1) * (cellSize + gap);
-        const y = padding + (p.rowStart - 1) * (cellSize + gap);
-        const w = p.colSpan * cellSize + (p.colSpan - 1) * gap;
-        const h = p.rowSpan * cellSize + (p.rowSpan - 1) * gap;
+        const x = padding + (p.colStart - 1) * (cellWidth + gap);
+        const y = padding + (p.rowStart - 1) * (cellHeight + gap);
+        const w = p.colSpan * cellWidth + (p.colSpan - 1) * gap;
+        const h = p.rowSpan * cellHeight + (p.rowSpan - 1) * gap;
         const isHero = p.id === heroId;
 
         return (
@@ -909,11 +915,11 @@ const LayoutPreview = ({ preset, isActive }) => {
               y={y}
               width={w}
               height={h}
-              rx={2.5}
+              rx={2}
               fill={isActive
-                ? (isHero ? 'var(--accent)' : 'var(--accent)')
+                ? 'var(--accent)'
                 : (isHero ? 'var(--sidebar-text-secondary)' : 'var(--sidebar-text-muted)')}
-              opacity={isHero ? (isActive ? 0.9 : 0.5) : (isActive ? 0.5 : 0.3)}
+              opacity={isHero ? (isActive ? 0.85 : 0.45) : (isActive ? 0.45 : 0.25)}
             />
             {/* Subtle inner highlight for depth */}
             <rect
@@ -921,11 +927,11 @@ const LayoutPreview = ({ preset, isActive }) => {
               y={y + 0.5}
               width={w - 1}
               height={h - 1}
-              rx={2}
+              rx={1.5}
               fill="none"
               stroke="white"
               strokeWidth={0.5}
-              opacity={isActive ? 0.2 : 0.1}
+              opacity={isActive ? 0.15 : 0.08}
             />
           </g>
         );
