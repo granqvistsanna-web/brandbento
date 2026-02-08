@@ -54,32 +54,41 @@ export function useImageLuminance(imageUrl: string | null): UseImageLuminanceRes
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     if (!imageUrl) {
       Promise.resolve().then(() => {
+        if (cancelled) return;
         setLuminance(null);
         setBackground('light');
         setError(null);
       });
-      return;
+      return () => { cancelled = true; };
     }
 
     Promise.resolve().then(() => {
+      if (cancelled) return;
       setLoading(true);
       setError(null);
     });
 
     getImageLuminance(imageUrl)
       .then(l => {
+        if (cancelled) return;
         setLuminance(l);
         setBackground(getAdaptiveBackground(l));
       })
       .catch(err => {
+        if (cancelled) return;
         console.warn('Luminance detection failed:', err);
         setError(err.message);
         setLuminance(null);
         setBackground('light');  // Fallback to light
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [imageUrl]);
 
   return { luminance, background, loading, error };

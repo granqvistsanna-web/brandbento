@@ -100,6 +100,8 @@ export interface Colors {
 export interface Logo {
   /** Logo text/wordmark (e.g., "BENTO", "LUXE") */
   text: string;
+  /** Logo image data URL or URL (svg/png) */
+  image?: string | null;
   /** Padding around logo in pixels */
   padding: number;
   /** Font size for text-based logos in pixels */
@@ -368,6 +370,8 @@ export interface BrandStore {
 
   /** Current brand configuration */
   brand: Brand;
+  /** Currently selected brand preset (used for contextual copy) */
+  activePreset: string;
   /** Array of tile configurations in the bento grid */
   tiles: Tile[];
   /** ID of the currently focused/selected tile (null if none) */
@@ -1278,6 +1282,7 @@ export const useBrandStore = create<BrandStore>()(
   persist(
     (set, get) => ({
       brand: DEFAULT_BRAND,
+      activePreset: "default",
       tiles: INITIAL_TILES,
       focusedTileId: null,
       darkModePreview: false,
@@ -1309,6 +1314,7 @@ export const useBrandStore = create<BrandStore>()(
         set({
           brand: randomTemplate.brand,
           tiles: randomTemplate.tiles,
+          activePreset: "custom",
           tileSurfaces: {},
           placementContent: defaultPlacementContent,
           history: {
@@ -1325,6 +1331,7 @@ export const useBrandStore = create<BrandStore>()(
 
         set({
           brand: preset,
+          activePreset: presetName,
           history: {
             past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: [],
@@ -1408,16 +1415,30 @@ export const useBrandStore = create<BrandStore>()(
         if (!newBrand || Object.keys(newBrand).length === 0) return;
         if (!hasBrandChanges(brand, newBrand)) return;
 
+        const nextBrand: Brand = {
+          ...brand,
+          ...newBrand,
+          typography: { ...brand.typography, ...(newBrand.typography ?? {}) },
+          colors: {
+            ...brand.colors,
+            ...(newBrand.colors ?? {}),
+            surfaces: newBrand.colors?.surfaces ?? brand.colors.surfaces,
+            paletteColors: newBrand.colors?.paletteColors ?? brand.colors.paletteColors,
+          },
+          logo: { ...brand.logo, ...(newBrand.logo ?? {}) },
+          imagery: { ...brand.imagery, ...(newBrand.imagery ?? {}) },
+        };
+
         if (isCommit) {
           set({
-            brand: { ...brand, ...newBrand } as Brand,
+            brand: nextBrand,
             history: {
               past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
               future: [],
             },
           });
         } else {
-          set({ brand: { ...brand, ...newBrand } as Brand });
+          set({ brand: nextBrand });
         }
       },
 
@@ -1492,6 +1513,7 @@ export const useBrandStore = create<BrandStore>()(
         set({
           brand: DEFAULT_BRAND,
           tiles: INITIAL_TILES,
+          activePreset: "default",
           tileSurfaces: {},
           placementContent: defaultPlacementContent,
           history: {
@@ -1554,6 +1576,7 @@ export const useBrandStore = create<BrandStore>()(
             : current.tiles,
           theme: persistedState.theme ?? current.theme,
           tileSurfaces: persistedState.tileSurfaces ?? current.tileSurfaces,
+          activePreset: persistedState.activePreset ?? current.activePreset,
           placementContent: {
             ...defaultPlacementContent,
             ...(persistedState.placementContent ?? current.placementContent),
@@ -1563,6 +1586,7 @@ export const useBrandStore = create<BrandStore>()(
       partialize: (state) => ({
         brand: state.brand,
         tiles: state.tiles,
+        activePreset: state.activePreset,
         theme: state.theme,
         tileSurfaces: state.tileSurfaces,
         placementContent: state.placementContent,

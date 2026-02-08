@@ -63,13 +63,15 @@ export async function extractFonts(doc: Document): Promise<ExtractedFonts> {
 
   // Strategy 3: Wait for fonts to load, check document.fonts
   // Wait up to 3 seconds for fonts
-  await Promise.race([
-    document.fonts.ready,
-    new Promise(resolve => setTimeout(resolve, 3000))
-  ]);
+  if ('fonts' in document && document.fonts?.ready) {
+    await Promise.race([
+      document.fonts.ready,
+      new Promise(resolve => setTimeout(resolve, 3000))
+    ]);
 
-  const loadedFonts = extractFromDocumentFonts();
-  if (loadedFonts) return loadedFonts;
+    const loadedFonts = extractFromDocumentFonts();
+    if (loadedFonts) return loadedFonts;
+  }
 
   // Strategy 4: Parse @font-face declarations
   const fontFaceFonts = extractFromFontFace(doc);
@@ -174,6 +176,7 @@ function extractFromCSSVariables(doc: Document): ExtractedFonts | null {
  * Checks fonts that have actually been loaded and rendered.
  */
 function extractFromDocumentFonts(): ExtractedFonts | null {
+  if (!('fonts' in document)) return null;
   const fonts = Array.from(document.fonts)
     .map(font => font.family.replace(/['"]/g, ''))
     .filter(family => !isSystemFont(family));

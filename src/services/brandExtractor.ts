@@ -85,9 +85,11 @@ export async function extractBrand(
     doc = new DOMParser().parseFromString(html, 'text/html');
 
     // Set base URL for relative URLs
-    const base = doc.createElement('base');
-    base.href = url;
-    doc.head.prepend(base);
+    if (doc.head) {
+      const base = doc.createElement('base');
+      base.href = url;
+      doc.head.prepend(base);
+    }
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch page';

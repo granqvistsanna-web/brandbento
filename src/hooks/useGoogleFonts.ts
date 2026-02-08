@@ -6,7 +6,7 @@
  *
  * @module hooks/useGoogleFonts
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { loadFontWithFallback, getSystemFallback } from '@/services/googleFonts';
 import { GOOGLE_FONTS, type GoogleFontMeta } from '@/data/googleFontsMetadata';
 
@@ -54,6 +54,7 @@ export function useGoogleFonts(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadedFamily, setLoadedFamily] = useState<string | null>(null);
+  const requestRef = useRef(0);
 
   // Get system fallback for the category
   const fallback = getSystemFallback(category);
@@ -62,6 +63,7 @@ export function useGoogleFonts(
   const fontFamily = loadedFamily ? `"${loadedFamily}", ${fallback}` : fallback;
 
   const loadFontAsync = useCallback(async (fontFamily: string, weights?: string[]) => {
+    const requestId = ++requestRef.current;
     setLoading(true);
     setError(null);
 
@@ -71,6 +73,9 @@ export function useGoogleFonts(
 
     const result = await loadFontWithFallback(fontFamily, weightsToLoad);
 
+    if (requestId !== requestRef.current) {
+      return false;
+    }
     setLoading(false);
 
     if (result.loaded) {

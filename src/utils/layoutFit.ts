@@ -112,6 +112,9 @@ export function fitTilesToGrid(
 ): TileFitResult {
   const { columns, rows } = gridConfig;
   const totalCells = columns * rows;
+  if (columns <= 0 || rows <= 0) {
+    return { visibleTiles: [], hiddenTiles: tiles };
+  }
 
   // Sort tiles by priority (lower number = higher priority)
   const sortedTiles = [...tiles].sort((a, b) => {
@@ -120,27 +123,67 @@ export function fitTilesToGrid(
 
   const visibleTiles: AdjustedTile[] = [];
   const hiddenTiles: TileData[] = [];
-  let usedCells = 0;
+  const grid: boolean[][] = Array.from({ length: rows }, () =>
+    Array.from({ length: columns }, () => false)
+  );
+
+  const canPlace = (row: number, col: number, colSpan: number, rowSpan: number): boolean => {
+    if (row + rowSpan > rows || col + colSpan > columns) return false;
+    for (let r = row; r < row + rowSpan; r += 1) {
+      for (let c = col; c < col + colSpan; c += 1) {
+        if (grid[r][c]) return false;
+      }
+    }
+    return true;
+  };
+
+  const place = (row: number, col: number, colSpan: number, rowSpan: number) => {
+    for (let r = row; r < row + rowSpan; r += 1) {
+      for (let c = col; c < col + colSpan; c += 1) {
+        grid[r][c] = true;
+      }
+    }
+  };
+
+  const tryPlaceTile = (colSpan: number, rowSpan: number): boolean => {
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < columns; c += 1) {
+        if (canPlace(r, c, colSpan, rowSpan)) {
+          place(r, c, colSpan, rowSpan);
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const countUsedCells = (): number => {
+    let count = 0;
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < columns; c += 1) {
+        if (grid[r][c]) count += 1;
+      }
+    }
+    return count;
+  };
 
   for (const tile of sortedTiles) {
     // First, reduce spans if they exceed grid dimensions
     const adjustedTile = reduceTileSpans(tile, columns, rows);
     const tileArea = getTileArea(adjustedTile);
 
-    // Check if tile fits in remaining space
-    if (usedCells + tileArea <= totalCells) {
+    // Check if tile fits in remaining space and can be placed
+    if (tileArea <= totalCells && tryPlaceTile(adjustedTile.adjustedColSpan, adjustedTile.adjustedRowSpan)) {
       visibleTiles.push(adjustedTile);
-      usedCells += tileArea;
     } else {
       // Try to fit with minimum 1x1 span if we have any space left
-      if (usedCells < totalCells) {
+      if (countUsedCells() < totalCells && tryPlaceTile(1, 1)) {
         const minimalTile: AdjustedTile = {
           ...tile,
           adjustedColSpan: 1,
           adjustedRowSpan: 1,
         };
         visibleTiles.push(minimalTile);
-        usedCells += 1;
       } else {
         // No space at all - hide the tile
         hiddenTiles.push(tile);

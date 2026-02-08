@@ -2,37 +2,39 @@ import LZString from 'lz-string';
 import type { CanvasState } from '@/types/brand';
 
 export function compressState(state: CanvasState): string {
+  const assets = state.assets ?? { logo: null, heroImage: null };
+
+  const storeDataUri = (key: string, dataUri: string): boolean => {
+    try {
+      localStorage.setItem(key, dataUri);
+      return true;
+    } catch (e) {
+      console.warn('Failed to store image in localStorage', e);
+      return false;
+    }
+  };
+
   // Remove large data URIs before compression - store separately
   const serializable = {
     ...state,
     assets: {
-      ...state.assets,
-      logo: state.assets.logo?.startsWith('data:')
-        ? `ref:${hashString(state.assets.logo)}`
-        : state.assets.logo,
-      heroImage: state.assets.heroImage?.startsWith('data:')
-        ? `ref:${hashString(state.assets.heroImage)}`
-        : state.assets.heroImage,
+      ...assets,
+      logo: assets.logo?.startsWith('data:')
+        ? (() => {
+            const hash = hashString(assets.logo);
+            const stored = storeDataUri(`bb:img:${hash}`, assets.logo);
+            return stored ? `ref:${hash}` : assets.logo;
+          })()
+        : assets.logo,
+      heroImage: assets.heroImage?.startsWith('data:')
+        ? (() => {
+            const hash = hashString(assets.heroImage);
+            const stored = storeDataUri(`bb:img:${hash}`, assets.heroImage);
+            return stored ? `ref:${hash}` : assets.heroImage;
+          })()
+        : assets.heroImage,
     }
   };
-
-  // Store data URIs in localStorage
-  if (state.assets.logo?.startsWith('data:')) {
-    const hash = hashString(state.assets.logo);
-    try {
-      localStorage.setItem(`bb:img:${hash}`, state.assets.logo);
-    } catch (e) {
-      console.warn('Failed to store logo in localStorage', e);
-    }
-  }
-  if (state.assets.heroImage?.startsWith('data:')) {
-    const hash = hashString(state.assets.heroImage);
-    try {
-      localStorage.setItem(`bb:img:${hash}`, state.assets.heroImage);
-    } catch (e) {
-      console.warn('Failed to store image in localStorage', e);
-    }
-  }
 
   const json = JSON.stringify(serializable);
   const compressed = LZString.compressToEncodedURIComponent(json);
@@ -50,13 +52,16 @@ export function decompressState(compressed: string): CanvasState | null {
     if (!json) return null;
 
     const state = JSON.parse(json) as CanvasState;
+    if (!state.assets) {
+      state.assets = { logo: null, heroImage: null } as CanvasState['assets'];
+    }
 
     // Restore data URIs from localStorage
-    if (state.assets.logo?.startsWith('ref:')) {
+    if (state.assets?.logo?.startsWith('ref:')) {
       const hash = state.assets.logo.slice(4);
       state.assets.logo = localStorage.getItem(`bb:img:${hash}`) || null;
     }
-    if (state.assets.heroImage?.startsWith('ref:')) {
+    if (state.assets?.heroImage?.startsWith('ref:')) {
       const hash = state.assets.heroImage.slice(4);
       state.assets.heroImage = localStorage.getItem(`bb:img:${hash}`) || null;
     }
