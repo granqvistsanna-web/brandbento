@@ -1,8 +1,43 @@
+/**
+ * Image Extraction Service
+ *
+ * Extracts hero/brand imagery from a parsed HTML document.
+ * Focuses on finding large, representative images suitable for moodboards.
+ *
+ * ## Extraction Strategies (in priority order)
+ *
+ * 1. **Open Graph Image** - Most reliable for brand imagery (og:image meta)
+ * 2. **Twitter Card Image** - Alternative social media image
+ * 3. **Hero Section Image** - Images in .hero, #hero, or first sections
+ * 4. **Large Image** - First large (>100px) non-logo image on page
+ *
+ * @module services/extractImages
+ */
+
+/**
+ * Result of image extraction.
+ */
 interface ExtractedImages {
+  /** URL of hero image (null if none found) */
   heroImage: string | null;
+  /** Which extraction strategy succeeded (null if none) */
   source: 'og-image' | 'hero-section' | 'large-image' | null;
 }
 
+/**
+ * Extracts hero/brand imagery from a parsed HTML document.
+ *
+ * Tries multiple sources in priority order. Filters out small images,
+ * icons, logos, and tracking pixels to find actual brand imagery.
+ *
+ * @param doc - Parsed HTML document from DOMParser
+ * @param baseUrl - Base URL for resolving relative URLs
+ * @returns Object with heroImage URL and source (or null if not found)
+ *
+ * @example
+ * const { heroImage, source } = await extractImages(doc, 'https://stripe.com');
+ * // heroImage: 'https://stripe.com/img/hero.jpg', source: 'og-image'
+ */
 export async function extractImages(doc: Document, baseUrl: string): Promise<ExtractedImages> {
   // Strategy 1: Open Graph image (most reliable for brand imagery)
   const ogImage = doc.querySelector('meta[property="og:image"]');
@@ -65,6 +100,10 @@ export async function extractImages(doc: Document, baseUrl: string): Promise<Ext
   return { heroImage: null, source: null };
 }
 
+/**
+ * Checks if an image is too small or appears to be an icon.
+ * Filters out images < 100px and those with icon/logo patterns in src.
+ */
 function isSmallOrIcon(img: Element): boolean {
   const width = img.getAttribute('width');
   const height = img.getAttribute('height');

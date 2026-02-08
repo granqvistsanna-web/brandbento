@@ -180,7 +180,7 @@ const Section = ({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className={noPadding ? "" : "px-3 pb-3 space-y-3"}>
+            <div className={noPadding ? "" : "px-2.5 pb-2 space-y-2"}>
               {children}
             </div>
           </motion.div>
@@ -379,10 +379,10 @@ const SegmentedControl = ({ options, value, onChange }) => (
         className="flex-1 h-7 text-10 font-medium transition-fast"
         style={{
           background:
-            value === opt.value ? "var(--accent-muted)" : "transparent",
+            value === opt.value ? "var(--sidebar-bg-active)" : "transparent",
           color:
             value === opt.value
-              ? "var(--accent)"
+              ? "var(--sidebar-text)"
               : "var(--sidebar-text-secondary)",
         }}
       >
@@ -534,7 +534,7 @@ const UsagePreview = ({ colorKey }) => {
   );
 };
 
-const ColorRoleGroup = ({ title, description, children, icon: Icon }) => (
+const ColorRoleGroup = ({ title, description, children }) => (
   <div
     className="rounded-lg overflow-hidden mb-3"
     style={{
@@ -542,36 +542,28 @@ const ColorRoleGroup = ({ title, description, children, icon: Icon }) => (
       border: "1px solid var(--sidebar-border-subtle)",
     }}
   >
-    {/* Group Header */}
+    {/* Group Header - Clean, minimal Figma style */}
     <div
-      className="px-3 py-2 flex items-center gap-2"
+      className="px-3 py-2"
       style={{
         background: "var(--sidebar-bg-hover)",
         borderBottom: "1px solid var(--sidebar-border-subtle)",
       }}
     >
-      {Icon && (
-        <Icon
-          size={12}
-          style={{ color: "var(--accent)" }}
-        />
-      )}
-      <div className="flex-1">
-        <span
-          className="text-10 font-semibold uppercase tracking-wider"
-          style={{ color: "var(--sidebar-text)" }}
+      <span
+        className="text-10 font-semibold uppercase tracking-wider"
+        style={{ color: "var(--sidebar-text)" }}
+      >
+        {title}
+      </span>
+      {description && (
+        <p
+          className="text-[9px] mt-0.5"
+          style={{ color: "var(--sidebar-text-muted)" }}
         >
-          {title}
-        </span>
-        {description && (
-          <p
-            className="text-[9px] mt-0.5"
-            style={{ color: "var(--sidebar-text-muted)" }}
-          >
-            {description}
-          </p>
-        )}
-      </div>
+          {description}
+        </p>
+      )}
     </div>
     {/* Group Content */}
     <div className="p-2 space-y-1">
@@ -1386,7 +1378,6 @@ const PaletteBrowser = () => {
   return (
     <Section
       title="Color Palettes"
-      icon={Palette}
       defaultOpen={false}
       badge={<Badge variant="accent">{TOTAL_PALETTE_COUNT}</Badge>}
       noPadding
@@ -1481,14 +1472,11 @@ const PresetCard = ({ name, brand, isActive, onClick }) => (
 // LAYOUT PREVIEW - Mini bento grid visualization
 // ============================================
 
-const LayoutPreview = ({ preset, isActive }) => {
+const LayoutPreview = ({ preset, isActive, displaySize = 32 }) => {
   const config = BENTO_LAYOUTS[preset]?.desktop;
   if (!config) return null;
 
   const { columns, rows, placements } = config;
-
-  // Fixed display size for all previews
-  const displaySize = 44;
   const padding = 3;
   const gap = 2;
 
@@ -1590,64 +1578,42 @@ const LayoutSelector = () => {
       style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
     >
       {/* Layout label */}
-      <div className="flex items-center gap-2">
-        <LayoutGrid size={14} style={{ color: "var(--accent)" }} />
-        <span
-          className="text-11 font-medium"
-          style={{ color: "var(--sidebar-text)" }}
-        >
-          Layout
-        </span>
-      </div>
+      <span
+        className="text-11 font-medium"
+        style={{ color: "var(--sidebar-text)" }}
+      >
+        Layout
+      </span>
 
       {/* Layout preset buttons */}
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-1">
         {LAYOUT_PRESETS_CONFIG.map((p) => {
           const isActive = preset === p.key;
           return (
             <motion.button
               key={p.key}
               onClick={() => setPreset(p.key)}
-              className="flex flex-col items-center gap-2 p-2.5 rounded-lg transition-all relative overflow-hidden"
+              className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg transition-all relative overflow-hidden"
               style={{
                 background: isActive
-                  ? "linear-gradient(135deg, var(--accent-muted) 0%, transparent 100%)"
+                  ? "var(--sidebar-bg-hover)"
                   : "var(--sidebar-bg)",
                 border: `1.5px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
-                boxShadow: isActive
-                  ? "0 2px 8px -2px var(--accent-muted), inset 0 1px 0 rgba(255,255,255,0.1)"
-                  : "inset 0 1px 0 rgba(255,255,255,0.05)",
               }}
               whileHover={{
                 borderColor: isActive ? "var(--accent)" : "var(--sidebar-text-muted)",
-                y: -2,
-                boxShadow: isActive
-                  ? "0 4px 12px -2px var(--accent-muted)"
-                  : "0 2px 8px -2px rgba(0,0,0,0.1)",
               }}
-              whileTap={{ scale: 0.96, y: 0 }}
+              whileTap={{ scale: 0.96 }}
             >
-              <LayoutPreview preset={p.key} isActive={isActive} />
+              <LayoutPreview preset={p.key} isActive={isActive} displaySize={32} />
               <span
                 className="text-[10px] font-semibold tracking-wide"
                 style={{
                   color: isActive ? "var(--accent)" : "var(--sidebar-text-secondary)",
-                  textShadow: isActive ? "0 0 20px var(--accent-muted)" : "none",
                 }}
               >
                 {p.label}
               </span>
-              {isActive && (
-                <motion.div
-                  layoutId="activeLayoutIndicator"
-                  className="absolute inset-0 rounded-lg pointer-events-none"
-                  style={{
-                    border: "1.5px solid var(--accent)",
-                    boxShadow: "inset 0 0 12px -4px var(--accent)",
-                  }}
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                />
-              )}
             </motion.button>
           );
         })}
@@ -1673,28 +1639,17 @@ const LayoutSelector = () => {
       {/* Debug toggle */}
       <div className="flex items-center gap-2">
         <span className="text-10" style={{ color: "var(--sidebar-text-secondary)" }}>
-          Debug
+          Grid
         </span>
         <div className="flex-1">
-          <motion.button
-            onClick={toggleDebug}
-            className="w-full h-7 px-3 rounded-md text-10 font-medium transition-fast flex items-center justify-center gap-1.5"
-            style={{
-              background: debugMode ? "var(--accent-muted)" : "var(--sidebar-bg)",
-              border: `1px solid ${debugMode ? "var(--accent)" : "var(--sidebar-border)"}`,
-              color: debugMode ? "var(--accent)" : "var(--sidebar-text-secondary)",
-            }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <div
-              className="w-2 h-2 rounded-full"
-              style={{
-                background: debugMode ? "var(--accent)" : "var(--sidebar-text-muted)",
-              }}
-            />
-            {debugMode ? "Grid Visible" : "Show Grid"}
-          </motion.button>
+          <SegmentedControl
+            options={[
+              { value: false, label: "Off" },
+              { value: true, label: "Grid" },
+            ]}
+            value={debugMode}
+            onChange={(val) => { if (val !== debugMode) toggleDebug(); }}
+          />
         </div>
       </div>
     </div>
@@ -1767,7 +1722,6 @@ const GlobalControls = () => {
       {/* Quick Start */}
       <Section
         title="Quick Start"
-        icon={Wand2}
         defaultOpen={false}
         badge={<Badge variant="accent">{presets.length}</Badge>}
       >
@@ -1788,7 +1742,7 @@ const GlobalControls = () => {
       <PaletteBrowser />
 
       {/* Typography */}
-      <Section title="Typography" icon={Type}>
+      <Section title="Typography">
         <FontSelector
           label="Headline"
           value={brand.typography.primary}
@@ -1868,7 +1822,6 @@ const GlobalControls = () => {
       {/* Colors - Grouped by Role */}
       <Section
         title="Colors"
-        icon={Droplet}
         badge={
           getContrastRatio(brand.colors.text, brand.colors.bg) >= 4.5 ? (
             <Badge variant="success">AA</Badge>
@@ -1881,7 +1834,6 @@ const GlobalControls = () => {
         <ColorRoleGroup
           title="Core"
           description="Primary brand color for visual identity"
-          icon={Sparkles}
         >
           <ColorSwatch
             label="Primary"
@@ -1903,7 +1855,6 @@ const GlobalControls = () => {
         <ColorRoleGroup
           title="Neutral"
           description="Structural foundation for layouts and content"
-          icon={Layers}
         >
           <ColorSwatch
             label="Background"
@@ -1943,7 +1894,6 @@ const GlobalControls = () => {
         <ColorRoleGroup
           title="Accent"
           description="Supporting color for emphasis and differentiation"
-          icon={Droplet}
         >
           <ColorSwatch
             label="Accent"
@@ -1961,7 +1911,7 @@ const GlobalControls = () => {
       </Section>
 
       {/* Logo */}
-      <Section title="Logo" icon={Sparkles} defaultOpen={false}>
+      <Section title="Logo" defaultOpen={false}>
         <PropRow label="Text">
           <Input
             value={brand.logo.text}
@@ -2451,7 +2401,7 @@ const ControlPanel = () => {
   return (
     <motion.div
       data-export-exclude="true"
-      className="h-full flex flex-col flex-shrink-0 relative overflow-hidden"
+      className="h-full flex flex-col flex-shrink-0 relative"
       style={{
         background: "var(--sidebar-bg)",
         borderRight: "1px solid var(--sidebar-border)",
@@ -2460,47 +2410,58 @@ const ControlPanel = () => {
       animate={{ width: isCollapsed ? 48 : 300 }}
       transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
     >
-      {/* Collapse toggle */}
+      {/* Collapse toggle - positioned inside panel edge */}
       <motion.button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 rounded-full flex items-center justify-center"
+        className="absolute right-2 top-3 z-50 w-6 h-6 rounded flex items-center justify-center"
         style={{
-          background: "var(--sidebar-bg-elevated)",
-          border: "1px solid var(--sidebar-border)",
-          boxShadow: "var(--shadow-md)",
-          color: "var(--sidebar-text-secondary)",
+          background: "var(--sidebar-bg-hover)",
+          color: "var(--sidebar-text-muted)",
         }}
-        whileHover={{ scale: 1.1, color: "var(--sidebar-text)" }}
+        whileHover={{
+          background: "var(--sidebar-bg-active)",
+          color: "var(--sidebar-text)"
+        }}
         whileTap={{ scale: 0.95 }}
       >
         <motion.div
           animate={{ rotate: isCollapsed ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronRight size={12} />
+          {isCollapsed ? <PanelLeft size={14} /> : <PanelLeftClose size={14} />}
         </motion.div>
       </motion.button>
 
       {isCollapsed ? (
         /* Collapsed state */
-        <div className="flex flex-col items-center py-3 gap-1">
-          <IconButton
-            icon={PanelLeft}
-            tooltip="Expand"
-            onClick={() => setIsCollapsed(false)}
-          />
-          <div className="divider-h w-6 my-1" />
-          <IconButton icon={Sliders} tooltip="Brand" />
-          <IconButton icon={Type} tooltip="Typography" />
-          <IconButton icon={Droplet} tooltip="Colors" />
-          <IconButton icon={Sparkles} tooltip="Logo" />
+        <div className="flex flex-col items-center pt-12 gap-2">
+          <Tooltip content="Expand panel" position="right">
+            <button
+              onClick={() => setIsCollapsed(false)}
+              className="w-8 h-8 rounded flex items-center justify-center transition-fast"
+              style={{
+                background: "var(--sidebar-bg-hover)",
+                color: "var(--sidebar-text-muted)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--sidebar-bg-active)";
+                e.currentTarget.style.color = "var(--sidebar-text)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--sidebar-bg-hover)";
+                e.currentTarget.style.color = "var(--sidebar-text-muted)";
+              }}
+            >
+              <PanelLeft size={16} />
+            </button>
+          </Tooltip>
         </div>
       ) : (
         /* Expanded state */
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Panel header */}
           <div
-            className="px-3 py-2 flex items-center justify-between flex-shrink-0"
+            className="px-3 py-2.5 flex items-center justify-between flex-shrink-0"
             style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
           >
             <span
@@ -2509,7 +2470,7 @@ const ControlPanel = () => {
             >
               {focusedTileId ? "Tile Properties" : "Design"}
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 mr-8">
               <span
                 className="text-10 px-2 py-0.5 rounded"
                 style={{
@@ -2551,20 +2512,20 @@ const ControlPanel = () => {
 
           {/* Panel footer */}
           <div
-            className="px-3 py-2 flex items-center justify-between flex-shrink-0"
+            className="px-2 py-1.5 flex items-center justify-between flex-shrink-0"
             style={{
               borderTop: "1px solid var(--sidebar-border-subtle)",
               background: "var(--sidebar-bg-elevated)",
             }}
           >
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <Kbd>⌘</Kbd>
               <Kbd>Z</Kbd>
             </div>
-            <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+            <span className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
               Undo/Redo
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <Kbd>⌘</Kbd>
               <Kbd>\</Kbd>
             </div>

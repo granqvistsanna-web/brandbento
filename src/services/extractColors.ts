@@ -1,8 +1,48 @@
+/**
+ * Color Extraction Service
+ *
+ * Extracts brand colors from a parsed HTML document using multiple strategies
+ * in priority order. Filters out neutral colors (grays, black, white) to
+ * focus on actual brand colors.
+ *
+ * ## Extraction Strategies (in priority order)
+ *
+ * 1. **CSS Variables** - Highest confidence. Looks for custom properties
+ *    with color-related names (--color-*, --bg-*, --primary, --accent)
+ *
+ * 2. **Semantic Elements** - Extracts colors from buttons, links, headings,
+ *    and other interactive elements that typically use brand colors
+ *
+ * 3. **Stylesheets** - Fallback. Scans all CSS rules for color values
+ *
+ * @module services/extractColors
+ */
+
+/**
+ * Result of color extraction.
+ */
 interface ExtractedColors {
+  /** Array of hex color strings (max 10) */
   colors: string[];
+  /** Which extraction strategy succeeded */
   source: 'css-vars' | 'semantic' | 'stylesheet';
 }
 
+/**
+ * Extracts brand colors from a parsed HTML document.
+ *
+ * Uses a multi-strategy approach, returning early when enough colors
+ * are found (5+ colors). Neutral colors are filtered out automatically.
+ *
+ * @param doc - Parsed HTML document from DOMParser
+ * @returns Object with colors array and source strategy
+ *
+ * @example
+ * const html = await fetch(url);
+ * const doc = new DOMParser().parseFromString(html, 'text/html');
+ * const { colors, source } = await extractColors(doc);
+ * // colors: ['#3B82F6', '#10B981', '#F59E0B', ...]
+ */
 export async function extractColors(doc: Document): Promise<ExtractedColors> {
   const colors = new Set<string>();
 
@@ -34,6 +74,10 @@ export async function extractColors(doc: Document): Promise<ExtractedColors> {
   return { colors: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'], source: 'stylesheet' };
 }
 
+/**
+ * Extracts colors from CSS custom properties (variables).
+ * Looks for properties containing 'color', 'bg', 'primary', or 'accent'.
+ */
 function extractFromCSSVariables(doc: Document): string[] {
   const colors: string[] = [];
 
@@ -67,6 +111,10 @@ function extractFromCSSVariables(doc: Document): string[] {
   return colors;
 }
 
+/**
+ * Extracts colors from semantic elements (buttons, links, headings).
+ * These elements typically use the brand's primary/accent colors.
+ */
 function extractFromSemanticElements(doc: Document): string[] {
   const colors: string[] = [];
   const selectors = 'button, a, h1, h2, h3, .btn, .cta, [role="button"], .primary, .accent';
@@ -88,6 +136,10 @@ function extractFromSemanticElements(doc: Document): string[] {
   return colors;
 }
 
+/**
+ * Extracts colors from all CSS rules in stylesheets.
+ * Fallback strategy when CSS vars and semantic extraction don't find enough.
+ */
 function extractFromStylesheets(doc: Document): string[] {
   const colors: string[] = [];
   const colorRegex = /#[0-9A-Fa-f]{3,8}\b|rgb\([^)]+\)|hsl\([^)]+\)/g;
@@ -117,6 +169,11 @@ function extractFromStylesheets(doc: Document): string[] {
   return colors;
 }
 
+/**
+ * Converts CSS color value to normalized hex format.
+ * Handles hex (#RGB, #RRGGBB, #RRGGBBAA), rgb(), and rgba().
+ * @returns 6-char hex string with # prefix, or null if invalid
+ */
 function cssValueToHex(value: string): string | null {
   value = value.trim().toLowerCase();
 
@@ -142,18 +199,27 @@ function cssValueToHex(value: string): string | null {
   return null;
 }
 
+/** Wrapper for cssValueToHex that handles transparent/inherit values */
 function rgbToHex(rgb: string): string | null {
   if (!rgb || rgb === 'transparent' || rgb === 'inherit') return null;
   return cssValueToHex(rgb);
 }
 
+/** Converts RGB channel values (0-255) to hex string */
 function rgbToHexValue(r: number, g: number, b: number): string {
   const toHex = (n: number) => n.toString(16).padStart(2, '0');
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
+/**
+ * Checks if a color is neutral (grayscale, near-white, or near-black).
+ * These colors are filtered out to focus on actual brand colors.
+ *
+ * Thresholds:
+ * - Saturation < 20 (diff between max/min RGB channels)
+ * - Brightness > 240 (near white) or < 15 (near black)
+ */
 function isNearNeutral(hex: string): boolean {
-  // Check if color is grayscale or near-white/near-black
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);

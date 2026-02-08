@@ -1,8 +1,45 @@
+/**
+ * Logo Extraction Service
+ *
+ * Extracts brand logos from a parsed HTML document. Prioritizes
+ * high-quality sources like SVG favicons over lower-quality alternatives.
+ *
+ * ## Extraction Strategies (in priority order)
+ *
+ * 1. **SVG Favicon** - Highest quality, scalable
+ * 2. **PNG Favicon** - Prefers largest size available
+ * 3. **Apple Touch Icon** - 180x180, good quality
+ * 4. **Generic Favicon** - Standard favicon link
+ * 5. **Header Image** - Logo in header/nav with logo class
+ * 6. **Default Favicon** - /favicon.ico fallback
+ *
+ * @module services/extractLogo
+ */
+
+/**
+ * Result of logo extraction.
+ */
 interface ExtractedLogo {
+  /** URL of the logo (absolute URL or data URI) */
   logo: string;
+  /** Which extraction strategy succeeded */
   source: 'favicon-svg' | 'favicon-png' | 'apple-touch-icon' | 'favicon-default' | 'header-img';
 }
 
+/**
+ * Extracts brand logo from a parsed HTML document.
+ *
+ * Tries multiple sources in quality order, returning the first found.
+ * All URLs are resolved to absolute using the base URL.
+ *
+ * @param doc - Parsed HTML document from DOMParser
+ * @param baseUrl - Base URL for resolving relative URLs
+ * @returns Object with logo URL and source
+ *
+ * @example
+ * const { logo, source } = await extractLogo(doc, 'https://stripe.com');
+ * // logo: 'https://stripe.com/favicon.svg', source: 'favicon-svg'
+ */
 export async function extractLogo(doc: Document, baseUrl: string): Promise<ExtractedLogo> {
   // Strategy 1: SVG favicon (highest quality)
   const svgIcon = doc.querySelector('link[rel*="icon"][type="image/svg+xml"]');
@@ -88,6 +125,10 @@ export async function extractLogo(doc: Document, baseUrl: string): Promise<Extra
   return { logo: defaultFavicon, source: 'favicon-default' };
 }
 
+/**
+ * Resolves a URL against a base URL.
+ * Handles data URIs and already-absolute URLs.
+ */
 function resolveUrl(href: string, baseUrl: string): string {
   if (href.startsWith('data:') || href.startsWith('http://') || href.startsWith('https://')) {
     return href;

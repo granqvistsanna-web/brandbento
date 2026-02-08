@@ -1,9 +1,35 @@
+/**
+ * Font Extraction Service
+ *
+ * Extracts web fonts from a parsed HTML document using multiple strategies.
+ * Filters out system fonts to identify custom/branded typography.
+ *
+ * ## Extraction Strategies (in priority order)
+ *
+ * 1. **Google Fonts Link** - Highest confidence. Parses fonts.googleapis.com URLs
+ * 2. **CSS Variables** - Looks for --font-family custom properties
+ * 3. **Document.fonts API** - Checks loaded fonts after document.fonts.ready
+ * 4. **@font-face Rules** - Parses font-face declarations in stylesheets
+ *
+ * @module services/extractFonts
+ */
+
+/**
+ * Result of font extraction.
+ */
 interface ExtractedFonts {
+  /** Primary/headline font family name */
   primaryFont: string;
+  /** Secondary/body font family name */
   secondaryFont: string;
+  /** Which extraction strategy succeeded */
   source: 'google-fonts' | 'css-vars' | 'document-fonts' | 'font-face';
 }
 
+/**
+ * Common system fonts to filter out during extraction.
+ * We only want custom/web fonts, not default system fonts.
+ */
 const SYSTEM_FONTS = [
   'Arial', 'Helvetica', 'Times New Roman', 'Times', 'Courier New', 'Courier',
   'Verdana', 'Georgia', 'Palatino', 'Garamond', 'Comic Sans MS', 'Impact',
@@ -12,6 +38,20 @@ const SYSTEM_FONTS = [
   'serif', 'monospace', 'cursive', 'fantasy'
 ];
 
+/**
+ * Extracts web fonts from a parsed HTML document.
+ *
+ * Tries multiple strategies in priority order, returning when fonts are found.
+ * Waits up to 3 seconds for document.fonts to load before checking.
+ *
+ * @param doc - Parsed HTML document from DOMParser
+ * @returns Object with primaryFont, secondaryFont, and source
+ * @throws Error if no web fonts are detected
+ *
+ * @example
+ * const { primaryFont, secondaryFont } = await extractFonts(doc);
+ * // primaryFont: 'Playfair Display', secondaryFont: 'Inter'
+ */
 export async function extractFonts(doc: Document): Promise<ExtractedFonts> {
   // Strategy 1: Google Fonts link tags (highest confidence)
   const googleFonts = extractFromGoogleFontsLink(doc);
@@ -38,6 +78,10 @@ export async function extractFonts(doc: Document): Promise<ExtractedFonts> {
   throw new Error('No web fonts detected');
 }
 
+/**
+ * Extracts fonts from Google Fonts link tags.
+ * Parses family=Font+Name:wght@400;700 URL format.
+ */
 function extractFromGoogleFontsLink(doc: Document): ExtractedFonts | null {
   const link = doc.querySelector('link[href*="fonts.googleapis.com"]');
   if (!link) return null;
@@ -73,6 +117,10 @@ function extractFromGoogleFontsLink(doc: Document): ExtractedFonts | null {
   return null;
 }
 
+/**
+ * Extracts fonts from CSS custom properties.
+ * Looks for variables containing both 'font' and 'family'.
+ */
 function extractFromCSSVariables(doc: Document): ExtractedFonts | null {
   const fontVars: string[] = [];
 
@@ -121,6 +169,10 @@ function extractFromCSSVariables(doc: Document): ExtractedFonts | null {
   return null;
 }
 
+/**
+ * Extracts fonts from the document.fonts API.
+ * Checks fonts that have actually been loaded and rendered.
+ */
 function extractFromDocumentFonts(): ExtractedFonts | null {
   const fonts = Array.from(document.fonts)
     .map(font => font.family.replace(/['"]/g, ''))
@@ -148,6 +200,10 @@ function extractFromDocumentFonts(): ExtractedFonts | null {
   return null;
 }
 
+/**
+ * Extracts fonts from @font-face CSS rules.
+ * Fallback when other methods don't find fonts.
+ */
 function extractFromFontFace(doc: Document): ExtractedFonts | null {
   const fontFamilies: string[] = [];
 

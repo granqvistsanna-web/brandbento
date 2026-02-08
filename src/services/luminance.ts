@@ -1,9 +1,25 @@
 /**
- * Calculate relative luminance per WCAG/ITU-R BT.709
- * @param r Red channel (0-255)
- * @param g Green channel (0-255)
- * @param b Blue channel (0-255)
- * @returns Luminance value (0-1)
+ * Luminance Detection Service
+ *
+ * Calculates image brightness using WCAG luminance formulas.
+ * Used for adaptive UI (e.g., choosing light/dark text on images).
+ *
+ * Uses ITU-R BT.709 coefficients for relative luminance:
+ * L = 0.2126 * R + 0.7152 * G + 0.0722 * B
+ *
+ * @module services/luminance
+ */
+
+/**
+ * Calculates relative luminance per WCAG 2.1 / ITU-R BT.709.
+ *
+ * Applies gamma correction and weighted sum of RGB channels.
+ * Human eyes are most sensitive to green, least to blue.
+ *
+ * @param r - Red channel (0-255)
+ * @param g - Green channel (0-255)
+ * @param b - Blue channel (0-255)
+ * @returns Luminance value (0-1, where 0 = black, 1 = white)
  */
 function getLuminance(r: number, g: number, b: number): number {
   const [rs, gs, bs] = [r, g, b].map(val => {
@@ -16,12 +32,27 @@ function getLuminance(r: number, g: number, b: number): number {
 }
 
 /**
- * Get average luminance from image URL or data URI
- * Handles SVG data URIs by waiting for Image onload
+ * Calculates average luminance of an image.
+ *
+ * Loads the image, renders to a small canvas (max 100px), and samples
+ * pixels to calculate average brightness. Transparent pixels are skipped.
+ *
+ * Performance optimizations:
+ * - Downscales to max 100x100 for faster processing
+ * - Samples every Nth pixel (default: 10) instead of all pixels
+ *
+ * @param imageUrl - Image URL or data URI
+ * @param sampleSize - Sample every Nth pixel (default: 10)
+ * @returns Promise resolving to luminance (0-1)
+ * @throws Error if image fails to load or canvas unavailable
+ *
+ * @example
+ * const luminance = await getImageLuminance(logoUrl);
+ * const textColor = luminance > 0.5 ? 'black' : 'white';
  */
 export async function getImageLuminance(
   imageUrl: string,
-  sampleSize = 10  // Sample every Nth pixel
+  sampleSize = 10
 ): Promise<number> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -80,9 +111,19 @@ export async function getImageLuminance(
 }
 
 /**
- * Determine background color based on logo luminance
- * High luminance (bright logo) -> dark background
- * Low luminance (dark logo) -> light background
+ * Determines optimal background type based on image luminance.
+ *
+ * Logic:
+ * - Bright image (luminance > 0.5) → dark background for contrast
+ * - Dark image (luminance ≤ 0.5) → light background for contrast
+ *
+ * @param luminance - Luminance value from getImageLuminance (0-1)
+ * @returns 'light' or 'dark' indicating recommended background
+ *
+ * @example
+ * const luminance = await getImageLuminance(logoUrl);
+ * const bg = getAdaptiveBackground(luminance);
+ * // bg === 'dark' if logo is bright, 'light' if logo is dark
  */
 export function getAdaptiveBackground(luminance: number): 'light' | 'dark' {
   return luminance > 0.5 ? 'dark' : 'light';

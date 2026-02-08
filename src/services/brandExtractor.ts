@@ -1,3 +1,22 @@
+/**
+ * Brand Extraction Orchestrator
+ *
+ * Coordinates extraction of brand assets (colors, fonts, logo, images) from
+ * any URL. Uses a multi-strategy approach with graceful fallbacks to defaults.
+ *
+ * ## Extraction Pipeline
+ *
+ * 1. Fetch HTML via CORS proxy
+ * 2. Extract colors (CSS vars → semantic elements → stylesheets)
+ * 3. Extract fonts (Google Fonts → CSS vars → document.fonts → @font-face)
+ * 4. Extract images (og:image → hero section → large images)
+ * 5. Extract logo (SVG favicon → PNG favicon → apple-touch-icon → header img)
+ *
+ * Each step is independent and fails gracefully, keeping defaults for any
+ * failed extraction. Progress callbacks enable real-time UI updates.
+ *
+ * @module services/brandExtractor
+ */
 import type { BrandAssets, ExtractionStage } from '@/types/brand';
 import { DEFAULT_ASSETS, generateMonogram } from '@/state/defaults';
 import { fetchViaProxy } from './corsProxy';
@@ -6,14 +25,40 @@ import { extractFonts } from './extractFonts';
 import { extractLogo } from './extractLogo';
 import { extractImages } from './extractImages';
 
+/**
+ * Progress update during brand extraction.
+ */
 export interface ExtractionProgress {
+  /** Current extraction stage */
   stage: ExtractionStage;
+  /** Partially extracted assets so far */
   assets: Partial<BrandAssets>;
+  /** Error message if extraction failed at this stage */
   error?: string;
 }
 
+/**
+ * Callback for receiving extraction progress updates.
+ */
 export type ProgressCallback = (progress: ExtractionProgress) => void;
 
+/**
+ * Extracts brand assets from a URL.
+ *
+ * Orchestrates the full extraction pipeline, calling individual extractors
+ * for colors, fonts, images, and logo. Each extractor can fail independently
+ * without affecting others - defaults are used for any failed extraction.
+ *
+ * @param url - Website URL to extract from (with or without protocol)
+ * @param onProgress - Optional callback for progress updates
+ * @returns Complete BrandAssets object (extracted values + defaults for failures)
+ *
+ * @example
+ * const assets = await extractBrand('stripe.com', (progress) => {
+ *   console.log(`Stage: ${progress.stage}`);
+ *   if (progress.error) console.error(progress.error);
+ * });
+ */
 export async function extractBrand(
   url: string,
   onProgress?: ProgressCallback
@@ -107,7 +152,21 @@ export async function extractBrand(
   return assets;
 }
 
-// Helper to check if an asset is using defaults
+/**
+ * Checks if a specific asset is using default values (not extracted).
+ *
+ * Useful for showing indicators in the UI that an asset couldn't be
+ * extracted and is using fallback values.
+ *
+ * @param assets - The BrandAssets object to check
+ * @param assetType - Which asset type to check
+ * @returns true if the asset is using defaults, false if extracted
+ *
+ * @example
+ * if (isDefaultAsset(assets, 'colors')) {
+ *   showWarning('Colors could not be extracted, using defaults');
+ * }
+ */
 export function isDefaultAsset(assets: BrandAssets, assetType: keyof BrandAssets): boolean {
   switch (assetType) {
     case 'colors':
