@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   useBrandStore,
+  selectFocusedTile,
   getContrastRatio,
   getColorHarmony,
   exportAsCSS,
@@ -12,7 +14,9 @@ import {
   PALETTE_SECTIONS,
   ROLE_DESCRIPTIONS,
   TOTAL_PALETTE_COUNT,
+  getPaletteById,
 } from "../data/colorPalettes";
+import { mapPaletteToBrand } from "../utils/colorMapping";
 import {
   Download,
   ChevronRight,
@@ -479,6 +483,104 @@ const FontSelector = ({ label, value, onChange, fonts }) => {
 };
 
 // ============================================
+// COLOR ROLE GROUP - Groups colors by category
+// ============================================
+
+const COLOR_USAGE = {
+  primary: {
+    label: "Core Brand Color",
+    uses: ["Logo", "Hero sections", "Primary CTAs", "Headlines"],
+  },
+  bg: {
+    label: "Background",
+    uses: ["Page backgrounds", "Large surfaces"],
+  },
+  text: {
+    label: "Body Text",
+    uses: ["Body copy", "Headings", "Labels"],
+  },
+  surface: {
+    label: "Surface",
+    uses: ["Cards", "Panels", "Modals"],
+  },
+  accent: {
+    label: "Accent",
+    uses: ["Highlights", "Badges", "Secondary CTAs"],
+  },
+};
+
+const UsagePreview = ({ colorKey }) => {
+  const usage = COLOR_USAGE[colorKey];
+  if (!usage) return null;
+
+  return (
+    <div
+      className="flex flex-wrap gap-1 mt-1.5 mb-0.5"
+      style={{ marginLeft: "2px" }}
+    >
+      {usage.uses.map((use, i) => (
+        <span
+          key={i}
+          className="text-[9px] px-1.5 py-0.5 rounded"
+          style={{
+            background: "var(--sidebar-bg-active)",
+            color: "var(--sidebar-text-muted)",
+          }}
+        >
+          {use}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const ColorRoleGroup = ({ title, description, children, icon: Icon }) => (
+  <div
+    className="rounded-lg overflow-hidden mb-3"
+    style={{
+      background: "var(--sidebar-bg)",
+      border: "1px solid var(--sidebar-border-subtle)",
+    }}
+  >
+    {/* Group Header */}
+    <div
+      className="px-3 py-2 flex items-center gap-2"
+      style={{
+        background: "var(--sidebar-bg-hover)",
+        borderBottom: "1px solid var(--sidebar-border-subtle)",
+      }}
+    >
+      {Icon && (
+        <Icon
+          size={12}
+          style={{ color: "var(--accent)" }}
+        />
+      )}
+      <div className="flex-1">
+        <span
+          className="text-10 font-semibold uppercase tracking-wider"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          {title}
+        </span>
+        {description && (
+          <p
+            className="text-[9px] mt-0.5"
+            style={{ color: "var(--sidebar-text-muted)" }}
+          >
+            {description}
+          </p>
+        )}
+      </div>
+    </div>
+    {/* Group Content */}
+    <div className="p-2 space-y-1">
+      {children}
+    </div>
+  </div>
+);
+
+// ============================================
 // COLOR SWATCH - COMPACT WITH PICKER
 // ============================================
 
@@ -490,6 +592,8 @@ const ColorSwatch = ({
   showContrast,
   contrastWith,
   hint,
+  colorKey,
+  showUsage = false,
 }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [localValue, setLocalValue] = useState(value);
@@ -574,6 +678,9 @@ const ColorSwatch = ({
           </button>
         </div>
       </div>
+
+      {/* Contextual usage preview */}
+      {showUsage && colorKey && <UsagePreview colorKey={colorKey} />}
 
       <AnimatePresence>
         {showPicker && (
@@ -778,11 +885,503 @@ const PaletteSection = ({ section, onSelectPalette }) => {
 };
 
 // ============================================
+// PALETTE COMPLEXITY SELECTOR
+// ============================================
+
+const COMPLEXITY_OPTIONS = [
+  {
+    value: 'simple',
+    label: 'Simple',
+    description: 'One core color + neutral foundation',
+  },
+  {
+    value: 'curated',
+    label: 'Curated',
+    description: 'Core + accent colors',
+  },
+  {
+    value: 'full',
+    label: 'Full',
+    description: 'Complete palette control',
+  },
+];
+
+const ComplexitySelector = ({ value, onChange }) => (
+  <div
+    className="px-3 py-2.5 space-y-2"
+    style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
+  >
+    <div className="flex items-center justify-between">
+      <span
+        className="text-10 font-medium"
+        style={{ color: "var(--sidebar-text-secondary)" }}
+      >
+        Palette Complexity
+      </span>
+      <Tooltip
+        content="Controls how many colors are extracted from the palette"
+        position="left"
+      >
+        <Info
+          size={10}
+          style={{ color: "var(--sidebar-text-muted)", cursor: "help" }}
+        />
+      </Tooltip>
+    </div>
+    <div className="grid grid-cols-3 gap-1">
+      {COMPLEXITY_OPTIONS.map((option) => {
+        const isActive = value === option.value;
+        return (
+          <Tooltip key={option.value} content={option.description} position="bottom">
+            <motion.button
+              onClick={() => onChange(option.value)}
+              className="flex flex-col items-center gap-0.5 p-2 rounded-md transition-fast"
+              style={{
+                background: isActive ? "var(--accent-muted)" : "var(--sidebar-bg)",
+                border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
+              }}
+              whileHover={{ borderColor: isActive ? "var(--accent)" : "var(--sidebar-border-hover)" }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {/* Visual indicator */}
+              <div className="flex gap-0.5">
+                {option.value === 'simple' && (
+                  <>
+                    <div className="w-3 h-3 rounded-full" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)" }} />
+                    <div className="w-3 h-3 rounded-full" style={{ background: "var(--sidebar-bg-active)" }} />
+                  </>
+                )}
+                {option.value === 'curated' && (
+                  <>
+                    <div className="w-2.5 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)" }} />
+                    <div className="w-2.5 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)", opacity: 0.6 }} />
+                    <div className="w-2.5 h-3 rounded-sm" style={{ background: "var(--sidebar-bg-active)" }} />
+                  </>
+                )}
+                {option.value === 'full' && (
+                  <>
+                    <div className="w-2 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)" }} />
+                    <div className="w-2 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)", opacity: 0.8 }} />
+                    <div className="w-2 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)", opacity: 0.6 }} />
+                    <div className="w-2 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)", opacity: 0.4 }} />
+                  </>
+                )}
+              </div>
+              <span
+                className="text-[9px] font-medium"
+                style={{ color: isActive ? "var(--accent)" : "var(--sidebar-text-secondary)" }}
+              >
+                {option.label}
+              </span>
+            </motion.button>
+          </Tooltip>
+        );
+      })}
+    </div>
+  </div>
+);
+
+// ============================================
+// PALETTE CUSTOMIZER - Subtract & Role Assignment modes
+// ============================================
+
+const ROLE_CONFIG = [
+  { key: 'primary', label: 'Primary', description: 'Core brand color', icon: Sparkles },
+  { key: 'accent', label: 'Accent', description: 'Supporting emphasis', icon: Droplet },
+  { key: 'bg', label: 'Background', description: 'Page backgrounds', icon: Layers },
+  { key: 'text', label: 'Text', description: 'Body copy', icon: Type },
+  { key: 'surface', label: 'Surface', description: 'Cards & panels', icon: Box },
+];
+
+const PaletteCustomizer = ({
+  palette,
+  mode,
+  onModeChange,
+  // Subtract mode props
+  includedColors,
+  onToggleColor,
+  // Role assignment props
+  roleAssignments,
+  selectedRole,
+  onSelectRole,
+  onAssignColor,
+  onClearRole,
+  // Common props
+  onApply,
+  onClear,
+}) => {
+  if (!palette) return null;
+
+  const includedCount = includedColors.filter(Boolean).length;
+  const assignedCount = Object.values(roleAssignments).filter(Boolean).length;
+
+  return (
+    <div
+      className="px-3 py-2.5 space-y-2"
+      style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="text-10 font-medium"
+            style={{ color: "var(--sidebar-text)" }}
+          >
+            {palette.name}
+          </span>
+        </div>
+        <button
+          onClick={onClear}
+          className="p-1 rounded transition-fast"
+          style={{ color: "var(--sidebar-text-muted)" }}
+          onMouseEnter={(e) => e.currentTarget.style.color = "var(--sidebar-text)"}
+          onMouseLeave={(e) => e.currentTarget.style.color = "var(--sidebar-text-muted)"}
+        >
+          <X size={12} />
+        </button>
+      </div>
+
+      {/* Mode Toggle */}
+      <div
+        className="flex rounded-md overflow-hidden"
+        style={{
+          background: "var(--sidebar-bg)",
+          border: "1px solid var(--sidebar-border)",
+        }}
+      >
+        <button
+          onClick={() => onModeChange('subtract')}
+          className="flex-1 h-7 text-[9px] font-medium transition-fast flex items-center justify-center gap-1"
+          style={{
+            background: mode === 'subtract' ? "var(--accent-muted)" : "transparent",
+            color: mode === 'subtract' ? "var(--accent)" : "var(--sidebar-text-secondary)",
+          }}
+        >
+          <Minus size={10} />
+          Subtract
+        </button>
+        <button
+          onClick={() => onModeChange('assign')}
+          className="flex-1 h-7 text-[9px] font-medium transition-fast flex items-center justify-center gap-1"
+          style={{
+            background: mode === 'assign' ? "var(--accent-muted)" : "transparent",
+            color: mode === 'assign' ? "var(--accent)" : "var(--sidebar-text-secondary)",
+          }}
+        >
+          <Sliders size={10} />
+          Assign Roles
+        </button>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {mode === 'subtract' ? (
+          <motion.div
+            key="subtract"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="space-y-2"
+          >
+            {/* Color grid with toggles */}
+            <div className="grid grid-cols-6 gap-1.5">
+              {palette.colors.map((color, index) => {
+                const isIncluded = includedColors[index];
+                return (
+                  <motion.button
+                    key={`${color}-${index}`}
+                    onClick={() => onToggleColor(index)}
+                    className="relative aspect-square rounded-md transition-fast"
+                    style={{
+                      background: color,
+                      boxShadow: isIncluded
+                        ? "inset 0 0 0 2px var(--accent), 0 0 0 1px rgba(0,0,0,0.1)"
+                        : "inset 0 0 0 1px rgba(0,0,0,0.1)",
+                      opacity: isIncluded ? 1 : 0.4,
+                    }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {!isIncluded && (
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ color: "rgba(0,0,0,0.5)" }}>
+                        <X size={10} />
+                      </div>
+                    )}
+                    {isIncluded && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -top-1 -right-1 w-3 h-3 rounded-full flex items-center justify-center"
+                        style={{ background: "var(--accent)", boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }}
+                      >
+                        <Check size={8} style={{ color: "white" }} />
+                      </motion.div>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+            <p className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
+              Click colors to include/exclude
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="assign"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="space-y-2"
+          >
+            {/* Available Colors */}
+            <div>
+              <p className="text-[9px] mb-1.5" style={{ color: "var(--sidebar-text-muted)" }}>
+                Available Colors
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {palette.colors.map((color, index) => {
+                  // Check if this color is already assigned
+                  const assignedTo = Object.entries(roleAssignments).find(([_, c]) => c === color)?.[0];
+                  const isAssigned = !!assignedTo;
+
+                  return (
+                    <motion.button
+                      key={`avail-${color}-${index}`}
+                      onClick={() => !isAssigned && selectedRole && onAssignColor(color)}
+                      className="w-6 h-6 rounded-md transition-fast relative"
+                      style={{
+                        background: color,
+                        boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)",
+                        opacity: isAssigned ? 0.3 : 1,
+                        cursor: isAssigned ? "not-allowed" : selectedRole ? "pointer" : "default",
+                        outline: !isAssigned && selectedRole ? "2px dashed var(--accent)" : "none",
+                        outlineOffset: "2px",
+                      }}
+                      whileHover={!isAssigned && selectedRole ? { scale: 1.15 } : {}}
+                      whileTap={!isAssigned && selectedRole ? { scale: 0.95 } : {}}
+                    >
+                      {isAssigned && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Check size={10} style={{ color: "rgba(0,0,0,0.5)" }} />
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Role Slots */}
+            <div>
+              <p className="text-[9px] mb-1.5" style={{ color: "var(--sidebar-text-muted)" }}>
+                Assign to Roles {selectedRole && <span style={{ color: "var(--accent)" }}>• Select a color above</span>}
+              </p>
+              <div className="space-y-1">
+                {ROLE_CONFIG.map((role) => {
+                  const RoleIcon = role.icon;
+                  const assignedColor = roleAssignments[role.key];
+                  const isSelected = selectedRole === role.key;
+
+                  return (
+                    <motion.div
+                      key={role.key}
+                      className="flex items-center gap-2 p-1.5 rounded-md transition-fast"
+                      style={{
+                        background: isSelected ? "var(--accent-muted)" : "var(--sidebar-bg)",
+                        border: `1px solid ${isSelected ? "var(--accent)" : "var(--sidebar-border)"}`,
+                      }}
+                    >
+                      <button
+                        onClick={() => onSelectRole(isSelected ? null : role.key)}
+                        className="flex items-center gap-2 flex-1"
+                      >
+                        <RoleIcon
+                          size={12}
+                          style={{ color: isSelected ? "var(--accent)" : "var(--sidebar-text-muted)" }}
+                        />
+                        <span
+                          className="text-[10px] font-medium"
+                          style={{ color: isSelected ? "var(--accent)" : "var(--sidebar-text)" }}
+                        >
+                          {role.label}
+                        </span>
+                      </button>
+
+                      {/* Color slot */}
+                      <div className="flex items-center gap-1">
+                        {assignedColor ? (
+                          <>
+                            <div
+                              className="w-5 h-5 rounded"
+                              style={{
+                                background: assignedColor,
+                                boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)",
+                              }}
+                            />
+                            <button
+                              onClick={() => onClearRole(role.key)}
+                              className="p-0.5 rounded transition-fast"
+                              style={{ color: "var(--sidebar-text-muted)" }}
+                            >
+                              <X size={10} />
+                            </button>
+                          </>
+                        ) : (
+                          <div
+                            className="w-5 h-5 rounded border-2 border-dashed flex items-center justify-center"
+                            style={{
+                              borderColor: isSelected ? "var(--accent)" : "var(--sidebar-border)",
+                            }}
+                          >
+                            {isSelected && (
+                              <Plus size={10} style={{ color: "var(--accent)" }} />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Apply button */}
+      <motion.button
+        onClick={onApply}
+        disabled={mode === 'subtract' ? includedCount === 0 : assignedCount < 2}
+        className="w-full h-7 rounded-md text-10 font-medium transition-fast flex items-center justify-center gap-1.5"
+        style={{
+          background: (mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? "var(--accent)" : "var(--sidebar-bg-active)",
+          color: (mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? "white" : "var(--sidebar-text-muted)",
+          cursor: (mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? "pointer" : "not-allowed",
+        }}
+        whileHover={(mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? { scale: 1.02 } : {}}
+        whileTap={(mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? { scale: 0.98 } : {}}
+      >
+        <Check size={12} />
+        {mode === 'subtract' ? `Apply ${includedCount} colors` : `Apply ${assignedCount} assigned roles`}
+      </motion.button>
+    </div>
+  );
+};
+
+// ============================================
 // PALETTE BROWSER - Full browser section
 // ============================================
 
+const DEFAULT_ROLE_ASSIGNMENTS = {
+  primary: null,
+  accent: null,
+  bg: null,
+  text: null,
+  surface: null,
+};
+
 const PaletteBrowser = () => {
-  const { applyPalette } = useBrandStore();
+  const applyPalette = useBrandStore((s) => s.applyPalette);
+  const updateBrand = useBrandStore((s) => s.updateBrand);
+
+  // Complexity mode
+  const [complexity, setComplexity] = useState('full');
+
+  // Palette customizer state
+  const [selectedPalette, setSelectedPalette] = useState(null);
+  const [customizerMode, setCustomizerMode] = useState('subtract'); // 'subtract' | 'assign'
+
+  // Subtract mode state
+  const [includedColors, setIncludedColors] = useState([]);
+
+  // Role assignment state
+  const [roleAssignments, setRoleAssignments] = useState(DEFAULT_ROLE_ASSIGNMENTS);
+  const [selectedRole, setSelectedRole] = useState(null);
+
+  const handleSelectPalette = (paletteId) => {
+    const palette = getPaletteById(paletteId);
+    if (!palette) return;
+
+    // If complexity is 'full', show customizer UI; otherwise apply directly
+    if (complexity === 'full') {
+      setSelectedPalette(palette);
+      setIncludedColors(palette.colors.map(() => true));
+      setRoleAssignments(DEFAULT_ROLE_ASSIGNMENTS);
+      setSelectedRole(null);
+      setCustomizerMode('subtract');
+    } else {
+      applyPalette(paletteId, complexity);
+    }
+  };
+
+  // Subtract mode handlers
+  const handleToggleColor = (index) => {
+    setIncludedColors(prev => {
+      const next = [...prev];
+      next[index] = !next[index];
+      return next;
+    });
+  };
+
+  // Role assignment handlers
+  const handleAssignColor = (color) => {
+    if (!selectedRole) return;
+    setRoleAssignments(prev => ({
+      ...prev,
+      [selectedRole]: color,
+    }));
+    setSelectedRole(null); // Deselect after assignment
+  };
+
+  const handleClearRole = (roleKey) => {
+    setRoleAssignments(prev => ({
+      ...prev,
+      [roleKey]: null,
+    }));
+  };
+
+  // Apply handlers
+  const handleApply = () => {
+    if (!selectedPalette) return;
+
+    if (customizerMode === 'subtract') {
+      // Filter to only included colors and auto-map
+      const filteredColors = selectedPalette.colors.filter((_, i) => includedColors[i]);
+      if (filteredColors.length === 0) return;
+
+      const colorMapping = mapPaletteToBrand(filteredColors);
+      updateBrand({ colors: colorMapping }, true);
+    } else {
+      // Use manual role assignments
+      const assignments = roleAssignments;
+
+      // Build color mapping from assignments, filling in defaults
+      const colorMapping = {
+        primary: assignments.primary || '#000000',
+        accent: assignments.accent || assignments.primary || '#555555',
+        bg: assignments.bg || '#FAFAFA',
+        text: assignments.text || '#171717',
+        surface: assignments.surface || assignments.bg || '#F5F5F5',
+        surfaces: [
+          assignments.bg || '#FAFAFA',
+          assignments.surface || '#F5F5F5',
+          '#FFFFFF',
+        ].filter(Boolean),
+        paletteColors: selectedPalette.colors,
+      };
+
+      updateBrand({ colors: colorMapping }, true);
+    }
+
+    // Clear selection
+    handleClearSelection();
+  };
+
+  const handleClearSelection = () => {
+    setSelectedPalette(null);
+    setIncludedColors([]);
+    setRoleAssignments(DEFAULT_ROLE_ASSIGNMENTS);
+    setSelectedRole(null);
+  };
 
   return (
     <Section
@@ -792,15 +1391,39 @@ const PaletteBrowser = () => {
       badge={<Badge variant="accent">{TOTAL_PALETTE_COUNT}</Badge>}
       noPadding
     >
+      {/* Complexity Selector */}
+      <ComplexitySelector value={complexity} onChange={setComplexity} />
+
+      {/* Palette Customizer (when palette selected in full mode) */}
+      {selectedPalette && (
+        <PaletteCustomizer
+          palette={selectedPalette}
+          mode={customizerMode}
+          onModeChange={setCustomizerMode}
+          // Subtract mode props
+          includedColors={includedColors}
+          onToggleColor={handleToggleColor}
+          // Role assignment props
+          roleAssignments={roleAssignments}
+          selectedRole={selectedRole}
+          onSelectRole={setSelectedRole}
+          onAssignColor={handleAssignColor}
+          onClearRole={handleClearRole}
+          // Common props
+          onApply={handleApply}
+          onClear={handleClearSelection}
+        />
+      )}
+
+      {/* Palette Sections */}
       <div
         className="max-h-64 overflow-y-auto scrollbar-dark"
-        style={{ marginTop: "-4px" }}
       >
         {PALETTE_SECTIONS.map((section) => (
           <PaletteSection
             key={section.id}
             section={section}
-            onSelectPalette={applyPalette}
+            onSelectPalette={handleSelectPalette}
           />
         ))}
       </div>
@@ -954,7 +1577,12 @@ const LAYOUT_PRESETS_CONFIG = [
 ];
 
 const LayoutSelector = () => {
-  const { preset, setPreset, density, setDensity, debugMode, toggleDebug } = useLayoutStore();
+  const { preset, density, debugMode } = useLayoutStore(
+    useShallow((s) => ({ preset: s.preset, density: s.density, debugMode: s.debugMode }))
+  );
+  const setPreset = useLayoutStore((s) => s.setPreset);
+  const setDensity = useLayoutStore((s) => s.setDensity);
+  const toggleDebug = useLayoutStore((s) => s.toggleDebug);
 
   return (
     <div
@@ -1078,7 +1706,9 @@ const LayoutSelector = () => {
 // ============================================
 
 const GlobalControls = () => {
-  const { brand, updateBrand, loadPreset } = useBrandStore();
+  const brand = useBrandStore((s) => s.brand);
+  const updateBrand = useBrandStore((s) => s.updateBrand);
+  const loadPreset = useBrandStore((s) => s.loadPreset);
 
   const handleChange = (section, key, value, isCommit = false) => {
     updateBrand(
@@ -1235,7 +1865,7 @@ const GlobalControls = () => {
         />
       </Section>
 
-      {/* Colors */}
+      {/* Colors - Grouped by Role */}
       <Section
         title="Colors"
         icon={Droplet}
@@ -1247,61 +1877,87 @@ const GlobalControls = () => {
           )
         }
       >
-        <ColorSwatch
-          label="Background"
-          value={brand.colors.bg}
-          onChange={(e) => handleChange("colors", "bg", e.target.value, false)}
-          onBlur={() => handleChange("colors", "bg", brand.colors.bg, true)}
-          hint={ROLE_DESCRIPTIONS.bg}
-        />
+        {/* CORE - Primary brand identity */}
+        <ColorRoleGroup
+          title="Core"
+          description="Primary brand color for visual identity"
+          icon={Sparkles}
+        >
+          <ColorSwatch
+            label="Primary"
+            value={brand.colors.primary}
+            onChange={(e) =>
+              handleChange("colors", "primary", e.target.value, false)
+            }
+            onBlur={() =>
+              handleChange("colors", "primary", brand.colors.primary, true)
+            }
+            showContrast
+            contrastWith={brand.colors.bg}
+            colorKey="primary"
+            showUsage
+          />
+        </ColorRoleGroup>
 
-        <ColorSwatch
-          label="Text"
-          value={brand.colors.text}
-          onChange={(e) => handleChange("colors", "text", e.target.value, false)}
-          onBlur={() => handleChange("colors", "text", brand.colors.text, true)}
-          showContrast
-          contrastWith={brand.colors.bg}
-          hint={ROLE_DESCRIPTIONS.text}
-        />
+        {/* NEUTRAL - Structural foundation */}
+        <ColorRoleGroup
+          title="Neutral"
+          description="Structural foundation for layouts and content"
+          icon={Layers}
+        >
+          <ColorSwatch
+            label="Background"
+            value={brand.colors.bg}
+            onChange={(e) => handleChange("colors", "bg", e.target.value, false)}
+            onBlur={() => handleChange("colors", "bg", brand.colors.bg, true)}
+            colorKey="bg"
+            showUsage
+          />
 
-        <ColorSwatch
-          label="Primary"
-          value={brand.colors.primary}
-          onChange={(e) =>
-            handleChange("colors", "primary", e.target.value, false)
-          }
-          onBlur={() =>
-            handleChange("colors", "primary", brand.colors.primary, true)
-          }
-          showContrast
-          contrastWith={brand.colors.bg}
-          hint={ROLE_DESCRIPTIONS.primary}
-        />
+          <ColorSwatch
+            label="Text"
+            value={brand.colors.text}
+            onChange={(e) => handleChange("colors", "text", e.target.value, false)}
+            onBlur={() => handleChange("colors", "text", brand.colors.text, true)}
+            showContrast
+            contrastWith={brand.colors.bg}
+            colorKey="text"
+            showUsage
+          />
 
-        <ColorSwatch
-          label="Accent"
-          value={brand.colors.accent}
-          onChange={(e) =>
-            handleChange("colors", "accent", e.target.value, false)
-          }
-          onBlur={() =>
-            handleChange("colors", "accent", brand.colors.accent, true)
-          }
-          hint={ROLE_DESCRIPTIONS.accent}
-        />
+          <ColorSwatch
+            label="Surface"
+            value={brand.colors.surface}
+            onChange={(e) =>
+              handleChange("colors", "surface", e.target.value, false)
+            }
+            onBlur={() =>
+              handleChange("colors", "surface", brand.colors.surface, true)
+            }
+            colorKey="surface"
+            showUsage
+          />
+        </ColorRoleGroup>
 
-        <ColorSwatch
-          label="Surface"
-          value={brand.colors.surface}
-          onChange={(e) =>
-            handleChange("colors", "surface", e.target.value, false)
-          }
-          onBlur={() =>
-            handleChange("colors", "surface", brand.colors.surface, true)
-          }
-          hint={ROLE_DESCRIPTIONS.surface}
-        />
+        {/* ACCENT - Supporting emphasis */}
+        <ColorRoleGroup
+          title="Accent"
+          description="Supporting color for emphasis and differentiation"
+          icon={Droplet}
+        >
+          <ColorSwatch
+            label="Accent"
+            value={brand.colors.accent}
+            onChange={(e) =>
+              handleChange("colors", "accent", e.target.value, false)
+            }
+            onBlur={() =>
+              handleChange("colors", "accent", brand.colors.accent, true)
+            }
+            colorKey="accent"
+            showUsage
+          />
+        </ColorRoleGroup>
       </Section>
 
       {/* Logo */}
@@ -1371,11 +2027,26 @@ const GlobalControls = () => {
 // TILE CONTROLS
 // ============================================
 
-const TileControls = ({ tile }) => {
-  const { updateTile, setFocusedTile, swapTileType } = useBrandStore();
+const TileControls = ({ tile, placementId }) => {
+  const updateTile = useBrandStore((s) => s.updateTile);
+  const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const surfaces = useBrandStore((s) => s.brand.colors.surfaces);
+  const bg = useBrandStore((s) => s.brand.colors.bg);
+  const tileSurfaces = useBrandStore((s) => s.tileSurfaces);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
+
+  // Get current surface index for this placement
+  const currentSurfaceIndex = tileSurfaces[placementId];
 
   const handleChange = (key, value) => {
-    updateTile(tile.id, { [key]: value });
+    if (tile) {
+      updateTile(tile.id, { [key]: value });
+    }
+  };
+
+  const handleSurfaceChange = (index) => {
+    setTileSurface(placementId, index);
   };
 
   const tileTypes = [
@@ -1388,7 +2059,17 @@ const TileControls = ({ tile }) => {
     { value: "logo", label: "Logo", icon: Sparkles },
   ];
 
-  const currentType = tileTypes.find((t) => t.value === tile.type);
+  // Get tile type from placement ID mapping (fallback for when tile object is undefined)
+  const tileTypeFromPlacement = {
+    'hero': 'hero', 'a': 'hero',
+    'editorial': 'editorial', 'b': 'editorial',
+    'buttons': 'ui-preview', 'c': 'ui-preview',
+    'image': 'image', 'd': 'image',
+    'logo': 'logo', 'e': 'logo',
+    'colors': 'utility', 'f': 'utility',
+  };
+  const currentTileType = tile?.type || tileTypeFromPlacement[placementId] || 'hero';
+  const currentType = tileTypes.find((t) => t.value === currentTileType);
   const CurrentIcon = currentType?.icon || Layers;
 
   return (
@@ -1409,10 +2090,10 @@ const TileControls = ({ tile }) => {
             className="text-12 font-medium capitalize"
             style={{ color: "var(--sidebar-text)" }}
           >
-            {tile.type.replace("-", " ")} Tile
+            {currentTileType.replace("-", " ")} Tile
           </h2>
           <p className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
-            Edit content
+            Edit surface color
           </p>
         </div>
         <motion.button
@@ -1430,35 +2111,113 @@ const TileControls = ({ tile }) => {
         </motion.button>
       </div>
 
-      {/* Tile type */}
-      <Section title="Type" icon={LayoutGrid} defaultOpen={false}>
-        <div className="grid grid-cols-4 gap-1">
-          {tileTypes.map((type) => {
-            const TypeIcon = type.icon;
-            const isSelected = tile.type === type.value;
+      {/* Tile type - only show if tile exists */}
+      {tile && (
+        <Section title="Type" icon={LayoutGrid} defaultOpen={false}>
+          <div className="grid grid-cols-4 gap-1">
+            {tileTypes.map((type) => {
+              const TypeIcon = type.icon;
+              const isSelected = tile.type === type.value;
 
+              return (
+                <button
+                  key={type.value}
+                  onClick={() => swapTileType(tile.id, type.value)}
+                  className="flex flex-col items-center gap-1 p-2 rounded-md transition-fast"
+                  style={{
+                    background: isSelected
+                      ? "var(--accent-muted)"
+                      : "var(--sidebar-bg)",
+                    border: `1px solid ${isSelected ? "var(--accent)" : "var(--sidebar-border)"}`,
+                    color: isSelected ? "var(--accent)" : "var(--sidebar-text-secondary)",
+                  }}
+                >
+                  <TypeIcon size={14} />
+                  <span className="text-[9px]">{type.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+      )}
+
+      {/* Surface Color */}
+      <Section title="Surface" icon={Palette} defaultOpen={true}>
+        <div className="grid grid-cols-4 gap-1.5">
+          {/* Auto option - uses default assignment */}
+          <button
+            onClick={() => handleSurfaceChange(undefined)}
+            className="flex flex-col items-center gap-1 p-2 rounded-md transition-fast"
+            style={{
+              background: currentSurfaceIndex === undefined
+                ? "var(--accent-muted)"
+                : "var(--sidebar-bg)",
+              border: `1px solid ${currentSurfaceIndex === undefined ? "var(--accent)" : "var(--sidebar-border)"}`,
+            }}
+          >
+            <div
+              className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-medium"
+              style={{
+                background: `linear-gradient(135deg, ${surfaces?.[0] || bg} 50%, ${surfaces?.[1] || bg} 50%)`,
+                color: "var(--sidebar-text-muted)",
+              }}
+            >
+              A
+            </div>
+            <span
+              className="text-[9px]"
+              style={{
+                color: currentSurfaceIndex === undefined
+                  ? "var(--accent)"
+                  : "var(--sidebar-text-secondary)",
+              }}
+            >
+              Auto
+            </span>
+          </button>
+
+          {/* Surface options */}
+          {(surfaces || []).slice(0, 7).map((surface, index) => {
+            const isSelected = currentSurfaceIndex === index;
             return (
               <button
-                key={type.value}
-                onClick={() => swapTileType(tile.id, type.value)}
+                key={index}
+                onClick={() => handleSurfaceChange(index)}
                 className="flex flex-col items-center gap-1 p-2 rounded-md transition-fast"
                 style={{
                   background: isSelected
                     ? "var(--accent-muted)"
                     : "var(--sidebar-bg)",
                   border: `1px solid ${isSelected ? "var(--accent)" : "var(--sidebar-border)"}`,
-                  color: isSelected ? "var(--accent)" : "var(--sidebar-text-secondary)",
                 }}
               >
-                <TypeIcon size={14} />
-                <span className="text-[9px]">{type.label}</span>
+                <div
+                  className="w-6 h-6 rounded-md"
+                  style={{
+                    backgroundColor: surface,
+                    border: surface === "#FFFFFF" || surface === "#FAFAFA"
+                      ? "1px solid var(--sidebar-border)"
+                      : "none",
+                  }}
+                />
+                <span
+                  className="text-[9px]"
+                  style={{
+                    color: isSelected
+                      ? "var(--accent)"
+                      : "var(--sidebar-text-secondary)",
+                  }}
+                >
+                  {index + 1}
+                </span>
               </button>
             );
           })}
         </div>
       </Section>
 
-      {/* Content */}
+      {/* Content - only show if tile exists */}
+      {tile && (
       <Section title="Content" icon={FileText}>
         {tile.content.headline !== undefined && (
           <PropRow label="Headline">
@@ -1617,6 +2376,7 @@ const TileControls = ({ tile }) => {
           </PropRow>
         )}
       </Section>
+      )}
 
       {/* Footer note */}
       <div
@@ -1625,7 +2385,7 @@ const TileControls = ({ tile }) => {
       >
         <Palette size={12} style={{ color: "var(--sidebar-text-muted)" }} />
         <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
-          Styles controlled by brand settings
+          Surface colors from brand palette
         </span>
       </div>
     </>
@@ -1637,8 +2397,15 @@ const TileControls = ({ tile }) => {
 // ============================================
 
 const ControlPanel = () => {
-  const { focusedTileId, tiles, undo, redo, history, setFocusedTile } = useBrandStore();
-  const focusedTile = tiles.find((t) => t.id === focusedTileId);
+  // Selective subscriptions - only re-render when these specific values change
+  const focusedTileId = useBrandStore((s) => s.focusedTileId);
+  const history = useBrandStore((s) => s.history);
+  const focusedTile = useBrandStore(selectFocusedTile);
+
+  // Actions don't change, so select them individually (stable references)
+  const undo = useBrandStore((s) => s.undo);
+  const redo = useBrandStore((s) => s.redo);
+  const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -1740,7 +2507,7 @@ const ControlPanel = () => {
               className="text-11 font-medium"
               style={{ color: "var(--sidebar-text)" }}
             >
-              {focusedTile ? "Tile Properties" : "Design"}
+              {focusedTileId ? "Tile Properties" : "Design"}
             </span>
             <div className="flex items-center gap-1">
               <span
@@ -1758,7 +2525,7 @@ const ControlPanel = () => {
           {/* Panel content */}
           <div className="flex-1 overflow-y-auto scrollbar-dark">
             <AnimatePresence mode="wait">
-              {focusedTile ? (
+              {focusedTileId ? (
                 <motion.div
                   key="tile"
                   initial={{ opacity: 0, x: 10 }}
@@ -1766,7 +2533,7 @@ const ControlPanel = () => {
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <TileControls tile={focusedTile} />
+                  <TileControls tile={focusedTile} placementId={focusedTileId} />
                 </motion.div>
               ) : (
                 <motion.div

@@ -1,155 +1,339 @@
+/**
+ * Brand Store - Central State Management for Brand Bento
+ *
+ * This Zustand store manages all brand-related state for the application,
+ * including typography, colors, logo, imagery, and tile content. It provides
+ * a single source of truth that all components subscribe to for reactive updates.
+ *
+ * ## Architecture
+ *
+ * The store uses Zustand with the `persist` middleware for localStorage
+ * persistence, ensuring brand state survives page refreshes. State is
+ * partitioned so only essential data (brand, tiles, theme) is persisted.
+ *
+ * ## History Management (Undo/Redo)
+ *
+ * Implements a manual history stack pattern:
+ * - `past`: Array of previous states (for undo)
+ * - `future`: Array of undone states (for redo)
+ *
+ * Actions that modify brand/tiles can optionally push to history via
+ * the `isCommit` parameter (default: true). Use `isCommit: false` for
+ * live previews that shouldn't create undo points.
+ *
+ * ## Usage
+ *
+ * @example
+ * // Subscribe to specific state slices (recommended for performance)
+ * const colors = useBrandStore((state) => state.brand.colors);
+ * const updateBrand = useBrandStore((state) => state.updateBrand);
+ *
+ * // Update with history tracking (creates undo point)
+ * updateBrand({ typography: { ...typography, primary: 'Roboto' } });
+ *
+ * // Update without history (for live previews)
+ * updateBrand({ typography: { ...typography, primary: 'Roboto' } }, false);
+ *
+ * @module store/useBrandStore
+ */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { getPaletteById } from "../data/colorPalettes";
 import { mapPaletteToBrand } from "../utils/colorMapping";
+import { DEFAULT_BRAND, BRAND_PRESETS } from "../data/brandPresets";
+import { INITIAL_TILES, DEFAULT_TILE_CONTENT } from "../data/tileDefaults";
 
 // ============================================
 // TYPE DEFINITIONS
 // ============================================
 
+/**
+ * Typography configuration for the brand.
+ * Defines font families, sizing scale, and text styling preferences.
+ */
 export interface Typography {
+  /** Primary font family for headlines and emphasis (e.g., "Playfair Display") */
   primary: string;
+  /** Secondary font family for body text (e.g., "Inter") */
   secondary: string;
+  /** UI font family for buttons, labels, inputs (e.g., "Inter") */
   ui: string;
+  /** Type scale ratio for heading sizes (e.g., 1.25 = Major Third) */
   scale: number;
+  /** Base font size in pixels (typically 16) */
   baseSize: number;
+  /** Font weight for headlines (e.g., "700", "bold") */
   weightHeadline: string;
+  /** Font weight for body text (e.g., "400", "normal") */
   weightBody: string;
+  /** Letter spacing preference for overall brand feel */
   letterSpacing: "tight" | "normal" | "wide";
 }
 
+/**
+ * Semantic color roles for the brand.
+ * Maps extracted palette colors to functional design roles following
+ * the 60-30-10 color rule for balanced visual hierarchy.
+ */
 export interface Colors {
+  /** Background color (60% usage) - page/canvas background */
   bg: string;
+  /** Text color - primary body text, ensures WCAG contrast with bg */
   text: string;
+  /** Primary brand color (10% usage) - CTAs, links, key accents */
   primary: string;
+  /** Accent color - secondary emphasis, complementary to primary */
   accent: string;
+  /** Default surface color (30% usage) - cards, tiles, containers */
   surface: string;
+  /** Array of surface color variations for moodboard variety */
   surfaces: string[];
+  /** Original extracted palette colors before semantic mapping */
   paletteColors: string[];
 }
 
+/**
+ * Logo display configuration.
+ * Controls how the brand mark/wordmark appears in the identity tile.
+ */
 export interface Logo {
+  /** Logo text/wordmark (e.g., "BENTO", "LUXE") */
   text: string;
+  /** Padding around logo in pixels */
   padding: number;
+  /** Font size for text-based logos in pixels */
   size: number;
 }
 
+/**
+ * Hero imagery configuration.
+ * Defines the featured image and any treatments applied to it.
+ */
 export interface Imagery {
+  /** Image URL (can be external URL or data URI) */
   url: string;
+  /** Visual treatment applied to the image */
   style: "default" | "grayscale" | "tint";
+  /** Overlay opacity percentage (0-100) */
   overlay: number;
 }
 
+/**
+ * Complete brand configuration.
+ * Aggregates all brand elements that define the visual identity.
+ */
 export interface Brand {
+  /** Typography settings (fonts, scale, weights) */
   typography: Typography;
+  /** Color palette with semantic roles */
   colors: Colors;
+  /** Logo/wordmark configuration */
   logo: Logo;
+  /** Hero imagery settings */
   imagery: Imagery;
 }
 
+/**
+ * Content fields available for tiles.
+ * Different tile types use different subsets of these fields.
+ * All fields are optional to support flexible tile configurations.
+ */
 export interface TileContent {
+  /** Main headline text (hero, editorial tiles) */
   headline?: string;
+  /** Supporting text below headline (hero tiles) */
   subcopy?: string;
+  /** Body copy text (editorial tiles) */
   body?: string;
+  /** Call-to-action button text (hero tiles) */
   cta?: string;
+  /** Short label text (product, logo tiles) */
   label?: string;
+  /** Price display (product tiles) */
   price?: string;
+  /** Image URL for tile background/content */
   image?: string;
+  /** Text overlay on images (image tiles) */
   overlayText?: string;
+  /** List items (utility tiles with bullet points) */
   items?: string[];
+  /** Header/title for UI preview tiles */
   headerTitle?: string;
+  /** Button label in UI preview tiles */
   buttonLabel?: string;
+  /** Placeholder text for input fields in UI preview */
   inputPlaceholder?: string;
 }
 
+/**
+ * Individual tile configuration within the bento grid.
+ * Tiles are the building blocks of the brand moodboard.
+ */
 export interface Tile {
+  /** Unique identifier for the tile */
   id: string;
+  /** Tile type determining render component (hero, editorial, product, etc.) */
   type: string;
+  /** Content fields specific to this tile */
   content: TileContent;
+  /** Number of grid columns this tile spans */
   colSpan: number;
+  /** Number of grid rows this tile spans */
   rowSpan: number;
+  /** Index into brand.colors.surfaces array for tile background */
+  surfaceIndex?: number;
 }
 
+/**
+ * Snapshot of state for history tracking.
+ * Captures both brand and tiles for complete undo/redo.
+ */
 export interface HistoryState {
+  /** Brand configuration at this point in history */
   brand: Brand;
+  /** Tile configurations at this point in history */
   tiles: Tile[];
 }
 
+/**
+ * History stack for undo/redo functionality.
+ * Uses a dual-stack pattern for bidirectional navigation.
+ */
 export interface History {
+  /** Stack of previous states (most recent at end) */
   past: HistoryState[];
+  /** Stack of undone states (for redo, most recent at start) */
   future: HistoryState[];
 }
 
+/**
+ * Maximum number of history entries to keep.
+ * Prevents unbounded memory growth from undo/redo operations.
+ */
+const MAX_HISTORY = 50;
+
+/**
+ * Helper to push a new state to history while respecting MAX_HISTORY limit.
+ */
+const pushToHistory = (
+  currentPast: HistoryState[],
+  newEntry: HistoryState
+): HistoryState[] => [...currentPast, newEntry].slice(-MAX_HISTORY);
+
+/**
+ * Temporary font preview state.
+ * Used for hover-preview of fonts before committing selection.
+ */
 export interface FontPreview {
+  /** Font family name being previewed */
   font: string;
+  /** Which typography slot to preview in (primary or secondary) */
   target: "primary" | "secondary";
 }
 
+/**
+ * Complete store interface with state and actions.
+ *
+ * ## State Properties
+ * - `brand`: Current brand configuration (typography, colors, logo, imagery)
+ * - `tiles`: Array of tile configurations for the bento grid
+ * - `focusedTileId`: Currently selected tile for editing (null if none)
+ * - `fontPreview`: Temporary font being previewed on hover
+ * - `theme`: User's theme preference (light/dark/system)
+ * - `resolvedTheme`: Computed theme after applying system preference
+ * - `history`: Undo/redo state stacks
+ * - `tileSurfaces`: Per-tile surface color overrides
+ *
+ * ## Actions
+ * Actions are methods that modify state. Most accept an optional `isCommit`
+ * parameter to control whether the change creates an undo point.
+ */
 export interface BrandStore {
-  brand: Brand;
-  tiles: Tile[];
-  focusedTileId: string | null;
-  darkModePreview: boolean;
-  fontPreview: FontPreview | null;
-  theme: "light" | "dark" | "system";
-  resolvedTheme: "light" | "dark";
-  history: History;
+  // ─────────────────────────────────────────────────────────────────
+  // State
+  // ─────────────────────────────────────────────────────────────────
 
-  // Actions
+  /** Current brand configuration */
+  brand: Brand;
+  /** Array of tile configurations in the bento grid */
+  tiles: Tile[];
+  /** ID of the currently focused/selected tile (null if none) */
+  focusedTileId: string | null;
+  /** @deprecated Legacy dark mode preview toggle - use theme instead */
+  darkModePreview: boolean;
+  /** Temporary font preview state for hover effects */
+  fontPreview: FontPreview | null;
+  /** User's theme preference */
+  theme: "light" | "dark" | "system";
+  /** Computed theme after resolving "system" preference */
+  resolvedTheme: "light" | "dark";
+  /** Undo/redo history stacks */
+  history: History;
+  /** Surface index overrides by placement ID (e.g., 'a', 'b', 'hero') */
+  tileSurfaces: Record<string, number | undefined>;
+
+  // ─────────────────────────────────────────────────────────────────
+  // UI State Actions
+  // ─────────────────────────────────────────────────────────────────
+
+  /** Sets the currently focused tile for editing */
   setFocusedTile: (id: string | null) => void;
+  /** @deprecated Use setTheme instead */
   toggleDarkMode: () => void;
+  /** Sets temporary font preview for hover effects */
   setFontPreview: (font: string | null, target?: "primary" | "secondary") => void;
+  /** Sets the user's theme preference */
   setTheme: (theme: "light" | "dark" | "system") => void;
+  /** Sets resolved theme (called by useTheme when system preference changes) */
   setResolvedTheme: (resolved: "light" | "dark") => void;
+
+  // ─────────────────────────────────────────────────────────────────
+  // Template & Preset Actions
+  // ─────────────────────────────────────────────────────────────────
+
+  /** Loads a random starter template (clears history) */
   loadRandomTemplate: () => void;
+  /** Loads a named brand preset (typography + colors only) */
   loadPreset: (presetName: string) => void;
-  applyPalette: (paletteId: string) => void;
+  /** Applies a color palette, mapping to semantic roles */
+  applyPalette: (paletteId: string, complexity?: 'simple' | 'curated' | 'full') => void;
+
+  // ─────────────────────────────────────────────────────────────────
+  // Tile Actions
+  // ─────────────────────────────────────────────────────────────────
+
+  /** Changes a tile's type and resets its content to defaults */
   swapTileType: (tileId: string, newType: string) => void;
-  updateBrand: (newBrand: Partial<Brand>, isCommit?: boolean) => void;
+  /** Updates tile content (isCommit=true creates undo point) */
   updateTile: (tileId: string, newContent: Partial<TileContent>, isCommit?: boolean) => void;
+  /** Sets the surface color index for a specific tile placement */
+  setTileSurface: (placementId: string, surfaceIndex: number | undefined) => void;
+
+  // ─────────────────────────────────────────────────────────────────
+  // Brand Actions
+  // ─────────────────────────────────────────────────────────────────
+
+  /** Updates brand configuration (isCommit=true creates undo point) */
+  updateBrand: (newBrand: Partial<Brand>, isCommit?: boolean) => void;
+  /** Resets brand and tiles to default values */
   resetToDefaults: () => void;
+
+  // ─────────────────────────────────────────────────────────────────
+  // History Actions
+  // ─────────────────────────────────────────────────────────────────
+
+  /** Restores previous state from history (no-op if past is empty) */
   undo: () => void;
+  /** Restores next state from future stack (no-op if future is empty) */
   redo: () => void;
 }
 
 // ============================================
-// DEFAULT VALUES
+// LOCAL PRESETS (extends imported BRAND_PRESETS)
 // ============================================
 
-const DEFAULT_BRAND: Brand = {
-  typography: {
-    primary: "Inter",
-    secondary: "Plus Jakarta Sans",
-    ui: "Inter",
-    scale: 1.25,
-    baseSize: 16,
-    weightHeadline: "700",
-    weightBody: "400",
-    letterSpacing: "normal",
-  },
-  colors: {
-    bg: "#FFFFFF",
-    text: "#171717",
-    primary: "#000000",
-    accent: "#555555",
-    surface: "#F5F5F5",
-    surfaces: ["#FFFFFF", "#F5F5F5", "#FAFAFA", "#F0F0F0"],
-    paletteColors: [],
-  },
-  logo: {
-    text: "BENTO",
-    padding: 16,
-    size: 24,
-  },
-  imagery: {
-    url: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000&auto=format&fit=crop",
-    style: "default",
-    overlay: 0,
-  },
-};
-
-// Brand Presets
-const BRAND_PRESETS: Record<string, Brand> = {
+// Additional preset configurations
+const LOCAL_BRAND_PRESETS: Record<string, Brand> = {
   default: DEFAULT_BRAND,
   techStartup: {
     typography: {
@@ -747,12 +931,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
 // HELPER FUNCTIONS
 // ============================================
 
+/**
+ * HSL color representation.
+ * Used internally for color harmony calculations.
+ */
 interface HSL {
+  /** Hue (0-360 degrees) */
   h: number;
+  /** Saturation (0-100 percent) */
   s: number;
+  /** Lightness (0-100 percent) */
   l: number;
 }
 
+/**
+ * Converts a hex color string to HSL values.
+ * Supports both 3-char (#RGB) and 6-char (#RRGGBB) hex formats.
+ * @param hex - Hex color string (with or without # prefix)
+ * @returns HSL object with h (0-360), s (0-100), l (0-100)
+ */
 const hexToHSL = (hex: string): HSL => {
   let rHex: string, gHex: string, bHex: string;
 
@@ -801,6 +998,13 @@ const hexToHSL = (hex: string): HSL => {
   return { h: h * 360, s: s * 100, l: l * 100 };
 };
 
+/**
+ * Converts HSL values to a hex color string.
+ * @param h - Hue (0-360 degrees)
+ * @param s - Saturation (0-100 percent)
+ * @param l - Lightness (0-100 percent)
+ * @returns Hex color string with # prefix
+ */
 const hslToHex = (h: number, s: number, l: number): string => {
   s /= 100;
   l /= 100;
@@ -832,6 +1036,19 @@ const hslToHex = (h: number, s: number, l: number): string => {
   return "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
 };
 
+/**
+ * Generates color harmony variations from a base color.
+ * Useful for creating cohesive color palettes.
+ *
+ * @param baseColor - Starting hex color
+ * @returns Object with analogous (±30°), complementary (+180°), and triadic (+120°, +240°) colors
+ *
+ * @example
+ * const harmony = getColorHarmony('#3B82F6');
+ * // harmony.analogous = ['#823BF6', '#3BF6F6']
+ * // harmony.complementary = '#F6823B'
+ * // harmony.triadic = ['#82F63B', '#F63B82']
+ */
 export const getColorHarmony = (baseColor: string) => {
   const hsl = hexToHSL(baseColor);
   return {
@@ -847,6 +1064,18 @@ export const getColorHarmony = (baseColor: string) => {
   };
 };
 
+/**
+ * Calculates WCAG contrast ratio between two colors.
+ * Uses relative luminance formula per WCAG 2.1 specification.
+ *
+ * @param color1 - First hex color
+ * @param color2 - Second hex color
+ * @returns Contrast ratio (1-21). AA requires 4.5:1 for text, 3:1 for large text.
+ *
+ * @example
+ * const ratio = getContrastRatio('#FFFFFF', '#000000'); // 21
+ * const isAACompliant = ratio >= 4.5;
+ */
 export const getContrastRatio = (color1: string, color2: string): number => {
   const getLuminance = (hex: string): number => {
     let rHex: string, gHex: string, bHex: string;
@@ -892,6 +1121,21 @@ export const getContrastRatio = (color1: string, color2: string): number => {
 // EXPORT FUNCTIONS
 // ============================================
 
+/**
+ * Exports brand configuration as CSS custom properties.
+ * Generates a :root block with design tokens for typography, colors, and logo.
+ *
+ * @param brand - Brand configuration to export (null returns empty placeholder)
+ * @returns CSS string with custom properties
+ *
+ * @example
+ * const css = exportAsCSS(brand);
+ * // :root {
+ * //   --font-primary: Inter;
+ * //   --color-primary: #3B82F6;
+ * //   ...
+ * // }
+ */
 export const exportAsCSS = (brand: Brand | null): string => {
   if (!brand) return ":root { /* No brand data */ }";
 
@@ -928,15 +1172,22 @@ export const exportAsCSS = (brand: Brand | null): string => {
 }`;
 };
 
+/**
+ * Exports brand configuration as formatted JSON.
+ * Useful for saving brand settings or importing into other tools.
+ *
+ * @param brand - Brand configuration to export (null returns empty object)
+ * @returns Pretty-printed JSON string (2-space indent)
+ */
 export const exportAsJSON = (brand: Brand | null): string => {
   return JSON.stringify(brand ?? {}, null, 2);
 };
 
 // ============================================
-// INITIAL TILES
+// LOCAL INITIAL TILES (fallback if not imported)
 // ============================================
 
-const INITIAL_TILES: Tile[] = [
+const LOCAL_INITIAL_TILES: Tile[] = [
   {
     id: "hero-1",
     type: "hero",
@@ -1045,6 +1296,21 @@ const defaultTileContent: Record<string, TileContent> = {
 // STORE
 // ============================================
 
+/**
+ * Main brand store hook.
+ *
+ * Uses Zustand with persist middleware for localStorage persistence.
+ * Only persists essential state (brand, tiles, theme, tileSurfaces) to avoid
+ * storing transient UI state like focusedTileId or fontPreview.
+ *
+ * @example
+ * // Subscribe to specific slices (recommended for performance)
+ * const brand = useBrandStore((s) => s.brand);
+ * const updateBrand = useBrandStore((s) => s.updateBrand);
+ *
+ * // Or destructure multiple values (causes re-render on any change)
+ * const { brand, updateBrand, undo, redo } = useBrandStore();
+ */
 export const useBrandStore = create<BrandStore>()(
   persist(
     (set, get) => ({
@@ -1059,6 +1325,7 @@ export const useBrandStore = create<BrandStore>()(
         past: [],
         future: [],
       },
+      tileSurfaces: {},
 
       setFocusedTile: (id) => set({ focusedTileId: id }),
 
@@ -1093,18 +1360,50 @@ export const useBrandStore = create<BrandStore>()(
         set({
           brand: preset,
           history: {
-            past: [...history.past, { brand, tiles }],
+            past: pushToHistory(history.past, { brand, tiles }),
             future: [],
           },
         });
       },
 
-      applyPalette: (paletteId) => {
+      applyPalette: (paletteId, complexity = 'full') => {
         const { brand, tiles, history } = get();
         const palette = getPaletteById(paletteId);
         if (!palette) return;
 
-        const colorMapping = mapPaletteToBrand(palette.colors);
+        const fullMapping = mapPaletteToBrand(palette.colors);
+        let colorMapping: typeof fullMapping;
+
+        switch (complexity) {
+          case 'simple': {
+            // Simple: Just core color + neutral foundation
+            // Use neutral grays for bg/text/surface, only primary from palette
+            colorMapping = {
+              bg: '#FAFAFA',
+              text: '#171717',
+              primary: fullMapping.primary,
+              accent: fullMapping.primary, // Same as primary for minimal palette
+              surface: '#F5F5F5',
+              surfaces: ['#FFFFFF', '#F5F5F5', '#FAFAFA'],
+              paletteColors: [fullMapping.primary],
+            };
+            break;
+          }
+          case 'curated': {
+            // Curated: Core + accent, limit surfaces to 3
+            colorMapping = {
+              ...fullMapping,
+              surfaces: fullMapping.surfaces.slice(0, 3),
+            };
+            break;
+          }
+          case 'full':
+          default: {
+            // Full: Complete palette mapping
+            colorMapping = fullMapping;
+            break;
+          }
+        }
 
         set({
           brand: {
@@ -1112,7 +1411,7 @@ export const useBrandStore = create<BrandStore>()(
             colors: colorMapping as Colors,
           },
           history: {
-            past: [...history.past, { brand, tiles }],
+            past: pushToHistory(history.past, { brand, tiles }),
             future: [],
           },
         });
@@ -1132,7 +1431,7 @@ export const useBrandStore = create<BrandStore>()(
         set({
           tiles: newTiles,
           history: {
-            past: [...history.past, { brand, tiles }],
+            past: pushToHistory(history.past, { brand, tiles }),
             future: [],
           },
         });
@@ -1145,7 +1444,7 @@ export const useBrandStore = create<BrandStore>()(
           set({
             brand: { ...brand, ...newBrand } as Brand,
             history: {
-              past: [...history.past, { brand, tiles }],
+              past: pushToHistory(history.past, { brand, tiles }),
               future: [],
             },
           });
@@ -1164,13 +1463,23 @@ export const useBrandStore = create<BrandStore>()(
           set({
             tiles: newTiles,
             history: {
-              past: [...history.past, { brand, tiles }],
+              past: pushToHistory(history.past, { brand, tiles }),
               future: [],
             },
           });
         } else {
           set({ tiles: newTiles });
         }
+      },
+
+      setTileSurface: (placementId, surfaceIndex) => {
+        const { tileSurfaces } = get();
+        set({
+          tileSurfaces: {
+            ...tileSurfaces,
+            [placementId]: surfaceIndex,
+          },
+        });
       },
 
       resetToDefaults: () => {
@@ -1180,7 +1489,7 @@ export const useBrandStore = create<BrandStore>()(
           brand: DEFAULT_BRAND,
           tiles: INITIAL_TILES,
           history: {
-            past: [...history.past, { brand, tiles }],
+            past: pushToHistory(history.past, { brand, tiles }),
             future: [],
           },
         });
@@ -1214,7 +1523,7 @@ export const useBrandStore = create<BrandStore>()(
           brand: next.brand,
           tiles: next.tiles,
           history: {
-            past: [...history.past, { brand, tiles }],
+            past: pushToHistory(history.past, { brand, tiles }),
             future: newFuture,
           },
         });
@@ -1226,7 +1535,31 @@ export const useBrandStore = create<BrandStore>()(
         brand: state.brand,
         tiles: state.tiles,
         theme: state.theme,
+        tileSurfaces: state.tileSurfaces,
       }),
     }
   )
 );
+
+// ============================================
+// SELECTORS
+// ============================================
+
+/**
+ * Selector to get the currently focused tile.
+ * Use with: const focusedTile = useBrandStore(selectFocusedTile);
+ */
+export const selectFocusedTile = (state: BrandStore): Tile | undefined =>
+  state.tiles.find((t) => t.id === state.focusedTileId);
+
+/**
+ * Selector to check if undo is available.
+ */
+export const selectCanUndo = (state: BrandStore): boolean =>
+  state.history.past.length > 0;
+
+/**
+ * Selector to check if redo is available.
+ */
+export const selectCanRedo = (state: BrandStore): boolean =>
+  state.history.future.length > 0;
