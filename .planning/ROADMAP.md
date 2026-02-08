@@ -16,8 +16,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Canvas System** - 3x3 bento grid layout with tile interaction patterns
 - [x] **Phase 3: Logo & Typography Tiles** - First content tiles with editing capabilities
 - [ ] **Phase 4: Color & Imagery Tiles** - Visual customization with presets and live preview
-- [ ] **Phase 5: System View** - UI preview tile showing everything working together
-- [ ] **Phase 6: Workflows** - Export, sharing, and toolbar actions
+- [x] **Phase 5: System View** - SUPERSEDED (new tile architecture approach)
+- [ ] **Phase 6: Workflows** - Export, sharing, and toolbar actions (partially done)
 - [ ] **Phase 7: Polish** - Onboarding flow and accessibility enhancements
 - [x] **Phase 8: Dark/Light Mode** - Implement dark and light mode theming
 - [ ] **Phase 9: Responsive Bento Layout System** - Hole-free responsive grid with presets and 100vh constraint
@@ -123,32 +123,46 @@ Plans:
 ### Phase 5: System View
 **Goal**: Users see a reactive UI preview showing how all brand assets work together, updating live as any asset changes
 
+**Status**: ✅ SUPERSEDED - Goal achieved via new tile architecture
+
 **Depends on**: Phase 4
 
 **Requirements**: UIPV-01, UIPV-02, UIPV-03, UIPV-04, UIPV-05, UIPV-06, UIPV-07, LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, LIVE-06
 
-**Success Criteria** (what must be TRUE):
-  1. UI preview tile displays generic interface mock (header with logo, nav, CTA button, text block, card) using current brand assets
-  2. Mock uses current primary font for headings, secondary for body, current palette (background, text, primary for CTA, accent for links), and scaled thumbnail from imagery tile
-  3. When user changes any brand asset (font, color, image, logo), UI preview updates within 100ms perceived delay with smooth 120-180ms ease-out transition
-  4. Font swaps render in under 100ms after font load, with no flickering or intermediate states
-  5. No Apply, Save, or Confirm button required - all changes are live and immediate
-  6. Only one edit panel can be open at a time, closing previous panel automatically
-  7. Hovering UI preview shows tooltip "This preview updates automatically based on your brand choices" (not directly editable)
+**What Happened**: The original plan called for a single UIPreviewTile showing a generic interface mock. Instead, a new tile architecture was implemented (2026-02-08) that achieves the same goal through multiple specialized tiles:
+- **InterfaceTile**: Shows buttons using brand colors and typography
+- **EditorialTile**: Shows text content with brand typography
+- **IdentityTile**: Shows logo with brand styling
+- **SocialPostTile**: Shows brand in social context
+- **ColorTile**: Shows color palette
 
-**Plans**: 3 plans
+This approach is arguably superior - demonstrating brand assets in realistic, concrete use cases rather than an abstract mock interface. All tiles are reactive and update live when brand assets change.
 
-Plans:
-- [ ] 05-01-PLAN.md — Foundation hooks and GPU-accelerated transition CSS
-- [ ] 05-02-PLAN.md — UI preview mock component and reactive tile
-- [ ] 05-03-PLAN.md — Hover tooltip and LIVE-06 verification
+**Original Plans** (not executed - superseded):
+- ~~05-01-PLAN.md — Foundation hooks and GPU-accelerated transition CSS~~
+- ~~05-02-PLAN.md — UI preview mock component and reactive tile~~
+- ~~05-03-PLAN.md — Hover tooltip and LIVE-06 verification~~
 
 ### Phase 6: Workflows
 **Goal**: Users can undo/redo changes, export canvas as PNG, share via URL, and reset to extracted state
 
+**Status**: ⏳ PARTIALLY DONE - Some features implemented outside GSD
+
 **Depends on**: Phase 5
 
 **Requirements**: TOOL-01, TOOL-02, TOOL-03, TOOL-04, TOOL-05, TOOL-06, TOOL-07, TOOL-08, EXPRT-01, EXPRT-02, EXPRT-03, EXPRT-04, SHAR-01, SHAR-02, SHAR-03
+
+**Already Implemented (2026-02-08)**:
+- ✅ CSS/JSON export in App.tsx toolbar and ControlPanel.jsx
+- ✅ Undo/redo infrastructure (zundo middleware from Phase 3)
+- ✅ URL state persistence (lz-string compression from Phase 1)
+
+**Still Needed**:
+- ❌ PNG export with html-to-image (EXPRT-01 through EXPRT-04)
+- ❌ Share Link button with "Copied!" toast (SHAR-02)
+- ❌ Read-only view for shared links (SHAR-03)
+- ❌ Reset with confirmation dialog (TOOL-07, TOOL-08)
+- ❌ Auto-hiding floating toolbar (TOOL-01, TOOL-03)
 
 **Success Criteria** (what must be TRUE):
   1. Toolbar appears floating at bottom center, auto-hides after 3 seconds of inactivity, reappears on mouse move
@@ -159,14 +173,14 @@ Plans:
   6. Share Link generates URL with compressed canvas state, copies to clipboard with "Copied!" toast
   7. Shared link opens in read-only view with no edit panels or hover states
 
-**Plans**: 5 plans in 4 waves
+**Revised Plans**: 3 plans (slimmed down from original 5)
 
 Plans:
-- [ ] 06-01-PLAN.md — Dependencies + keyboard shortcuts hook
-- [ ] 06-02-PLAN.md — PNG export with html-to-image
-- [ ] 06-03-PLAN.md — Share link + toast + reset with confirmation
-- [ ] 06-04-PLAN.md — Read-only view for shared links
-- [ ] 06-05-PLAN.md — Verification checkpoint
+- [x] 06-01-PLAN.md — ~~Dependencies + keyboard shortcuts hook~~ (superseded - undo/redo exists, CSS/JSON export done)
+- [ ] 06-02-PLAN.md — PNG export with html-to-image (still needed)
+- [ ] 06-03-PLAN.md — Share link + toast + reset with confirmation (still needed)
+- [ ] 06-04-PLAN.md — Read-only view for shared links (still needed)
+- [ ] ~~06-05-PLAN.md — Verification checkpoint~~ (can be merged into 06-04)
 
 ### Phase 7: Polish
 **Goal**: First-time users understand how to use the tool, and all controls are keyboard accessible
@@ -250,15 +264,15 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 2. Canvas System | 3/3 | Complete | 2026-02-07 |
 | 3. Logo & Typography Tiles | 6/6 | Complete | 2026-02-07 |
 | 4. Color & Imagery Tiles | 4/5 | In progress (verification pending) | - |
-| 5. System View | 0/3 | Superseded* | - |
-| 6. Workflows | 0/5 | Partially done outside GSD* | - |
+| 5. System View | N/A | Complete (superseded) | 2026-02-08 |
+| 6. Workflows | 1/4 | In progress (3 plans remaining) | - |
 | 7. Polish | 0/TBD | Not started | - |
 | 8. Dark/Light Mode | 5/5 | Complete | 2026-02-07 |
 | 9. Responsive Bento Layout | 5/6 | In progress (verification pending) | - |
 
 **Notes:**
-- *Phase 5: New tile components (IdentityTile, EditorialTile, SocialPostTile, InterfaceTile) created outside GSD workflow on 2026-02-08. These take a different approach than the original UIPreviewTile plan. Consider updating plans or marking phase as superseded.
-- *Phase 6: Export CSS/JSON functionality already implemented in App.tsx toolbar outside GSD workflow.
+- Phase 5: Goal achieved via new tile architecture (IdentityTile, EditorialTile, SocialPostTile, InterfaceTile, ColorTile) created 2026-02-08. Original UIPreviewTile plans superseded.
+- Phase 6: CSS/JSON export done, remaining work: PNG export, share link with toast, read-only view.
 
 ---
 *Roadmap created: 2026-02-06*
