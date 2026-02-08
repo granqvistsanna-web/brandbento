@@ -1,14 +1,37 @@
+/**
+ * Theme Toggle Component
+ *
+ * Dropdown menu for switching between light, dark, and system themes.
+ * Shows the current resolved theme icon on the toggle button.
+ *
+ * ## Features
+ *
+ * - Three theme options: Light, Dark, System
+ * - Animated dropdown with Framer Motion
+ * - Click-outside to close
+ * - Checkmark on selected option
+ * - Icon reflects resolved theme (not preference)
+ *
+ * @component
+ * @example
+ * <ThemeToggle />
+ */
 import { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../hooks/useTheme';
 
+/** Available theme options with their display configuration */
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun },
   { value: 'dark', label: 'Dark', icon: Moon },
   { value: 'system', label: 'System', icon: Monitor },
 ] as const;
 
+/**
+ * Theme toggle dropdown component.
+ * Manages theme preference with visual feedback.
+ */
 export function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);

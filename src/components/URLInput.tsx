@@ -1,11 +1,40 @@
+/**
+ * URL Input Component
+ *
+ * Form input for entering website URLs for brand extraction.
+ * Handles validation and protocol normalization.
+ *
+ * ## Features
+ *
+ * - Auto-prepends https:// if no protocol specified
+ * - URL validation before submission
+ * - Loading state (disabled during extraction)
+ * - Error message display
+ *
+ * @component
+ * @example
+ * <URLInput
+ *   onSubmit={(url) => extractBrand(url)}
+ *   disabled={isExtracting}
+ * />
+ */
 import { useState, type FormEvent } from 'react';
 
+/**
+ * Props for URLInput component.
+ */
 interface URLInputProps {
+  /** Callback when valid URL is submitted */
   onSubmit: (url: string) => void;
+  /** Disables input during extraction */
   disabled?: boolean;
+  /** Pre-fill the input field */
   initialValue?: string;
 }
 
+/**
+ * URL input form with validation.
+ */
 export function URLInput({ onSubmit, disabled, initialValue = '' }: URLInputProps) {
   const [url, setUrl] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);

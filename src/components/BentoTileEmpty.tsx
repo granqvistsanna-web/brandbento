@@ -1,9 +1,32 @@
+/**
+ * Empty Tile Placeholder Component
+ *
+ * Renders a placeholder for empty grid slots. Maintains layout stability
+ * when tiles haven't been assigned content yet.
+ *
+ * ## Features
+ *
+ * - Theme-aware styling via CSS variables
+ * - Dashed border to indicate empty state
+ * - Shows slot ID for development reference
+ * - Renders as button when clickable (accessibility)
+ *
+ * @component
+ * @example
+ * <BentoTileEmpty slotId="hero" onClick={() => setFocusedTile('hero')} />
+ */
 import type { MouseEvent } from 'react';
 import { twMerge } from 'tailwind-merge';
 
+/**
+ * Props for BentoTileEmpty component.
+ */
 export interface BentoTileEmptyProps {
+  /** Unique identifier for the grid slot */
   slotId: string;
+  /** Additional CSS classes */
   className?: string;
+  /** Click handler (makes component interactive) */
   onClick?: (e: MouseEvent) => void;
 }
 

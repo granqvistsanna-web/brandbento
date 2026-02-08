@@ -1,3 +1,30 @@
+/**
+ * Bento Canvas Component
+ *
+ * Main canvas container for the brand moodboard. Renders a responsive
+ * bento grid with theme-aware styling and tile selection handling.
+ *
+ * ## Features
+ *
+ * - Responsive grid that adapts to breakpoints
+ * - Theme-aware background (light/dark mode via CSS variables)
+ * - Click-to-focus tile selection (clicking canvas clears selection)
+ * - Debug grid overlay for development
+ * - forwardRef support for screenshot/export functionality
+ *
+ * ## Tile Mapping
+ *
+ * Maps placement IDs to tile components:
+ * - hero/a → IdentityTile (logo/wordmark)
+ * - editorial/b → EditorialTile (typography showcase)
+ * - image/d → SocialPostTile (social media mockup)
+ * - buttons/c → InterfaceTile (UI components)
+ * - colors/f → ColorTile (color palette)
+ *
+ * @component
+ * @example
+ * <BentoCanvasNew ref={canvasRef} />
+ */
 import React from "react";
 import { BentoGridNew } from "./BentoGridNew";
 import { BentoTileEmpty } from "./BentoTileEmpty";
@@ -9,11 +36,14 @@ import { IdentityTile } from "./tiles/IdentityTile";
 import { EditorialTile } from "./tiles/EditorialTile";
 import { SocialPostTile } from "./tiles/SocialPostTile";
 import { InterfaceTile } from "./tiles/InterfaceTile";
-import { ColorTile } from "./tiles/ColorTile"; // Keeping for 'colors' slot momentarily or replacing?
+import { ColorTile } from "./tiles/ColorTile";
 
 /**
  * Canvas with responsive bento grid – filled rectangle, no holes.
  * Uses theme-aware background (var(--canvas-bg)) for light/dark mode.
+ *
+ * @param {Object} props - Component props (passed through)
+ * @param {React.Ref} ref - Forwarded ref for canvas element (used for exports)
  */
 const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);

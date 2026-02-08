@@ -536,7 +536,7 @@ const UsagePreview = ({ colorKey }) => {
 
 const ColorRoleGroup = ({ title, description, children }) => (
   <div
-    className="rounded-lg overflow-hidden mb-3"
+    className="rounded-lg mb-3"
     style={{
       background: "var(--sidebar-bg)",
       border: "1px solid var(--sidebar-border-subtle)",

@@ -1,3 +1,29 @@
+/**
+ * Bento Grid Component
+ *
+ * Responsive CSS Grid layout for the brand moodboard. Renders tiles
+ * in a deterministic pattern that forms a filled rectangle with no gaps.
+ *
+ * ## Features
+ *
+ * - Preset-based layouts (balanced, hero-left, hero-center, stacked)
+ * - Responsive breakpoints (mobile < 768 < tablet < 1024 < desktop)
+ * - Density settings affect padding (cozy: 16px, compact: 12px)
+ * - Render prop pattern for flexible tile content
+ *
+ * ## Layout System
+ *
+ * Uses CSS Grid with:
+ * - Configurable columns/rows per breakpoint
+ * - Gap from layout config
+ * - Safe area inset support for mobile
+ *
+ * @component
+ * @example
+ * <BentoGridNew
+ *   renderSlot={(placement) => <Tile id={placement.id} />}
+ * />
+ */
 import type { ReactNode } from 'react';
 import { useLayoutStore } from '../store/useLayoutStore';
 import { useBreakpoint } from '../hooks/useBreakpoint';
@@ -8,8 +34,13 @@ import {
 } from '../config/bentoLayouts';
 import { twMerge } from 'tailwind-merge';
 
+/**
+ * Props for BentoGridNew component.
+ */
 export interface BentoGridNewProps {
+  /** Render function for each grid slot, receives placement info */
   renderSlot?: (placement: CellPlacement) => ReactNode;
+  /** Additional CSS classes for the container */
   className?: string;
 }
 

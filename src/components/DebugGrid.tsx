@@ -1,11 +1,35 @@
+/**
+ * Debug Grid Overlay Component
+ *
+ * Development tool that visualizes grid cell boundaries and layout info.
+ * Helps debug tile placement and responsive behavior.
+ *
+ * ## Features
+ *
+ * - Shows tile boundaries with pink dashed borders
+ * - Displays tile ID and span dimensions (e.g., "2×1")
+ * - Info panel shows preset, breakpoint, grid size, density
+ * - Only renders when debugMode is enabled in layout store
+ * - Excluded from exports (data-export-exclude attribute)
+ *
+ * ## Usage
+ *
+ * Enable via layout store: `useLayoutStore.setState({ debugMode: true })`
+ *
+ * @component
+ * @example
+ * // In canvas component
+ * <BentoGridNew ... />
+ * <DebugGrid />
+ */
 import { useLayoutStore } from '../store/useLayoutStore';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import { BENTO_LAYOUTS, type LayoutPresetName } from '../config/bentoLayouts';
 
 /**
- * Debug overlay that visualizes the grid cell boundaries
- * Shows numbered cells with column/row positions and debug info panel
- * Only renders when debugMode is true
+ * Debug overlay that visualizes the grid cell boundaries.
+ * Shows numbered cells with column/row positions and debug info panel.
+ * Only renders when debugMode is true.
  */
 export const DebugGrid = () => {
   const debugMode = useLayoutStore((s) => s.debugMode);
