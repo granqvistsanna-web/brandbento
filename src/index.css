@@ -329,6 +329,48 @@ main {
   background: var(--sidebar-border-subtle);
 }
 
+.divider-v {
+  width: 1px;
+  height: 16px;
+  background: var(--sidebar-border-subtle);
+  margin: 0 4px;
+}
+
+/* Figma-style buttons */
+.btn-figma {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 100ms ease;
+}
+
+.btn-figma-ghost {
+  background: transparent;
+  color: var(--sidebar-text-secondary);
+  border: 1px solid var(--sidebar-border);
+}
+
+.btn-figma-ghost:hover {
+  background: var(--sidebar-bg-hover);
+  color: var(--sidebar-text);
+}
+
+.btn-figma-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-figma-primary:hover {
+  background: var(--accent-hover);
+}
+
 /* Scrollbar - Dark variant */
 .scrollbar-dark::-webkit-scrollbar {
   width: 6px;

@@ -1,100 +1,469 @@
-import React, { useEffect } from "react";
-import { useBrandStore, getContrastRatio } from "../store/useBrandStore";
+import React from "react";
+import { useBrandStore } from "../store/useBrandStore";
 import { motion, AnimatePresence } from "motion/react";
 import { BentoGrid } from './BentoGrid';
 import { BentoTile } from './BentoTile';
 
-// Smart text color based on background
-const getSmartTextColor = (bgColor, textColor) => {
-  const contrast = getContrastRatio(textColor, bgColor);
-  if (contrast < 4.5) {
-    // Try white
-    const whiteContrast = getContrastRatio("#FFFFFF", bgColor);
-    if (whiteContrast > contrast) {
-      return "#FFFFFF";
-    }
-    // Try black
-    return "#000000";
-  }
-  return textColor;
+// Geos brand design system
+const GEOS = {
+  colors: {
+    canvas: "#0A0A0A",
+    beige: "#E8E4DC",
+    warmGray: "#D4CFC6",
+    charcoal: "#3D3D3D",
+    darkCharcoal: "#2A2A2A",
+    yellow: "#F0E547",
+    navy: "#2B3A67",
+    white: "#FFFFFF",
+    black: "#1A1A1A",
+  },
+  radius: {
+    sm: "12px",
+    md: "16px",
+    lg: "24px",
+    xl: "32px",
+  },
+  fonts: {
+    display: "'DM Sans', 'SF Pro Display', -apple-system, sans-serif",
+    body: "'DM Sans', 'SF Pro Text', -apple-system, sans-serif",
+  },
 };
 
+// Tile configuration matching the reference layout exactly
+// Grid: 3 cols x 3 rows
+// | Hero (1×2) | Image (2×1)              |
+// | Buttons    | Editorial (1×2)          |
+// | Logo Navy  | Logo White | (continues) |
+const GEOS_TILES = [
+  // Phone mockup - top left, spans 2 rows
+  {
+    id: "hero-1",
+    type: "hero",
+    content: {
+      headline: "Vill du jobba med oss?",
+      cta: "LEDIGA TJÄNSTER",
+      image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800&auto=format&fit=crop",
+    },
+  },
+  // Face close-up with logo - top right, wide (2 cols)
+  {
+    id: "image-1",
+    type: "image",
+    content: {
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1200&auto=format&fit=crop",
+      overlayText: "geos.",
+    },
+  },
+  // Buttons tile - middle left
+  {
+    id: "ui-preview-1",
+    type: "ui-preview",
+    content: {
+      buttons: ["BUTTON", "BUTTON", "BUTTON"],
+    },
+  },
+  // Editorial - right side, spans 2 rows
+  {
+    id: "editorial-1",
+    type: "editorial",
+    content: {
+      label: "INSIGHTS",
+      headline: "Geo- och bergteknik",
+      body: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+      footnote: "Duis aute irure dolor in reprehenderit in. Consectetur adipiscing elit.",
+    },
+  },
+  // Navy logo tile - bottom left
+  {
+    id: "logo-1",
+    type: "logo",
+    content: {
+      variant: "dark",
+    },
+  },
+  // White logo tile - bottom center
+  {
+    id: "colors-1",
+    type: "colors",
+    content: {
+      variant: "light",
+    },
+  },
+];
+
+// Phone Mockup Component - realistic iPhone-style frame
+const PhoneMockup = ({ image, headline, cta }) => {
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden flex items-center justify-center"
+      style={{
+        backgroundColor: GEOS.colors.beige,
+        borderRadius: GEOS.radius.lg,
+      }}
+    >
+      {/* Phone device frame */}
+      <motion.div
+        className="relative"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          width: "clamp(160px, 55%, 220px)",
+          aspectRatio: "9/19",
+        }}
+      >
+        {/* Phone outer frame */}
+        <div
+          className="absolute inset-0 rounded-[36px]"
+          style={{
+            background: "linear-gradient(145deg, #2A2A2A 0%, #1A1A1A 100%)",
+            boxShadow: `
+              0 25px 50px -12px rgba(0,0,0,0.5),
+              0 0 0 1px rgba(255,255,255,0.05) inset,
+              -8px -8px 16px rgba(255,255,255,0.02) inset
+            `,
+          }}
+        />
+
+        {/* Phone screen area */}
+        <div
+          className="absolute overflow-hidden"
+          style={{
+            top: "8px",
+            left: "8px",
+            right: "8px",
+            bottom: "8px",
+            borderRadius: "28px",
+          }}
+        >
+          {/* Dynamic Island */}
+          <div
+            className="absolute top-2 left-1/2 -translate-x-1/2 z-20"
+            style={{
+              width: "80px",
+              height: "24px",
+              backgroundColor: "#000",
+              borderRadius: "20px",
+            }}
+          />
+
+          {/* Screen content */}
+          <div className="relative h-full w-full">
+            {/* Background image */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url(${image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center top",
+              }}
+            />
+
+            {/* Gradient overlay */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 40%, transparent 70%)",
+              }}
+            />
+
+            {/* Content */}
+            <div className="absolute inset-0 flex flex-col justify-end p-5">
+              <motion.h2
+                className="text-white leading-tight mb-4"
+                style={{
+                  fontFamily: GEOS.fonts.display,
+                  fontSize: "clamp(16px, 5vw, 22px)",
+                  fontWeight: "700",
+                  letterSpacing: "-0.02em",
+                }}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                {headline}
+              </motion.h2>
+
+              <motion.button
+                className="w-full py-3 rounded-full font-semibold tracking-wide"
+                style={{
+                  backgroundColor: GEOS.colors.yellow,
+                  color: GEOS.colors.black,
+                  fontFamily: GEOS.fonts.body,
+                  fontSize: "11px",
+                  letterSpacing: "0.08em",
+                }}
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {cta}
+              </motion.button>
+            </div>
+
+            {/* Status bar */}
+            <div className="absolute top-0 left-0 right-0 px-6 pt-3 flex justify-between items-center">
+              <span
+                className="text-white font-medium"
+                style={{ fontSize: "12px", fontFamily: GEOS.fonts.body }}
+              >
+                9:04
+              </span>
+              <div className="flex items-center gap-1">
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
+                  <rect x="0" y="4" width="3" height="8" rx="1" fillOpacity="0.4"/>
+                  <rect x="4.5" y="2" width="3" height="10" rx="1" fillOpacity="0.6"/>
+                  <rect x="9" y="0" width="3" height="12" rx="1"/>
+                  <rect x="13" y="3" width="3" height="6" rx="1" stroke="white" strokeWidth="1" fill="none"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Face/Image tile with logo overlay
+const ImageWithLogo = ({ image, overlayText }) => {
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden"
+      style={{ borderRadius: GEOS.radius.lg }}
+    >
+      <motion.img
+        src={image}
+        alt=""
+        className="w-full h-full object-cover"
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <motion.span
+          className="font-bold"
+          style={{
+            fontFamily: GEOS.fonts.display,
+            fontSize: "clamp(28px, 5vw, 48px)",
+            color: GEOS.colors.black,
+            letterSpacing: "-0.02em",
+          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
+          {overlayText}
+        </motion.span>
+      </div>
+    </div>
+  );
+};
+
+// Editorial tile with refined typography
+const EditorialTile = ({ label, headline, body, footnote }) => {
+  return (
+    <div
+      className="h-full w-full flex flex-col justify-between p-6 overflow-hidden"
+      style={{
+        backgroundColor: GEOS.colors.charcoal,
+        borderRadius: GEOS.radius.lg,
+      }}
+    >
+      <div>
+        <motion.span
+          className="block mb-4"
+          style={{
+            fontFamily: GEOS.fonts.body,
+            fontSize: "11px",
+            letterSpacing: "0.15em",
+            color: "rgba(255,255,255,0.5)",
+            textTransform: "uppercase",
+            fontWeight: "500",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          {label}
+        </motion.span>
+
+        <motion.h2
+          className="mb-4"
+          style={{
+            fontFamily: GEOS.fonts.display,
+            fontSize: "clamp(22px, 4vw, 32px)",
+            fontWeight: "700",
+            color: GEOS.colors.white,
+            lineHeight: 1.15,
+            letterSpacing: "-0.02em",
+          }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          {headline}
+        </motion.h2>
+
+        <motion.p
+          style={{
+            fontFamily: GEOS.fonts.body,
+            fontSize: "14px",
+            lineHeight: 1.6,
+            color: "rgba(255,255,255,0.65)",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          {body}
+        </motion.p>
+      </div>
+
+      {footnote && (
+        <motion.p
+          className="mt-auto pt-4"
+          style={{
+            fontFamily: GEOS.fonts.body,
+            fontSize: "12px",
+            lineHeight: 1.5,
+            color: "rgba(255,255,255,0.35)",
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          {footnote}
+        </motion.p>
+      )}
+    </div>
+  );
+};
+
+// Buttons tile
+const ButtonsTile = ({ buttons }) => {
+  return (
+    <div
+      className="h-full w-full flex flex-col justify-center gap-3 p-6"
+      style={{
+        backgroundColor: GEOS.colors.beige,
+        borderRadius: GEOS.radius.lg,
+      }}
+    >
+      {buttons?.map((label, i) => {
+        const isYellow = i === 0;
+        const isDark = i === 1;
+        const isOutlined = i === 2;
+
+        return (
+          <motion.button
+            key={i}
+            className="w-full py-3.5 rounded-full font-semibold transition-all"
+            style={{
+              fontFamily: GEOS.fonts.body,
+              fontSize: "12px",
+              letterSpacing: "0.1em",
+              backgroundColor: isYellow ? GEOS.colors.yellow : isDark ? GEOS.colors.charcoal : "transparent",
+              color: isYellow ? GEOS.colors.black : isDark ? GEOS.colors.white : GEOS.colors.charcoal,
+              border: isOutlined ? `1.5px solid ${GEOS.colors.charcoal}` : "none",
+            }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {label}
+          </motion.button>
+        );
+      })}
+    </div>
+  );
+};
+
+// Landscape image tile
+const LandscapeTile = ({ image }) => {
+  return (
+    <div
+      className="relative h-full w-full overflow-hidden"
+      style={{ borderRadius: GEOS.radius.lg }}
+    >
+      <motion.img
+        src={image}
+        alt=""
+        className="w-full h-full object-cover"
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      />
+    </div>
+  );
+};
+
+// Logo tile (dark variant - navy)
+const LogoDark = () => {
+  return (
+    <div
+      className="h-full w-full flex items-center justify-center"
+      style={{
+        backgroundColor: GEOS.colors.navy,
+        borderRadius: GEOS.radius.lg,
+      }}
+    >
+      <motion.span
+        className="font-bold"
+        style={{
+          fontFamily: GEOS.fonts.display,
+          fontSize: "clamp(20px, 3vw, 28px)",
+          color: GEOS.colors.white,
+          letterSpacing: "-0.01em",
+        }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >
+        geos.
+      </motion.span>
+    </div>
+  );
+};
+
+// Logo tile (light variant - white)
+const LogoLight = () => {
+  return (
+    <div
+      className="h-full w-full flex items-center justify-center"
+      style={{
+        backgroundColor: GEOS.colors.white,
+        borderRadius: GEOS.radius.lg,
+        border: `1px solid ${GEOS.colors.warmGray}`,
+      }}
+    >
+      <motion.span
+        className="font-bold"
+        style={{
+          fontFamily: GEOS.fonts.display,
+          fontSize: "clamp(20px, 3vw, 28px)",
+          color: GEOS.colors.black,
+          letterSpacing: "-0.01em",
+        }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.35, duration: 0.4 }}
+      >
+        geos.
+      </motion.span>
+    </div>
+  );
+};
+
+// Main tile renderer
 const BrandTile = ({ tile, index }) => {
-  const { brand, focusedTileId, setFocusedTile, darkModePreview } =
-    useBrandStore();
+  const { focusedTileId, setFocusedTile } = useBrandStore();
   const isFocused = focusedTileId === tile.id;
 
-  const { typography, colors, logo } = brand;
-
-  // Dark mode color adjustments
-  const displayColors = darkModePreview
-    ? {
-        bg: "#0A0A0A",
-        text: "#FAFAFA",
-        primary: "#FFFFFF",
-        accent: "#A0A0A0",
-        surface: "#1A1A1A",
-      }
-    : colors;
-
-  // Letter spacing map
-  const letterSpacingMap = {
-    tight: "-0.02em",
-    normal: "0",
-    wide: "0.05em",
-  };
-
-  // Style objects based on brand tokens
-  const tileStyle = {
-    backgroundColor: displayColors.surface,
-    color: displayColors.text,
-    fontFamily: typography.ui,
-    borderWidth: isFocused ? "2px" : "1px",
-    borderColor: isFocused
-      ? displayColors.primary
-      : darkModePreview
-        ? "#333"
-        : "#E5E5E5",
-    transition: "all 0.2s ease",
-  };
-
-  const headlineStyle = {
-    fontFamily: typography.primary,
-    fontSize: `${typography.baseSize * Math.pow(typography.scale, 2)}px`,
-    lineHeight: 1.1,
-    fontWeight: typography.weightHeadline,
-    color: displayColors.text,
-    letterSpacing: letterSpacingMap[typography.letterSpacing] || "0",
-  };
-
-  const bodyStyle = {
-    fontFamily: typography.secondary,
-    fontSize: `${typography.baseSize}px`,
-    lineHeight: 1.5,
-    fontWeight: typography.weightBody,
-    color: displayColors.text,
-    letterSpacing: letterSpacingMap[typography.letterSpacing] || "0",
-  };
-
-  const labelStyle = {
-    fontFamily: typography.ui,
-    fontSize: "12px",
-    letterSpacing: "0.05em",
-    textTransform: "uppercase",
-    color: displayColors.accent,
-  };
-
-  const buttonStyle = {
-    backgroundColor: displayColors.primary,
-    color: getSmartTextColor(displayColors.primary, displayColors.bg),
-    fontFamily: typography.ui,
-    padding: "8px 24px",
-    borderRadius: "4px",
-    fontSize: "14px",
-    fontWeight: "600",
-  };
-
-  // Accessibility and Keyboard navigation
   const handleKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -106,169 +475,36 @@ const BrandTile = ({ tile, index }) => {
     switch (tile.type) {
       case "hero":
         return (
-          <div
-            className="relative h-full w-full overflow-hidden flex flex-col justify-end p-10"
-            style={{ backgroundColor: displayColors.bg }}
-          >
-            {tile.content.image && (
-              <div
-                className="absolute inset-0 z-0 opacity-20 grayscale"
-                style={{
-                  backgroundImage: `url(${tile.content.image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              />
-            )}
-            <div className="relative z-10 space-y-5">
-              <h1
-                style={headlineStyle}
-                className="line-clamp-3 overflow-hidden"
-              >
-                {tile.content.headline}
-              </h1>
-              <p
-                style={bodyStyle}
-                className="max-w-[85%] line-clamp-2 overflow-hidden"
-              >
-                {tile.content.subcopy}
-              </p>
-              <button style={buttonStyle} className="w-fit shrink-0 mt-2">
-                {tile.content.cta}
-              </button>
-            </div>
-          </div>
-        );
-      case "editorial":
-        return (
-          <div className="p-8 space-y-4 h-full flex flex-col justify-center overflow-hidden">
-            <h2 style={headlineStyle} className="line-clamp-4">
-              {tile.content.headline}
-            </h2>
-            <p style={bodyStyle} className="line-clamp-6">
-              {tile.content.body}
-            </p>
-          </div>
-        );
-      case "product":
-        return (
-          <div className="p-7 h-full flex flex-col gap-4">
-            <div className="flex-1 overflow-hidden rounded-lg bg-white/50">
-              <img
-                src={tile.content.image}
-                alt=""
-                className="w-full h-full object-cover grayscale"
-              />
-            </div>
-            <div className="flex justify-between items-end">
-              <div>
-                <span style={labelStyle}>{tile.content.label}</span>
-                <p style={bodyStyle} className="font-bold">
-                  {tile.content.price}
-                </p>
-              </div>
-              <button
-                style={{
-                  ...buttonStyle,
-                  padding: "6px 16px",
-                  fontSize: "12px",
-                }}
-              >
-                View
-              </button>
-            </div>
-          </div>
-        );
-      case "ui-preview":
-        return (
-          <div className="p-7 h-full flex flex-col gap-4 bg-white/30">
-            <div
-              className="flex items-center justify-between border-b pb-3"
-              style={{ borderColor: displayColors.surface }}
-            >
-              <span style={{ ...labelStyle, fontSize: "10px" }}>
-                {tile.content.headerTitle}
-              </span>
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: displayColors.accent }}
-              />
-            </div>
-            <div className="space-y-3 flex-1 flex flex-col justify-center">
-              <div
-                className="h-10 rounded-lg px-4 flex items-center border bg-white/50"
-                style={{ borderColor: displayColors.surface }}
-              >
-                <span className="text-[12px] opacity-50">
-                  {tile.content.inputPlaceholder}
-                </span>
-              </div>
-              <button className="w-full" style={buttonStyle}>
-                {tile.content.buttonLabel}
-              </button>
-            </div>
-          </div>
+          <PhoneMockup
+            image={tile.content.image}
+            headline={tile.content.headline}
+            cta={tile.content.cta}
+          />
         );
       case "image":
         return (
-          <div className="relative h-full w-full overflow-hidden">
-            <img
-              src={tile.content.image}
-              alt=""
-              className="w-full h-full object-cover grayscale"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <span
-                style={{ ...headlineStyle, color: "#FFF", fontSize: "24px" }}
-              >
-                {tile.content.overlayText}
-              </span>
-            </div>
-          </div>
+          <ImageWithLogo
+            image={tile.content.image}
+            overlayText={tile.content.overlayText}
+          />
         );
-      case "utility":
+      case "editorial":
         return (
-          <div className="p-7 h-full flex flex-col justify-center">
-            <h3 style={{ ...labelStyle, marginBottom: "20px" }}>
-              {tile.content.headline}
-            </h3>
-            <ul className="space-y-3">
-              {tile.content.items.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-2"
-                  style={bodyStyle}
-                >
-                  <div
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: displayColors.primary }}
-                  />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <EditorialTile
+            label={tile.content.label}
+            headline={tile.content.headline}
+            body={tile.content.body}
+            footnote={tile.content.footnote}
+          />
         );
+      case "ui-preview":
+        return <ButtonsTile buttons={tile.content.buttons} />;
+      case "landscape":
+        return <LandscapeTile image={tile.content.image} />;
       case "logo":
-        return (
-          <div className="p-8 flex flex-col items-center justify-center h-full text-center gap-5">
-            <div
-              style={{
-                fontFamily: typography.primary,
-                fontSize: `${logo.size}px`,
-                padding: `${logo.padding}px`,
-                border: `1px solid ${displayColors.surface}`,
-                backgroundColor: displayColors.bg,
-                color: displayColors.primary,
-                letterSpacing: "0.2em",
-                fontWeight: "900",
-              }}
-            >
-              {logo.text}
-            </div>
-            <span style={labelStyle}>{tile.content.label}</span>
-          </div>
-        );
+        return <LogoDark />;
+      case "colors":
+        return <LogoLight />;
       default:
         return null;
     }
@@ -286,62 +522,49 @@ const BrandTile = ({ tile, index }) => {
         setFocusedTile(tile.id);
       }}
       className="cursor-pointer group"
-      style={tileStyle}
+      style={{
+        outline: isFocused ? `2px solid ${GEOS.colors.yellow}` : "none",
+        outlineOffset: "2px",
+        transition: "outline 0.2s ease",
+      }}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        className="h-full w-full overflow-hidden"
+        style={{ borderRadius: GEOS.radius.lg }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{
-          duration: 0.3,
-          delay: index * 0.05,
-          ease: "easeOut",
+          duration: 0.5,
+          delay: index * 0.08,
+          ease: [0.22, 1, 0.36, 1],
         }}
-        whileHover={{ scale: 0.995 }}
-        className="h-full w-full"
+        whileHover={{ scale: 0.98 }}
       >
         {renderContent()}
-
-        {/* Focus indicator */}
-        {isFocused && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute top-3 left-3 z-20 bg-white/95 px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-wider uppercase border border-[#E5E5E5] shadow-sm"
-          >
-            {tile.type} Focus
-          </motion.div>
-        )}
       </motion.div>
     </BentoTile>
   );
 };
 
 const BentoCanvas = () => {
-  const { tiles, setFocusedTile, darkModePreview, loadRandomTemplate } =
-    useBrandStore();
-
-  // Load random template on mount
-  useEffect(() => {
-    loadRandomTemplate();
-  }, []); // Empty dependency array means this runs once on mount
+  const { setFocusedTile } = useBrandStore();
 
   return (
     <div
-      className="flex-1 transition-colors duration-300"
-      style={{ backgroundColor: darkModePreview ? "#050505" : "#FAFAFA" }}
+      className="flex-1 h-full transition-colors duration-300"
+      style={{ backgroundColor: GEOS.colors.canvas }}
       onClick={() => setFocusedTile(null)}
     >
       <AnimatePresence mode="wait">
         <motion.div
-          key={darkModePreview ? "dark" : "light"}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.3 }}
           className="h-full"
         >
           <BentoGrid>
-            {tiles.map((tile, index) => (
+            {GEOS_TILES.map((tile, index) => (
               <BrandTile key={tile.id} tile={tile} index={index} />
             ))}
           </BentoGrid>

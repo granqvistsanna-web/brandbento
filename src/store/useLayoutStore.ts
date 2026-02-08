@@ -20,7 +20,7 @@ export const useLayoutStore = create<LayoutStore>()(
   persist(
     (set) => ({
       breakpoint: 'desktop',
-      preset: 'balanced',
+      preset: 'geos',
       density: 'cozy',
       debugMode: false,
 

@@ -46,7 +46,7 @@ export interface GridConfig {
  * Priority values for tile types (lower = higher priority)
  * Hero tiles are preserved first, utility tiles hidden first
  */
-const TILE_PRIORITY: Record<TileType, number> = {
+const TILE_PRIORITY: Record<string, number> = {
   hero: 1,
   logo: 2,
   colors: 2,
@@ -54,9 +54,13 @@ const TILE_PRIORITY: Record<TileType, number> = {
   secondaryType: 2,
   imagery: 3,
   uiPreview: 3,
+  'ui-preview': 3,
   editorial: 3,
   product: 3,
   utility: 4,
+  image: 3,
+  landscape: 3,
+  fullImage: 2,
 };
 
 /**

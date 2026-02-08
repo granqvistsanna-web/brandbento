@@ -49,7 +49,7 @@ export const BentoGrid = (props: BentoGridProps) => {
   const columns = config.columns[breakpoint];
   const rows = config.rows[breakpoint];
   const gap = config.gap[density];
-  const rowHeight = config.rowHeight[density];
+  // Use 1fr for rows to fill available viewport height instead of fixed pixels
 
   // Determine render mode and content
   let content: ReactNode;
@@ -82,7 +82,7 @@ export const BentoGrid = (props: BentoGridProps) => {
   }
 
   return (
-    <div className="relative h-[100dvh] max-h-[100dvh]" style={{ height: '100vh' }}>
+    <div className="relative h-full">
       <div
         className={twMerge(
           // Full size within container
@@ -102,7 +102,8 @@ export const BentoGrid = (props: BentoGridProps) => {
         )}
         style={{
           gridTemplateColumns: `repeat(${columns}, 1fr)`,
-          gridTemplateRows: `repeat(${rows}, ${rowHeight}px)`,
+          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          gridAutoFlow: 'dense',
           gap: `${gap}px`,
         }}
       >

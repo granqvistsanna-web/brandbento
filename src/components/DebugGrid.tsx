@@ -18,7 +18,6 @@ export const DebugGrid = () => {
   const columns = config.columns[breakpoint];
   const rows = config.rows[breakpoint];
   const gap = config.gap[density];
-  const rowHeight = config.rowHeight[density];
 
   const totalCells = columns * rows;
 
@@ -28,7 +27,8 @@ export const DebugGrid = () => {
       style={{
         display: 'grid',
         gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gridTemplateRows: `repeat(${rows}, ${rowHeight}px)`,
+        gridTemplateRows: `repeat(${rows}, 1fr)`,
+        gridAutoFlow: 'dense',
         gap: `${gap}px`,
         padding: density === 'cozy' ? '16px' : '8px',
       }}

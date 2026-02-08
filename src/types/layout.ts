@@ -4,7 +4,7 @@ export type BreakpointName = 'mobile' | 'tablet' | 'desktop';
 
 export type DensityMode = 'cozy' | 'dense';
 
-export type LayoutPresetName = 'balanced' | 'heroLeft' | 'heroCenter' | 'stacked';
+export type LayoutPresetName = 'balanced' | 'heroLeft' | 'heroCenter' | 'stacked' | 'geos';
 
 export type TileType =
   | 'hero'
@@ -16,7 +16,10 @@ export type TileType =
   | 'uiPreview'
   | 'editorial'
   | 'product'
-  | 'utility';
+  | 'utility'
+  | 'image'
+  | 'ui-preview'
+  | 'fullImage';
 
 export interface TileSpan {
   colSpan: number;

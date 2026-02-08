@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { BentoCanvas } from "./components/BentoCanvas";
+// @ts-ignore
+import BentoCanvas from "./components/BentoCanvasNew";
 // @ts-ignore
 import ControlPanel from "./components/ControlPanel";
 // @ts-ignore
-import { useBrandStore } from "./store/useBrandStore";
+import { useBrandStore, exportAsCSS, exportAsJSON } from "./store/useBrandStore";
 import { useTheme } from "./hooks/useTheme";
 import { ThemeToggle } from "./components/ThemeToggle";
 import {
@@ -13,7 +14,6 @@ import {
   Download,
   Share2,
   Layers,
-  Grid3X3,
   Maximize2,
   HelpCircle,
 } from "lucide-react";
@@ -130,26 +130,13 @@ const ZoomControl = () => {
 
 // Logo/Brand mark
 const AppLogo = () => (
-  <div className="flex items-center gap-3 px-3">
-    <div
-      className="w-7 h-7 rounded-md flex items-center justify-center"
-      style={{
-        background: "linear-gradient(135deg, var(--accent), #7C3AED)",
-      }}
+  <div className="flex items-center px-3">
+    <span
+      className="text-13 font-semibold tracking-tight"
+      style={{ color: "var(--sidebar-text)" }}
     >
-      <Grid3X3 size={14} className="text-white" />
-    </div>
-    <div className="flex flex-col">
-      <span
-        className="text-12 font-semibold"
-        style={{ color: "var(--sidebar-text)" }}
-      >
-        BrandBento
-      </span>
-      <span className="text-[10px]" style={{ color: "var(--sidebar-text-muted)" }}>
-        Moodboard Studio
-      </span>
-    </div>
+      Brand.Bento
+    </span>
   </div>
 );
 
@@ -170,7 +157,6 @@ const ExportMenu = () => {
   }, []);
 
   const handleExport = (format: "css" | "json") => {
-    const { exportAsCSS, exportAsJSON } = require("./store/useBrandStore");
     const content = format === "css" ? exportAsCSS(brand) : exportAsJSON(brand);
     const filename = `brand-tokens.${format}`;
     const blob = new Blob([content], { type: "text/plain" });

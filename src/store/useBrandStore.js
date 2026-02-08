@@ -796,37 +796,43 @@ export const getContrastRatio = (color1, color2) => {
 
 // Export functions
 export const exportAsCSS = (brand) => {
+  if (!brand) return ":root { /* No brand data */ }";
+
   const letterSpacingMap = {
     tight: "-0.02em",
     normal: "0",
     wide: "0.05em",
   };
 
+  const typography = brand.typography || {};
+  const colors = brand.colors || {};
+  const logo = brand.logo || {};
+
   return `:root {
   /* Typography */
-  --font-primary: ${brand.typography.primary};
-  --font-secondary: ${brand.typography.secondary};
-  --font-ui: ${brand.typography.ui};
-  --type-scale: ${brand.typography.scale};
-  --type-base-size: ${brand.typography.baseSize}px;
-  --type-letter-spacing: ${letterSpacingMap[brand.typography.letterSpacing] || "0"};
+  --font-primary: ${typography.primary ?? "Inter"};
+  --font-secondary: ${typography.secondary ?? "Inter"};
+  --font-ui: ${typography.ui ?? "Inter"};
+  --type-scale: ${typography.scale ?? 1.25};
+  --type-base-size: ${typography.baseSize ?? 16}px;
+  --type-letter-spacing: ${letterSpacingMap[typography.letterSpacing] ?? "0"};
   
   /* Colors */
-  --color-bg: ${brand.colors.bg};
-  --color-text: ${brand.colors.text};
-  --color-primary: ${brand.colors.primary};
-  --color-accent: ${brand.colors.accent};
-  --color-surface: ${brand.colors.surface};
+  --color-bg: ${colors.bg ?? "#FFFFFF"};
+  --color-text: ${colors.text ?? "#171717"};
+  --color-primary: ${colors.primary ?? "#000000"};
+  --color-accent: ${colors.accent ?? "#555555"};
+  --color-surface: ${colors.surface ?? "#F5F5F5"};
   
   /* Logo */
-  --logo-text: "${brand.logo.text}";
-  --logo-padding: ${brand.logo.padding}px;
-  --logo-size: ${brand.logo.size}px;
+  --logo-text: "${logo.text ?? "BRAND"}";
+  --logo-padding: ${logo.padding ?? 16}px;
+  --logo-size: ${logo.size ?? 24}px;
 }`;
 };
 
 export const exportAsJSON = (brand) => {
-  return JSON.stringify(brand, null, 2);
+  return JSON.stringify(brand ?? {}, null, 2);
 };
 
 const INITIAL_TILES = [

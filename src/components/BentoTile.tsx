@@ -49,6 +49,8 @@ export const BentoTile = ({
       className={twMerge(
         // Base tile styles
         'rounded-2xl overflow-hidden relative',
+        // Fill grid cell
+        'h-full w-full',
         // Prevent text overflow from expanding grid
         'min-w-0',
         // Focus styles

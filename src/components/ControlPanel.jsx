@@ -172,7 +172,6 @@ const Section = ({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="overflow-hidden"
           >
             <div className={noPadding ? "" : "px-3 pb-3 space-y-3"}>
               {children}
@@ -305,7 +304,7 @@ const NumberInput = ({
 
 // Slider with track fill
 const Slider = ({ value, onChange, onBlur, min, max, step = 1, label, unit = "" }) => {
-  const percentage = ((value - min) / (max - min)) * 100;
+  const percentage = max === min ? 0 : ((value - min) / (max - min)) * 100;
 
   return (
     <div className="space-y-2">
@@ -943,17 +942,37 @@ const GlobalControls = () => {
         />
 
         <PropRow label="Spacing">
-          <SegmentedControl
-            options={[
+          <div
+            className="flex rounded-md overflow-hidden"
+            style={{
+              background: "var(--sidebar-bg)",
+              border: "1px solid var(--sidebar-border)",
+            }}
+          >
+            {[
               { value: "tight", label: "Tight" },
               { value: "normal", label: "Normal" },
               { value: "wide", label: "Wide" },
-            ]}
-            value={brand.typography.letterSpacing}
-            onChange={(val) =>
-              handleChange("typography", "letterSpacing", val, true)
-            }
-          />
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => handleChange("typography", "letterSpacing", opt.value, true)}
+                className="flex-1 h-8 px-3 text-11 font-medium transition-fast"
+                style={{
+                  background:
+                    brand.typography.letterSpacing === opt.value
+                      ? "var(--accent-muted)"
+                      : "transparent",
+                  color:
+                    brand.typography.letterSpacing === opt.value
+                      ? "var(--accent)"
+                      : "var(--sidebar-text-secondary)",
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </PropRow>
 
         <Slider
@@ -1140,6 +1159,7 @@ const GlobalControls = () => {
             }}
           >
             <option value="balanced">Balanced</option>
+            <option value="geos">Geos</option>
             <option value="heroLeft">Hero Left</option>
             <option value="heroCenter">Hero Center</option>
             <option value="stacked">Stacked</option>
@@ -1579,19 +1599,15 @@ const ControlPanel = () => {
             }}
           >
             <div className="flex items-center gap-1">
-              <Kbd></Kbd>
-              <span className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
-                Z
-              </span>
+              <Kbd>⌘</Kbd>
+              <Kbd>Z</Kbd>
             </div>
             <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
               Undo/Redo
             </span>
             <div className="flex items-center gap-1">
-              <Kbd></Kbd>
-              <span className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
-                \
-              </span>
+              <Kbd>⌘</Kbd>
+              <Kbd>\</Kbd>
             </div>
           </div>
         </div>
