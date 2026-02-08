@@ -9,6 +9,7 @@ import { useTheme } from "./hooks/useTheme";
 import { ThemeToggle } from "./components/ThemeToggle";
 import toast, { Toaster } from 'react-hot-toast';
 import { generateShareUrl, copyToClipboard } from './utils/sharing';
+import { exportToPng } from './utils/export';
 import {
   ChevronDown,
   RotateCcw,
@@ -143,7 +144,7 @@ const AppLogo = () => (
 );
 
 // Export menu dropdown
-const ExportMenu = () => {
+const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { brand } = useBrandStore();
@@ -169,6 +170,21 @@ const ExportMenu = () => {
     a.click();
     URL.revokeObjectURL(url);
     setIsOpen(false);
+  };
+
+  const handleExportPng = async () => {
+    if (!canvasRef.current) {
+      toast.error('Canvas not ready');
+      return;
+    }
+
+    try {
+      await exportToPng(canvasRef.current, 'brandbento');
+      toast.success('PNG exported!');
+      setIsOpen(false);
+    } catch (error) {
+      toast.error('Export failed. Please try again.');
+    }
   };
 
   return (
@@ -197,6 +213,28 @@ const ExportMenu = () => {
               boxShadow: "var(--shadow-xl)",
             }}
           >
+            <button
+              onClick={handleExportPng}
+              className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
+              style={{ color: "var(--sidebar-text)" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <span className="text-11">Export as PNG</span>
+              <span
+                className="ml-auto text-10 px-1.5 py-0.5 rounded"
+                style={{
+                  background: "var(--sidebar-bg-active)",
+                  color: "var(--sidebar-text-muted)",
+                }}
+              >
+                .png
+              </span>
+            </button>
             <button
               onClick={() => handleExport("css")}
               className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
@@ -340,6 +378,8 @@ export default function App() {
   // Initialize theme management
   useTheme();
 
+  const canvasRef = useRef<HTMLDivElement>(null);
+
   const { brand, tiles, undo, redo, history, loadRandomTemplate, resetToDefaults } =
     useBrandStore();
 
@@ -367,6 +407,7 @@ export default function App() {
     <div className="h-screen flex flex-col overflow-hidden">
       {/* === TOP TOOLBAR (Figma Style) === */}
       <header
+        data-export-exclude="true"
         className="h-12 flex items-center justify-between px-2 z-20 flex-shrink-0"
         style={{
           background: "var(--sidebar-bg)",
@@ -444,7 +485,7 @@ export default function App() {
             <span>Share</span>
           </motion.button>
 
-          <ExportMenu />
+          <ExportMenu canvasRef={canvasRef} />
 
           <ToolbarDivider />
 
@@ -458,12 +499,13 @@ export default function App() {
         <ControlPanel />
 
         {/* Center: Canvas */}
-        <BentoCanvas />
+        <BentoCanvas ref={canvasRef} />
 
       </main>
 
       {/* === BOTTOM STATUS BAR === */}
       <footer
+        data-export-exclude="true"
         className="h-6 flex items-center justify-between px-3 flex-shrink-0"
         style={{
           background: "var(--sidebar-bg)",

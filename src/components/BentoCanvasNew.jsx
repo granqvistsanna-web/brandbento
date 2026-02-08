@@ -1,6 +1,7 @@
 import React from "react";
 import { BentoGridNew } from "./BentoGridNew";
 import { BentoTileEmpty } from "./BentoTileEmpty";
+import { DebugGrid } from "./DebugGrid";
 import { useBrandStore } from "../store/useBrandStore";
 
 // Tile Imports
@@ -14,7 +15,7 @@ import { ColorTile } from "./tiles/ColorTile"; // Keeping for 'colors' slot mome
  * Canvas with responsive bento grid – filled rectangle, no holes.
  * Uses theme-aware background (var(--canvas-bg)) for light/dark mode.
  */
-const BentoCanvasNew = () => {
+const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
 
   const renderTile = (id) => {
@@ -44,7 +45,8 @@ const BentoCanvasNew = () => {
 
   return (
     <div
-      className="flex-1 h-full overflow-hidden transition-colors duration-200"
+      ref={ref}
+      className="flex-1 h-full overflow-hidden transition-colors duration-200 relative"
       style={{ backgroundColor: "var(--canvas-bg)" }}
       onClick={() => setFocusedTile(null)}
     >
@@ -69,8 +71,12 @@ const BentoCanvasNew = () => {
           );
         }}
       />
+      {/* Debug overlay - shows grid boundaries when enabled */}
+      <DebugGrid />
     </div>
   );
-};
+});
+
+BentoCanvasNew.displayName = 'BentoCanvasNew';
 
 export default BentoCanvasNew;

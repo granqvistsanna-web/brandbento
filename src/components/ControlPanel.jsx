@@ -954,7 +954,7 @@ const LAYOUT_PRESETS_CONFIG = [
 ];
 
 const LayoutSelector = () => {
-  const { preset, setPreset, density, setDensity } = useLayoutStore();
+  const { preset, setPreset, density, setDensity, debugMode, toggleDebug } = useLayoutStore();
 
   return (
     <div
@@ -1039,6 +1039,34 @@ const LayoutSelector = () => {
             value={density}
             onChange={setDensity}
           />
+        </div>
+      </div>
+
+      {/* Debug toggle */}
+      <div className="flex items-center gap-2">
+        <span className="text-10" style={{ color: "var(--sidebar-text-secondary)" }}>
+          Debug
+        </span>
+        <div className="flex-1">
+          <motion.button
+            onClick={toggleDebug}
+            className="w-full h-7 px-3 rounded-md text-10 font-medium transition-fast flex items-center justify-center gap-1.5"
+            style={{
+              background: debugMode ? "var(--accent-muted)" : "var(--sidebar-bg)",
+              border: `1px solid ${debugMode ? "var(--accent)" : "var(--sidebar-border)"}`,
+              color: debugMode ? "var(--accent)" : "var(--sidebar-text-secondary)",
+            }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{
+                background: debugMode ? "var(--accent)" : "var(--sidebar-text-muted)",
+              }}
+            />
+            {debugMode ? "Grid Visible" : "Show Grid"}
+          </motion.button>
         </div>
       </div>
     </div>
@@ -1655,6 +1683,7 @@ const ControlPanel = () => {
 
   return (
     <motion.div
+      data-export-exclude="true"
       className="h-full flex flex-col flex-shrink-0 relative overflow-hidden"
       style={{
         background: "var(--sidebar-bg)",

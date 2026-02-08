@@ -1,5 +1,6 @@
 import { useLayoutStore } from '../store/useLayoutStore';
-import { LAYOUT_PRESETS } from '../config/layoutPresets';
+import { useBreakpoint } from '../hooks/useBreakpoint';
+import { BENTO_LAYOUTS, type LayoutPresetName } from '../config/bentoLayouts';
 
 /**
  * Debug overlay that visualizes the grid cell boundaries
@@ -8,53 +9,57 @@ import { LAYOUT_PRESETS } from '../config/layoutPresets';
  */
 export const DebugGrid = () => {
   const debugMode = useLayoutStore((s) => s.debugMode);
-  const preset = useLayoutStore((s) => s.preset);
-  const breakpoint = useLayoutStore((s) => s.breakpoint);
+  const preset = useLayoutStore((s) => s.preset) as LayoutPresetName;
   const density = useLayoutStore((s) => s.density);
+  const breakpoint = useBreakpoint();
 
   if (!debugMode) return null;
 
-  const config = LAYOUT_PRESETS[preset];
-  const columns = config.columns[breakpoint];
-  const rows = config.rows[breakpoint];
-  const gap = config.gap[density];
-
-  const totalCells = columns * rows;
+  const config = BENTO_LAYOUTS[preset]?.[breakpoint] ?? BENTO_LAYOUTS.balanced.desktop;
+  const { columns, rows, gap, placements } = config;
+  const padding = density === 'cozy' ? 16 : 12;
 
   return (
     <div
-      className="absolute inset-0 pointer-events-none z-50"
-      style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        gridTemplateRows: `repeat(${rows}, 1fr)`,
-        gridAutoFlow: 'dense',
-        gap: `${gap}px`,
-        padding: density === 'cozy' ? '16px' : '8px',
-      }}
+      data-export-exclude="true"
+      className="absolute inset-0 pointer-events-none z-50 flex items-center justify-center"
+      style={{ padding: `${padding}px` }}
     >
-      {Array.from({ length: totalCells }).map((_, i) => {
-        const col = (i % columns) + 1;
-        const row = Math.floor(i / columns) + 1;
-        return (
+      <div
+        className="h-full w-full max-w-6xl relative"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          gap: `${gap}px`,
+        }}
+      >
+        {/* Show actual tile placements */}
+        {placements.map((p) => (
           <div
-            key={i}
-            className="border-2 border-dashed border-pink-500/40 bg-pink-500/5 rounded-lg flex flex-col items-center justify-center"
+            key={p.id}
+            className="border-2 border-dashed border-pink-500/50 bg-pink-500/10 rounded-lg flex flex-col items-center justify-center"
+            style={{
+              gridColumn: `${p.colStart} / span ${p.colSpan}`,
+              gridRow: `${p.rowStart} / span ${p.rowSpan}`,
+            }}
           >
-            <span className="text-[10px] font-mono text-pink-600 font-bold">
-              {i + 1}
+            <span className="text-xs font-mono text-pink-600 font-bold">
+              {p.id}
             </span>
-            <span className="text-[8px] font-mono text-pink-500/80">
-              c{col} r{row}
+            <span className="text-[9px] font-mono text-pink-500/80">
+              {p.colSpan}×{p.rowSpan}
             </span>
           </div>
-        );
-      })}
+        ))}
 
-      {/* Debug info panel */}
-      <div className="absolute top-2 right-2 bg-pink-600 text-white text-[10px] font-mono px-2 py-1 rounded shadow-lg">
-        <div>{preset} | {breakpoint}</div>
-        <div>{columns}x{rows} | {density}</div>
+        {/* Debug info panel */}
+        <div className="absolute top-2 right-2 bg-pink-600 text-white text-[10px] font-mono px-3 py-2 rounded-lg shadow-lg space-y-0.5">
+          <div className="font-bold">{preset}</div>
+          <div>{breakpoint} · {columns}×{rows}</div>
+          <div>{density} · {gap}px gap</div>
+          <div>{placements.length} tiles</div>
+        </div>
       </div>
     </div>
   );
