@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 
 ## Current Position
 
-Phase: Phase 6 (Workflows) - 1 plan remaining
-Plan: 06-02 of 4 completed - PNG Export
-Status: Active development
-Last activity: 2026-02-08 - Completed 06-02-PLAN.md
+Phase: Phase 6 (Workflows) - complete
+Plan: 06-04 of 4 completed - Read-only View
+Status: Phase complete
+Last activity: 2026-02-08 - Completed 06-04-PLAN.md
 
-Progress: [███████████░] ~95% (Phase 5 superseded, Phase 6 3/4 done, verifications pending)
+Progress: [███████████░] ~97% (Phase 5 superseded, Phase 6 complete, verifications pending)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29
+- Total plans completed: 30
 - Average duration: ~5.8 min
-- Total execution time: ~2h 52min
+- Total execution time: ~2h 58min
 
 **By Phase:**
 
@@ -33,7 +33,7 @@ Progress: [███████████░] ~95% (Phase 5 superseded, Phase
 | 03 | 6/6 ✓ | ~39 min | ~6.5 min | |
 | 04 | 4/5 | ~12 min | ~3 min | 04-05 verification pending |
 | 05 | N/A ✓ | - | - | Superseded - goal achieved via new tile architecture |
-| 06 | 3/4 | ~9 min | ~3 min | CSS/JSON+Share+Reset done (outside GSD), PNG export done, readonly remaining |
+| 06 | 4/4 ✓ | ~15 min | ~3.75 min | CSS/JSON+Share+Reset done (outside GSD), PNG export + readonly done via GSD |
 | 08 | 5/5 ✓ | ~17 min | ~3.4 min | |
 | 09 | 5/6 | ~10 min | ~2 min | 09-05 verification pending |
 
@@ -130,6 +130,10 @@ Recent decisions affecting current work:
 - 06-02: forwardRef pattern for BentoCanvasNew to expose canvas ref to App
 - 06-02: PNG export as first option in Export dropdown menu
 - 06-02: devicePixelRatio scaling for high-DPI screens in PNG exports
+- 06-04: Read-only mode detected via ?view=readonly URL parameter
+- 06-04: ReadOnlyProvider context wraps entire app for global read-only state
+- 06-04: Banner provides clear 'Create your own' action to exit read-only mode
+- 06-04: All interactive UI (header, control panel, footer, toaster) hidden in read-only mode
 
 ### Pending Todos
 
@@ -138,7 +142,7 @@ Recent decisions affecting current work:
 - [ ] Run 09-05 verification checkpoint
 - [x] Execute 06-02: PNG export with html-to-image (completed 2026-02-08)
 - [x] Execute 06-03: Share link + toast + reset with confirmation (completed 2026-02-08)
-- [ ] Execute 06-04: Read-only view for shared links
+- [x] Execute 06-04: Read-only view for shared links (completed 2026-02-08)
 
 ### Blockers/Concerns
 
@@ -164,11 +168,12 @@ Active code now uses:
 - 2026-02-08: Significant work done outside GSD - new tile architecture, canvas refactor, export functionality
 - 2026-02-08: Phase 5 marked superseded (goal achieved via new tile architecture instead of UIPreviewTile)
 - 2026-02-08: Phase 6 slimmed from 5 plans to 4 (CSS/JSON export already done, 3 plans remaining)
+- 2026-02-08: Phase 6 complete - all 4 workflows implemented (CSS/JSON export, PNG export, share link, read-only view)
 
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 06-02-PLAN.md (PNG Export)
+Stopped at: Completed 06-04-PLAN.md (Read-only View)
 Resume file: None
 
 **Current active architecture:**
@@ -183,6 +188,7 @@ Resume file: None
 - src/utils/sharing.ts (URL generation and clipboard)
 - src/utils/export.ts (PNG export with filtering)
 - src/store/useBrandStore.ts (with resetToDefaults action)
+- src/hooks/useReadOnly.ts (read-only mode detection)
 
 ---
 *State initialized: 2026-02-06*
