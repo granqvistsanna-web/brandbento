@@ -77,6 +77,19 @@
   --z-dropdown: 30;
   --z-modal: 40;
   --z-tooltip: 50;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
 }
 
 /* === DARK MODE OVERRIDES === */
@@ -405,4 +418,47 @@ main {
 
 .text-12 {
   font-size: 12px;
+}
+
+.text-13 {
+  font-size: 13px;
+}
+
+/* ===== READ-ONLY MODE ===== */
+.read-only-mode .bento-tile {
+  pointer-events: none;
+  cursor: default;
+}
+
+.read-only-mode .bento-tile:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.read-only-mode .edit-panel,
+.read-only-mode .edit-button,
+.read-only-mode .hover-overlay,
+.read-only-mode .control-panel,
+.read-only-mode [data-editable] {
+  display: none !important;
+}
+
+.read-only-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 8px 16px;
+  background: var(--accent, #6366f1);
+  color: white;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.read-only-banner a {
+  color: white;
+  text-decoration: underline;
+  margin-left: 8px;
 }
