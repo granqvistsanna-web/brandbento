@@ -17,6 +17,9 @@
  */
 import type { MouseEvent } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { useBrandStore } from '@/store/useBrandStore';
+import { useGoogleFonts } from '@/hooks/useGoogleFonts';
+import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
 
 /**
  * Props for BentoTileEmpty component.
@@ -39,6 +42,9 @@ export interface BentoTileEmptyProps {
  * Uses theme-aware border/background from CSS variables.
  */
 export function BentoTileEmpty({ slotId, label, hint, className, onClick }: BentoTileEmptyProps) {
+  const typography = useBrandStore((state) => state.brand.typography);
+  const { fontFamily: uiFont } = useGoogleFonts(typography.ui, getFontCategory(typography.ui));
+  const typeScale = getTypeScale(typography);
   const displayLabel = label || slotId;
   const Component = onClick ? 'button' : 'div';
   return (
@@ -62,14 +68,22 @@ export function BentoTileEmpty({ slotId, label, hint, className, onClick }: Bent
     >
       <span
         className="text-10 font-medium uppercase tracking-wider opacity-50"
-        style={{ color: 'var(--canvas-text-secondary)' }}
+        style={{
+          color: 'var(--canvas-text-secondary)',
+          fontFamily: uiFont,
+          fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
+        }}
       >
         {displayLabel}
       </span>
       {hint ? (
         <span
           className="text-10 font-medium opacity-35"
-          style={{ color: 'var(--canvas-text-secondary)' }}
+          style={{
+            color: 'var(--canvas-text-secondary)',
+            fontFamily: uiFont,
+            fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
+          }}
         >
           {hint}
         </span>

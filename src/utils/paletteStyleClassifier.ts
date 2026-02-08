@@ -94,31 +94,41 @@ const classifyPalette = (palette: Palette, sectionId: string): PaletteStyle => {
     return 'minimal';
   }
 
-  // Neon: very high saturation
-  if (stats.maxSat > 85 && stats.avgSat > 50) {
-    return 'neon';
-  }
-
   // Dark: predominantly dark colors
-  if (stats.darkRatio > 0.5 || (stats.avgLight < 35 && stats.maxLight < 70)) {
+  if (stats.darkRatio > 0.5 || (stats.avgLight < 30 && stats.maxLight < 60)) {
     return 'dark';
   }
 
-  // Light: predominantly light colors with low saturation
-  if (stats.lightRatio > 0.6 && stats.avgSat < 40) {
+  // Neon: truly electric palettes — restrict to vibrant/clash/fresh sections
+  // with very high saturation, or extremely high sat from any section
+  if (stats.avgSat > 80 && stats.maxSat > 95) {
+    return 'neon';
+  }
+  if (stats.avgSat > 65 && stats.maxSat > 90 &&
+      (sectionId === 'vibrant' || sectionId === 'clash' || sectionId === 'fresh')) {
+    return 'neon';
+  }
+
+  // Light: predominantly light + desaturated (airy, clean palettes)
+  if (stats.lightRatio > 0.3 && stats.avgSat < 30) {
     return 'light';
   }
 
-  // Pastel: light + some saturation (soft colors)
-  if (stats.avgLight > 65 && stats.avgSat > 15 && stats.avgSat < 60) {
+  // Pastel: light + moderate saturation (soft tints with color)
+  if (stats.avgLight > 55 && stats.avgSat > 10 && stats.avgSat < 55 && stats.lightRatio > 0.2) {
     return 'pastel';
+  }
+
+  // Light fallback: high lightness with moderate saturation
+  if (stats.lightRatio > 0.45 && stats.avgSat < 50) {
+    return 'light';
   }
 
   // Vintage: heritage/retro sections, or muted mid-range
   if (sectionId === 'heritage' || sectionId === 'retro') {
     return 'vintage';
   }
-  if (stats.avgSat > 25 && stats.avgSat < 55 && stats.avgLight > 30 && stats.avgLight < 65) {
+  if (stats.avgSat > 20 && stats.avgSat < 50 && stats.avgLight > 35 && stats.avgLight < 55) {
     return 'vintage';
   }
 
@@ -128,9 +138,27 @@ const classifyPalette = (palette: Palette, sectionId: string): PaletteStyle => {
   }
 
   // Cold: cool hue dominance
-  if (stats.warmRatio < 0.3 && stats.avgSat > 20) {
+  if (stats.warmRatio < 0.35 && stats.avgSat > 15) {
     return 'cold';
   }
+
+  // Remaining saturated palettes: use section hints + temperature
+  if (stats.avgSat > 50) {
+    // Bold/playful with warmth → warm
+    if ((sectionId === 'bold' || sectionId === 'playful' || sectionId === 'earthy') && stats.warmRatio > 0.35) {
+      return 'warm';
+    }
+    // Corporate/muted → cold
+    if (sectionId === 'corporate' || sectionId === 'muted') {
+      return 'cold';
+    }
+    // Default by temperature
+    if (stats.warmRatio > 0.45) return 'warm';
+    return 'cold';
+  }
+
+  // Moderate saturation remainder
+  if (stats.warmRatio > 0.45) return 'warm';
 
   // Fallback to section hint
   return hint;

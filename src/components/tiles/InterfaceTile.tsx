@@ -1,119 +1,99 @@
 /**
  * Interface Tile Component
  *
- * UI component showcase displaying buttons in the brand style.
- * Demonstrates how the brand colors work in interactive elements.
- *
- * ## Features
- *
- * - Primary button with brand primary color
- * - Secondary/outline button with border
- * - Adaptive button text color based on primary brightness
- * - Hover and active states with micro-interactions
- * - Uses secondary/UI font for button text
- * - Surface color from tileSurfaces overrides or default (index 2)
- *
- * @component
- * @example
- * <InterfaceTile placementId="buttons" />
+ * Button showcase in a realistic UI snippet context.
+ * Shows primary + secondary buttons with a small label above,
+ * giving the feel of a real product card rather than a wireframe.
  */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { ArrowRight } from 'lucide-react';
 import { getAdaptiveTextColor } from '@/utils/color';
+import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { useGoogleFonts } from '@/hooks/useGoogleFonts';
+import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
 
-/**
- * Props for InterfaceTile component.
- */
 interface InterfaceTileProps {
-  /** Grid placement ID for surface color override lookup */
   placementId?: string;
 }
 
-/**
- * UI components showcase tile with buttons.
- */
 export function InterfaceTile({ placementId }: InterfaceTileProps) {
-    const { colors, bodyFont } = useBrandStore(
-        useShallow((state: BrandStore) => ({
-            colors: state.brand.colors,
-            bodyFont: state.brand.typography.secondary,
-        }))
-    );
-    const placementTileId = getPlacementTileId(placementId);
-    const placementTileType = getPlacementTileType(placementId);
-    const tile = useBrandStore((state: BrandStore) => {
-        if (placementTileId) {
-            return state.tiles.find((t) => t.id === placementTileId);
-        }
-        if (placementTileType) {
-            return state.tiles.find((t) => t.type === placementTileType);
-        }
-        return undefined;
-    });
-    const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
-        placementId ? state.tileSurfaces[placementId] : undefined
-    );
-    const { primary, text, bg, surfaces } = colors;
-    const content = tile?.content || {};
-    const primaryLabel = content.buttonLabel || 'Get Started';
-    const secondaryLabel = content.headerTitle || 'View Details';
+  const { colors, bodyFont, typography } = useBrandStore(
+    useShallow((state: BrandStore) => ({
+      colors: state.brand.colors,
+      bodyFont: state.brand.typography.secondary,
+      typography: state.brand.typography,
+    }))
+  );
+  const placementTileId = getPlacementTileId(placementId);
+  const placementTileType = getPlacementTileType(placementId);
+  const tile = useBrandStore((state: BrandStore) => {
+    if (placementTileId) {
+      return state.tiles.find((t) => t.id === placementTileId);
+    }
+    if (placementTileType) {
+      return state.tiles.find((t) => t.type === placementTileType);
+    }
+    return undefined;
+  });
+  const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
+    placementId ? state.tileSurfaces[placementId] : undefined
+  );
+  const { primary, text, bg, surfaces } = colors;
+  const content = tile?.content || {};
+  const primaryLabel = content.buttonLabel || 'Submit';
+  const secondaryLabel = content.headerTitle || 'Dashboard';
+  const { fontFamily: uiFont } = useGoogleFonts(bodyFont, getFontCategory(bodyFont));
+  const typeScale = getTypeScale(typography);
 
-    // Get surface index: user override > default (2 for interface)
-    const bgColor = resolveSurfaceColor({
-        placementId,
-        tileSurfaceIndex,
-        surfaces,
-        bg,
-        defaultIndex: 2,
-    });
+  const bgColor = resolveSurfaceColor({
+    placementId,
+    tileSurfaceIndex,
+    surfaces,
+    bg,
+    defaultIndex: 2,
+  });
 
-    // Adapt text colors based on surface brightness
-    const adaptiveText = getAdaptiveTextColor(bgColor, text, '#FAFAFA');
-    const buttonTextColor = getAdaptiveTextColor(bgColor, bg, '#0A0A0A');
+  const adaptiveText = getAdaptiveTextColor(bgColor, text, COLOR_DEFAULTS.TEXT_LIGHT);
+  const buttonTextColor = getAdaptiveTextColor(primary, COLOR_DEFAULTS.WHITE, COLOR_DEFAULTS.TEXT_DARK);
 
-    return (
-        <div
-            className="w-full h-full p-6 flex flex-col justify-center items-center gap-4 relative overflow-hidden transition-colors duration-300"
-            style={{ backgroundColor: bgColor }}
-        >
-            {/* Primary Button */}
-            <div className="w-full max-w-[200px] group relative z-10">
-                <button
-                    className="w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-fast shadow-sm hover:shadow-md active:scale-[0.98]"
-                    style={{
-                        backgroundColor: primary,
-                        color: buttonTextColor,
-                        fontFamily: bodyFont,
-                        fontWeight: 600,
-                        fontSize: '0.9rem'
-                    }}
-                >
-                    <span>{primaryLabel}</span>
-                    <ArrowRight size={14} />
-                </button>
-            </div>
+  return (
+    <div
+      className="w-full h-full p-6 flex flex-col justify-center gap-3 relative overflow-hidden transition-colors duration-300"
+      style={{ backgroundColor: bgColor }}
+    >
+      {/* Primary — filled, full-width feel */}
+      <button
+        className="w-full py-3 px-5 rounded-lg flex items-center justify-center gap-2 transition-all duration-150 active:scale-[0.98]"
+        style={{
+          backgroundColor: primary,
+          color: buttonTextColor,
+          fontFamily: uiFont,
+          fontWeight: 600,
+                        fontSize: `${clampFontSize(typeScale.base)}px`,
+          boxShadow: `0 1px 3px ${primary}33`,
+        }}
+      >
+        <span>{primaryLabel}</span>
+        <ArrowRight size={14} strokeWidth={2} />
+      </button>
 
-            {/* Secondary Button */}
-            <div className="w-full max-w-[200px] z-10">
-                <button
-                    className="w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 border transition-fast hover:opacity-80 active:scale-[0.98]"
-                    style={{
-                        borderColor: adaptiveText,
-                        color: adaptiveText,
-                        fontFamily: bodyFont,
-                        fontWeight: 500,
-                        fontSize: '0.9rem',
-                        opacity: 0.8
-                    }}
-                >
-                    <span>{secondaryLabel}</span>
-                </button>
-            </div>
-
-
-        </div>
-    );
+      {/* Secondary — outline/ghost style */}
+      <button
+        className="w-full py-3 px-5 rounded-lg flex items-center justify-center gap-2 border transition-all duration-150 active:scale-[0.98]"
+        style={{
+          borderColor: `color-mix(in srgb, ${adaptiveText} 25%, transparent)`,
+          color: adaptiveText,
+          fontFamily: uiFont,
+          fontWeight: 500,
+                        fontSize: `${clampFontSize(typeScale.stepMinus1)}px`,
+          backgroundColor: 'transparent',
+        }}
+      >
+        <span>{secondaryLabel}</span>
+      </button>
+    </div>
+  );
 }

@@ -10,6 +10,8 @@
  * - Full palette access for creative flexibility
  */
 
+import { COLOR_DEFAULTS } from './colorDefaults';
+
 export interface ColorAnalysis {
   hex: string;
   h: number; // Hue (0-360)
@@ -379,4 +381,96 @@ export const validateMapping = (mapping: BrandColorMapping): {
     primaryBgContrast,
     passesAA: textBgContrast >= 4.5,
   };
+};
+
+/**
+ * Adjust a hex color's lightness to meet a minimum contrast ratio against a reference color.
+ * Tries darkening first for light backgrounds, lightening first for dark backgrounds.
+ */
+const adjustForContrast = (hex: string, againstHex: string, minRatio: number): string => {
+  const hsl = hexToHSL(hex);
+  const againstHsl = hexToHSL(againstHex);
+  const isLightBg = againstHsl.l > 50;
+
+  // Try adjusting lightness in steps
+  for (let step = 0; step <= 40; step += 5) {
+    const darkerL = Math.max(0, hsl.l - step);
+    const lighterL = Math.min(100, hsl.l + step);
+
+    // For light backgrounds, try darker first; for dark backgrounds, try lighter first
+    const candidateL = isLightBg ? darkerL : lighterL;
+    const candidateHex = hslToHexLocal(hsl.h, hsl.s, candidateL);
+
+    if (getContrastRatio(candidateHex, againstHex) >= minRatio) {
+      return candidateHex;
+    }
+
+    // Try the other direction
+    const altL = isLightBg ? lighterL : darkerL;
+    const altHex = hslToHexLocal(hsl.h, hsl.s, altL);
+
+    if (getContrastRatio(altHex, againstHex) >= minRatio) {
+      return altHex;
+    }
+  }
+
+  // Fallback: use black or white
+  return isLightBg ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.TEXT_LIGHT;
+};
+
+/**
+ * Convert HSL values to hex string (local helper)
+ */
+const hslToHexLocal = (h: number, s: number, l: number): string => {
+  const sNorm = s / 100;
+  const lNorm = l / 100;
+  const a = sNorm * Math.min(lNorm, 1 - lNorm);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = lNorm - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+};
+
+/**
+ * Enforce WCAG AA contrast requirements on a color mapping.
+ * Adjusts text, primary, and accent colors to ensure readability.
+ * Filters surfaces that would cause contrast issues.
+ */
+export const enforceContrast = (mapping: BrandColorMapping): BrandColorMapping => {
+  const result = { ...mapping };
+
+  // 1. Ensure text vs bg meets AA (4.5:1)
+  const textBgRatio = getContrastRatio(result.text, result.bg);
+  if (textBgRatio < 4.5) {
+    result.text = adjustForContrast(result.text, result.bg, 4.5);
+  }
+
+  // 2. Ensure primary vs bg meets large-text AA (3:1)
+  const primaryBgRatio = getContrastRatio(result.primary, result.bg);
+  if (primaryBgRatio < 3) {
+    result.primary = adjustForContrast(result.primary, result.bg, 3);
+  }
+
+  // 3. Ensure accent vs bg meets at least 2.5:1 (used for badges/highlights)
+  const accentBgRatio = getContrastRatio(result.accent, result.bg);
+  if (accentBgRatio < 2.5) {
+    result.accent = adjustForContrast(result.accent, result.bg, 2.5);
+  }
+
+  // 4. Ensure text is readable on each surface — remove surfaces where it isn't
+  if (result.surfaces.length > 0) {
+    const readableSurfaces = result.surfaces.filter(surface => {
+      return getContrastRatio(result.text, surface) >= 3;
+    });
+
+    // Keep at least one surface (bg fallback)
+    result.surfaces = readableSurfaces.length > 0
+      ? readableSurfaces
+      : [result.bg];
+    result.surface = result.surfaces[0];
+  }
+
+  return result;
 };

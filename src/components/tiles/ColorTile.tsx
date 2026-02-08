@@ -1,35 +1,30 @@
 /**
  * Color Tile Component
  *
- * Color palette showcase displaying brand colors with copy-to-clipboard.
- * Shows core colors (primary, accent) and surface variations.
- *
- * ## Features
- *
- * - Core colors row (Primary, Accent) with hex values
- * - Surface palette grid (up to 6 surfaces)
- * - Click-to-copy hex values
- * - Visual feedback on copy (checkmark)
- * - Adaptive text colors for readability
- * - Background indicator showing canvas background
- *
- * @component
- * @example
- * <ColorTile />
+ * Palette showcase as stacked horizontal swatches.
+ * Dominant neutral takes most space, primary and accent
+ * appear as proportional accent strips below.
+ * Click any swatch to copy its hex value.
  */
 import { useBrandStore } from '@/store/useBrandStore';
+import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
-import { Copy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { hexToHSL } from '@/utils/colorMapping';
+import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
+import { Check } from 'lucide-react';
+import { useGoogleFonts } from '@/hooks/useGoogleFonts';
+import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
 
-/**
- * Color palette showcase tile.
- * Displays brand colors with copy functionality.
- */
 export function ColorTile() {
-  const colors = useBrandStore((state) => state.brand.colors);
-
+  const { colors, typography } = useBrandStore(
+    useShallow((state) => ({
+      colors: state.brand.colors,
+      typography: state.brand.typography,
+    }))
+  );
+  const { fontFamily: uiFont } = useGoogleFonts(typography.ui, getFontCategory(typography.ui));
+  const typeScale = getTypeScale(typography);
   const [copied, setCopied] = useState<string | null>(null);
 
   const textColorMap = useMemo(() => {
@@ -37,7 +32,7 @@ export function ColorTile() {
     const ensure = (hex: string) => {
       if (!hex || map.has(hex)) return;
       const { l } = hexToHSL(hex);
-      map.set(hex, l > 55 ? '#000000' : '#FFFFFF');
+      map.set(hex, l > 55 ? COLOR_DEFAULTS.PRIMARY : COLOR_DEFAULTS.WHITE);
     };
 
     [
@@ -55,18 +50,7 @@ export function ColorTile() {
   }, [colors]);
 
   const getTextColor = (bgHex: string): string =>
-    textColorMap.get(bgHex) ?? '#000000';
-
-  // Core brand colors
-  const coreColors = [
-    { name: 'Primary', value: colors.primary },
-    { name: 'Accent', value: colors.accent },
-  ];
-
-  // Surface palette - showcases identity
-  const surfaceColors = colors.surfaces?.length > 0
-    ? colors.surfaces.slice(0, 6)
-    : [colors.surface];
+    textColorMap.get(bgHex) ?? COLOR_DEFAULTS.PRIMARY;
 
   const handleCopy = (color: string) => {
     navigator.clipboard.writeText(color);
@@ -74,99 +58,63 @@ export function ColorTile() {
     setTimeout(() => setCopied(null), 1500);
   };
 
+  const neutral = colors.surface || colors.bg;
+  const primary = colors.primary || colors.accent;
+  const accent = colors.accent || colors.primary;
+  const labelSize = `${clampFontSize(typeScale.stepMinus2)}px`;
+
   return (
     <div
-      className="w-full h-full p-4 flex flex-col gap-3 overflow-hidden"
+      className="w-full h-full grid grid-rows-[1fr_auto_auto] gap-0 overflow-hidden"
       style={{ backgroundColor: colors.bg }}
     >
-      {/* Core Colors Row */}
-      <div className="flex gap-2">
-        {coreColors.map((color) => (
-          <motion.button
-            key={color.name}
-            className="flex-1 rounded-lg p-3 flex flex-col justify-between text-left min-h-[52px]"
-            style={{ backgroundColor: color.value }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleCopy(color.value)}
-          >
-            <span
-              className="text-10 font-medium opacity-70 uppercase tracking-wide"
-              style={{ color: getTextColor(color.value) }}
-            >
-              {color.name}
-            </span>
-            <div className="flex justify-between items-center">
-              <span
-                className="text-10 font-semibold"
-                style={{ color: getTextColor(color.value) }}
-              >
-                {color.value}
-              </span>
-              {copied === color.value ? (
-                <span className="text-10" style={{ color: getTextColor(color.value) }}>✓</span>
-              ) : (
-                <Copy size={12} className="opacity-40" style={{ color: getTextColor(color.value) }} />
-              )}
-            </div>
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Surfaces Grid - shows palette identity */}
-      <div className="flex-1 flex flex-col gap-2">
-        <span
-          className="text-10 font-medium opacity-50 uppercase tracking-wider"
-          style={{ color: colors.text }}
-        >
-          Surfaces
-        </span>
-        <div className="grid grid-cols-3 gap-2 flex-1">
-          {surfaceColors.map((surface, index) => (
-            <motion.button
-              key={`surface-${index}`}
-              className="rounded-md flex items-end justify-between p-2"
-              style={{
-                backgroundColor: surface,
-                border: surface === colors.bg ? `1px solid ${colors.text}20` : 'none',
-              }}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => handleCopy(surface)}
-            >
-              <span
-                className="text-10 font-medium opacity-60"
-                style={{ color: getTextColor(surface) }}
-              >
-                {index + 1}
-              </span>
-              {copied === surface && (
-                <span className="text-10" style={{ color: getTextColor(surface) }}>✓</span>
-              )}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      {/* Background indicator */}
-      <div
-        className="rounded-md p-2 flex justify-between items-center"
-        style={{
-          backgroundColor: colors.bg,
-          border: `1px solid ${colors.text}15`,
-        }}
+      {/* Dominant neutral — takes most vertical space */}
+      <motion.button
+        className="w-full flex items-end justify-start p-3 min-h-0"
+        style={{ backgroundColor: neutral }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => handleCopy(neutral)}
       >
         <span
-          className="text-10 font-medium opacity-50 uppercase"
-          style={{ color: colors.text }}
+          className="font-medium uppercase tracking-wider flex items-center gap-1.5"
+          style={{ color: getTextColor(neutral), opacity: 0.55, fontFamily: uiFont, fontSize: labelSize }}
         >
-          Background
+          {copied === neutral ? <Check size={10} strokeWidth={2.5} /> : null}
+          {neutral}
         </span>
+      </motion.button>
+
+      {/* Primary strip */}
+      <motion.button
+        className="w-full flex items-center justify-start p-3 py-2.5"
+        style={{ backgroundColor: primary }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => handleCopy(primary)}
+      >
         <span
-          className="text-10 font-semibold opacity-70"
-          style={{ color: colors.text }}
+          className="font-medium uppercase tracking-wider flex items-center gap-1.5"
+          style={{ color: getTextColor(primary), opacity: 0.65, fontFamily: uiFont, fontSize: labelSize }}
         >
-          {colors.bg}
+          {copied === primary ? <Check size={10} strokeWidth={2.5} /> : null}
+          {primary}
         </span>
-      </div>
+      </motion.button>
+
+      {/* Accent strip — thinnest */}
+      <motion.button
+        className="w-full flex items-center justify-start p-3 py-2"
+        style={{ backgroundColor: accent }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => handleCopy(accent)}
+      >
+        <span
+          className="font-medium uppercase tracking-wider flex items-center gap-1.5"
+          style={{ color: getTextColor(accent), opacity: 0.65, fontFamily: uiFont, fontSize: labelSize }}
+        >
+          {copied === accent ? <Check size={10} strokeWidth={2.5} /> : null}
+          {accent}
+        </span>
+      </motion.button>
     </div>
   );
 }

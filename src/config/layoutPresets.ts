@@ -399,4 +399,68 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
       },
     },
   },
+
+  foodDrink: {
+    name: 'foodDrink',
+    columns: {
+      mobile: 2,
+      tablet: 3,
+      desktop: 4,
+    },
+    rows: {
+      mobile: 6,
+      tablet: 4,
+      desktop: 3,
+    },
+    gap: {
+      cozy: 14,
+      dense: 10,
+    },
+    rowHeight: {
+      cozy: 260,
+      dense: 200,
+    },
+    tileSpans: {
+      hero: {
+        mobile: { colSpan: 2, rowSpan: 2 },
+        tablet: { colSpan: 2, rowSpan: 2 },
+        desktop: { colSpan: 2, rowSpan: 2 },
+      },
+      image: {
+        mobile: { colSpan: 2, rowSpan: 1 },
+        tablet: { colSpan: 1, rowSpan: 2 },
+        desktop: { colSpan: 2, rowSpan: 1 },
+      },
+      editorial: {
+        mobile: { colSpan: 2, rowSpan: 1 },
+        tablet: { colSpan: 2, rowSpan: 1 },
+        desktop: { colSpan: 1, rowSpan: 2 },
+      },
+      'ui-preview': {
+        mobile: { colSpan: 2, rowSpan: 1 },
+        tablet: { colSpan: 1, rowSpan: 1 },
+        desktop: { colSpan: 1, rowSpan: 1 },
+      },
+      colors: {
+        mobile: { colSpan: 1, rowSpan: 1 },
+        tablet: { colSpan: 2, rowSpan: 1 },
+        desktop: { colSpan: 2, rowSpan: 1 },
+      },
+      logo: {
+        mobile: { colSpan: 1, rowSpan: 1 },
+        tablet: { colSpan: 1, rowSpan: 1 },
+        desktop: { colSpan: 1, rowSpan: 1 },
+      },
+      product: {
+        mobile: { colSpan: 1, rowSpan: 1 },
+        tablet: { colSpan: 1, rowSpan: 1 },
+        desktop: { colSpan: 1, rowSpan: 1 },
+      },
+      menu: {
+        mobile: { colSpan: 2, rowSpan: 1 },
+        tablet: { colSpan: 1, rowSpan: 1 },
+        desktop: { colSpan: 1, rowSpan: 1 },
+      },
+    },
+  },
 };

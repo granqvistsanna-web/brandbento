@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { hexToHSL } from '@/utils/colorMapping';
+import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import type { Colors } from '@/store/useBrandStore';
 
 interface PreviewCardProps {
@@ -18,14 +19,14 @@ export const PreviewCard = memo(({ colors, variant }: PreviewCardProps) => {
   const { l } = hexToHSL(bg);
   const isLight = l > 55;
 
-  const textColor = isLight ? '#1A1A1A' : '#F5F5F5';
+  const textColor = isLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.SURFACE;
   const mutedText = isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
 
   // Button uses primary on surface, or surface on primary/accent
   const btnBg = variant === 'surface' ? colors.primary : colors.bg;
   const btnText = (() => {
     const { l: btnL } = hexToHSL(btnBg);
-    return btnL > 55 ? '#1A1A1A' : '#F5F5F5';
+    return btnL > 55 ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.SURFACE;
   })();
 
   const labelBg = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';

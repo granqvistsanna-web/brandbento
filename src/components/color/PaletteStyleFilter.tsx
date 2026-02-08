@@ -16,12 +16,12 @@ export const PaletteStyleFilter = memo(({
 }: PaletteStyleFilterProps) => {
   return (
     <div className="px-3 py-2">
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-0.5">
+      <div className="flex flex-wrap items-center gap-1.5 pb-0.5">
         <span
           className="text-[10px] font-semibold uppercase tracking-[0.08em] shrink-0 mr-0.5"
           style={{ color: 'var(--sidebar-text-muted)' }}
         >
-          Style
+          Style:
         </span>
 
         {STYLE_ORDER.map((style) => {

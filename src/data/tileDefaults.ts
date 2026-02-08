@@ -66,6 +66,10 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
     headline: "Features",
     items: ["Item 1", "Item 2", "Item 3"],
   },
+  menu: {
+    headline: "Menu",
+    items: ["Breakfast", "Brunch", "Seasonal"],
+  },
   logo: {
     label: "Brand",
   },

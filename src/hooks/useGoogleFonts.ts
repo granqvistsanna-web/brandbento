@@ -8,7 +8,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { loadFontWithFallback, getSystemFallback } from '@/services/googleFonts';
-import { GOOGLE_FONTS, type GoogleFontMeta } from '@/data/googleFontsMetadata';
+import { GOOGLE_FONTS_MAP, type GoogleFontMeta } from '@/data/googleFontsMetadata';
 
 /**
  * Result object returned by useGoogleFonts hook.
@@ -68,7 +68,7 @@ export function useGoogleFonts(
     setError(null);
 
     // Find font metadata to get available weights
-    const fontMeta = GOOGLE_FONTS.find(f => f.family === fontFamily);
+    const fontMeta = GOOGLE_FONTS_MAP.get(fontFamily);
     const weightsToLoad = weights || (fontMeta?.variants.filter(v => !v.includes('italic')) || ['400']);
 
     const result = await loadFontWithFallback(fontFamily, weightsToLoad);

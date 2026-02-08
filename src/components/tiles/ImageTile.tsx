@@ -1,6 +1,8 @@
 import { useBrandStore } from '../../store/useBrandStore';
 import { motion } from 'motion/react';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { useGoogleFonts } from '@/hooks/useGoogleFonts';
+import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
 
 /**
  * Image Tile Component
@@ -22,23 +24,27 @@ export const ImageTile = ({ placementId }: { placementId: string }) => {
         }
         return undefined;
     });
-    const imagery = useBrandStore((s) => s.brand?.imagery);
+    const { imagery, typography } = useBrandStore((s) => ({
+        imagery: s.brand?.imagery,
+        typography: s.brand?.typography,
+    }));
+    const { fontFamily: headlineFont } = useGoogleFonts(typography?.primary || 'Inter', getFontCategory(typography?.primary));
+    const typeScale = getTypeScale(typography);
 
     const content = tile?.content || {};
     const imageUrl = content.image || imagery?.url;
     const overlayText = content.overlayText;
 
+    const colors = useBrandStore((s) => s.brand?.colors);
+
     if (!imageUrl) {
         return (
             <div
-                className="w-full h-full flex items-center justify-center"
+                className="w-full h-full overflow-hidden"
                 style={{
-                    background: "var(--canvas-surface)",
-                    color: "var(--canvas-text-secondary)",
+                    background: `linear-gradient(135deg, ${colors?.primary || '#333'}ee, ${colors?.accent || colors?.primary || '#555'}aa)`,
                 }}
-            >
-                No Image Selected
-            </div>
+            />
         );
     }
 
@@ -62,7 +68,11 @@ export const ImageTile = ({ placementId }: { placementId: string }) => {
                 >
                     <h3
                         className="text-2xl font-bold text-center drop-shadow-lg"
-                        style={{ color: "var(--canvas-surface)" }}
+                        style={{
+                            color: "var(--canvas-surface)",
+                            fontFamily: headlineFont,
+                            fontSize: `${clampFontSize(typeScale.step2)}px`,
+                        }}
                     >
                         {overlayText}
                     </h3>

@@ -4,11 +4,18 @@ export type BreakpointName = 'mobile' | 'tablet' | 'desktop';
 
 export type DensityMode = 'cozy' | 'dense';
 
-export type LayoutPresetName = 'balanced' | 'heroLeft' | 'heroCenter' | 'stacked' | 'geos';
+export type LayoutPresetName =
+  | 'balanced'
+  | 'heroLeft'
+  | 'heroCenter'
+  | 'stacked'
+  | 'geos'
+  | 'foodDrink';
 
 export type TileType =
   | 'hero'
   | 'logo'
+  | 'menu'
   | 'colors'
   | 'primaryType'
   | 'secondaryType'

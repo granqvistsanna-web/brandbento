@@ -37,16 +37,22 @@ import { getPlacementKind } from "../config/placements";
 import { IdentityTile } from "./tiles/IdentityTile";
 import { HeroTile } from "./tiles/HeroTile";
 import { EditorialTile } from "./tiles/EditorialTile";
-import { ImageTile } from "./tiles/ImageTile";
 import { SocialPostTile } from "./tiles/SocialPostTile";
+import { ImageTile } from "./tiles/ImageTile";
 import { InterfaceTile } from "./tiles/InterfaceTile";
 import { ColorTile } from "./tiles/ColorTile";
+import { ProductTile } from "./tiles/ProductTile";
+import { MenuTile } from "./tiles/MenuTile";
+import { IconTile } from "./tiles/IconTile";
+import { getPlacementTileId, getPlacementTileType } from "../config/placements";
 const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
+  const focusedTileId = useBrandStore((s) => s.focusedTileId);
   const colors = useBrandStore((s) => s.brand.colors);
+  const tiles = useBrandStore((s) => s.tiles);
+  const activePreset = useBrandStore((s) => s.activePreset);
   const zoom = typeof props.zoom === 'number' ? props.zoom : 100;
   const zoomScale = Math.max(25, Math.min(200, zoom)) / 100;
-  let identityRendered = false;
 
   const getPlaceholderMeta = (id) => {
     switch (id) {
@@ -73,17 +79,53 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
     }
   };
 
+  const getTileForPlacement = (id) => {
+    const placementTileId = getPlacementTileId(id);
+    if (placementTileId) {
+      return tiles.find((t) => t.id === placementTileId);
+    }
+    const placementTileType = getPlacementTileType(id);
+    if (placementTileType) {
+      return tiles.find((t) => t.type === placementTileType);
+    }
+    return undefined;
+  };
+
   const renderTile = (id) => {
-    if (id === 'hero') {
-      return <HeroTile placementId={id} />;
-    }
-    if (id === 'a') {
-      return <IdentityTile placementId={id} />;
-    }
     const kind = getPlacementKind(id);
-    if (kind === 'identity') {
-      if (identityRendered) return null;
-      identityRendered = true;
+    if (kind === 'colors') {
+      return activePreset === 'foodDrink'
+        ? <IconTile placementId={id} />
+        : <ColorTile />;
+    }
+    const tile = getTileForPlacement(id);
+    const tileType = tile?.type;
+    if (tileType) {
+      switch (tileType) {
+        case 'hero':
+          return <HeroTile placementId={id} />;
+        case 'logo':
+          return <IdentityTile placementId={id} />;
+        case 'editorial':
+          return <EditorialTile placementId={id} />;
+        case 'image':
+          return activePreset === 'foodDrink'
+            ? <ImageTile placementId={id} />
+            : <SocialPostTile placementId={id} />;
+        case 'ui-preview':
+          return <InterfaceTile placementId={id} />;
+        case 'product':
+          return <ProductTile placementId={id} />;
+        case 'menu':
+        case 'utility':
+          return <MenuTile placementId={id} />;
+        case 'colors':
+          return activePreset === 'foodDrink'
+            ? <IconTile placementId={id} />
+            : <ColorTile />;
+        default:
+          break;
+      }
     }
     switch (kind) {
       case 'identity':
@@ -95,7 +137,9 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
       case 'interface':
         return <InterfaceTile placementId={id} />;
       case 'colors':
-        return <ColorTile />;
+        return activePreset === 'foodDrink'
+          ? <IconTile placementId={id} />
+          : <ColorTile />;
       default:
         return null;
     }

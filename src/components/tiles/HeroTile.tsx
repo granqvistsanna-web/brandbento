@@ -1,24 +1,28 @@
 /**
  * Hero Tile Component
  *
- * Image-led hero with a dark overlay and light title text.
- * Pulls image/headline/subcopy/cta from the hero tile content.
+ * Image-led hero with refined typographic overlay.
+ * Uses a subtle gradient vignette and elegant type hierarchy.
  */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { useGoogleFonts } from '@/hooks/useGoogleFonts';
+import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
 
 interface HeroTileProps {
   placementId?: string;
 }
 
 export function HeroTile({ placementId }: HeroTileProps) {
-  const { typography } = useBrandStore(
+  const { typography, colors } = useBrandStore(
     useShallow((state: BrandStore) => ({
       typography: state.brand.typography,
+      colors: state.brand.colors,
     }))
   );
+  const activePreset = useBrandStore((state: BrandStore) => state.activePreset);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -39,51 +43,56 @@ export function HeroTile({ placementId }: HeroTileProps) {
   const headline = content.headline || 'Brand stories, made bold.';
   const subcopy = content.subcopy || 'Design a cohesive world in minutes.';
 
-  const spacingMap = {
-    tight: '-0.02em',
-    normal: '0',
-    wide: '0.05em',
-  };
-  const spacing = spacingMap[typography.letterSpacing] || '0';
+  const spacing = getLetterSpacing(typography.letterSpacing);
+  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
+  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  const typeScale = getTypeScale(typography);
+
+  const isFoodDrink = activePreset === 'foodDrink';
 
   return (
     <div className="relative w-full h-full overflow-hidden">
+      {/* Background image or gradient fallback */}
       {imageUrl ? (
         <motion.img
           src={imageUrl}
           alt={headline}
           className="absolute inset-0 w-full h-full object-cover"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          initial={{ opacity: 0, scale: 1.02 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         />
       ) : (
         <div
           className="absolute inset-0"
           style={{
-            background:
-              'linear-gradient(135deg, rgba(10,10,10,0.95), rgba(35,35,35,0.9))',
+            background: `linear-gradient(145deg, ${colors.primary}dd, ${colors.accent || colors.primary}88)`,
           }}
         />
       )}
 
+      {/* Refined gradient overlay — heavier at bottom for text legibility */}
       <div
         className="absolute inset-0"
         style={{
-          background:
-            'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.7) 100%)',
+          background: [
+            'linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.72) 100%)',
+          ].join(', '),
         }}
       />
 
-      <div className="relative h-full w-full p-6 flex flex-col justify-end gap-3">
+      {/* Content — pinned to bottom with generous breathing room */}
+      <div className="relative h-full w-full p-6 flex flex-col justify-end gap-2">
         <h1
-          className="leading-tight"
+          className="leading-[1.08]"
           style={{
-            fontFamily: typography.primary,
+            fontFamily: headlineFont,
             fontWeight: parseInt(typography.weightHeadline) || 700,
-            fontSize: 'clamp(24px, 4vw, 40px)',
-            letterSpacing: spacing,
+            fontSize: `clamp(${clampFontSize(typeScale.step2)}px, 4vw, ${clampFontSize(typeScale.step3)}px)`,
+            letterSpacing: isFoodDrink ? '0.06em' : spacing,
             color: '#F7F4EF',
+            textTransform: isFoodDrink ? 'uppercase' : 'none',
+            textWrap: 'balance',
           }}
         >
           {headline}
@@ -91,19 +100,21 @@ export function HeroTile({ placementId }: HeroTileProps) {
 
         {subcopy && (
           <p
-            className="leading-relaxed max-w-[32ch]"
+            className="leading-relaxed max-w-[34ch]"
             style={{
-              fontFamily: typography.secondary,
+              fontFamily: bodyFont,
               fontWeight: parseInt(typography.weightBody) || 400,
-              fontSize: 'clamp(12px, 2vw, 16px)',
-              letterSpacing: spacing,
-              color: 'rgba(247, 244, 239, 0.85)',
+              fontSize: isFoodDrink
+                ? `clamp(${clampFontSize(typeScale.stepMinus1)}px, 1.6vw, ${clampFontSize(typeScale.step1)}px)`
+                : `clamp(${clampFontSize(typeScale.stepMinus1)}px, 2vw, ${clampFontSize(typeScale.step1)}px)`,
+              letterSpacing: isFoodDrink ? '0.04em' : spacing,
+              color: 'rgba(247, 244, 239, 0.72)',
+              textTransform: isFoodDrink ? 'uppercase' : 'none',
             }}
           >
             {subcopy}
           </p>
         )}
-
       </div>
     </div>
   );

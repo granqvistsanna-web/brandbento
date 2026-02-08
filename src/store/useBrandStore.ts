@@ -39,7 +39,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { getPaletteById } from "../data/colorPalettes";
-import { mapPaletteToBrand } from "../utils/colorMapping";
+import { mapPaletteToBrand, enforceContrast } from "../utils/colorMapping";
 import { DEFAULT_BRAND, BRAND_PRESETS } from "../data/brandPresets";
 import { INITIAL_TILES } from "../data/tileDefaults";
 import { getPlacementTileId, getPlacementTileType } from "../config/placements";
@@ -234,10 +234,21 @@ const createDefaultBrand = (): Brand => ({
   imagery: { ...DEFAULT_BRAND.imagery },
 });
 
+const isValidImageSrc = (src: unknown): src is string => {
+  if (typeof src !== 'string' || !src) return false;
+  return src.startsWith('data:image/') || src.startsWith('blob:') ||
+    src.startsWith('https://') || src.startsWith('http://');
+};
+
 const mergeBrand = (source?: Partial<Brand> | null): Brand => {
   const base = createDefaultBrand();
 
   if (!source) return base;
+
+  const mergedLogo = { ...base.logo, ...(source.logo ?? {}) };
+  if (mergedLogo.image && !isValidImageSrc(mergedLogo.image)) {
+    mergedLogo.image = null;
+  }
 
   return {
     typography: { ...base.typography, ...(source.typography ?? {}) },
@@ -247,7 +258,7 @@ const mergeBrand = (source?: Partial<Brand> | null): Brand => {
       surfaces: source.colors?.surfaces ?? base.colors.surfaces,
       paletteColors: source.colors?.paletteColors ?? base.colors.paletteColors,
     },
-    logo: { ...base.logo, ...(source.logo ?? {}) },
+    logo: mergedLogo,
     imagery: { ...base.imagery, ...(source.imagery ?? {}) },
   };
 };
@@ -786,7 +797,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         content: {
           headline: "We stand for food freedom",
           subcopy: "Enjoy the foods you love, regardless of dietary lifestyle.",
-          image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop",
+          image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop",
         },
         colSpan: 2,
         rowSpan: 2,
@@ -795,7 +806,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "image-1",
         type: "image",
         content: {
-          image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1000&auto=format&fit=crop",
+          image: "https://images.unsplash.com/photo-1520201163981-8cc95007dd2a?q=80&w=1200&auto=format&fit=crop",
           overlayText: "Fresh + Bright",
         },
         colSpan: 1,
@@ -803,21 +814,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
       },
       {
         id: "editorial-1",
-        type: "editorial",
+        type: "product",
         content: {
-          headline: "Samba Sweetness",
-          body: "Succulent and bold, a dessert that captures bite.",
+          label: "Organic Acai Bowl",
+          subcopy: "Breakfast",
+          body: "Vegan",
+          price: "$12.99",
+          image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=800&auto=format&fit=crop",
         },
         colSpan: 1,
         rowSpan: 1,
       },
       {
         id: "ui-preview-1",
-        type: "ui-preview",
+        type: "menu",
         content: {
-          headerTitle: "Menu",
+          headline: "Menu",
+          subcopy: "Look what are we currently serving:",
+          items: ["Breakfast", "Wines", "Brunch"],
           buttonLabel: "See PDF",
-          inputPlaceholder: "Search dishes...",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -1338,6 +1353,7 @@ const defaultTileContent: Record<string, TileContent> = {
     overlayText: "Image",
   },
   utility: { headline: "Features", items: ["Item 1", "Item 2", "Item 3"] },
+  menu: { headline: "Menu", items: ["Breakfast", "Brunch", "Seasonal"] },
   logo: { label: "Brand" },
 };
 
@@ -1439,7 +1455,8 @@ export const useBrandStore = create<BrandStore>()(
         const palette = getPaletteById(paletteId);
         if (!palette) return;
 
-        const fullMapping = mapPaletteToBrand(palette.colors);
+        const rawMapping = mapPaletteToBrand(palette.colors);
+        const fullMapping = enforceContrast(rawMapping);
         let colorMapping: typeof fullMapping;
 
         switch (complexity) {

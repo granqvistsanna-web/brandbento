@@ -22,7 +22,15 @@ export interface BentoLayoutConfig {
   placements: CellPlacement[];
 }
 
-export type LayoutPresetName = 'balanced' | 'geos' | 'heroLeft' | 'heroCenter' | 'stacked' | 'minimal' | 'duo';
+export type LayoutPresetName =
+  | 'balanced'
+  | 'geos'
+  | 'heroLeft'
+  | 'heroCenter'
+  | 'stacked'
+  | 'minimal'
+  | 'duo'
+  | 'foodDrink';
 
 /** Breakpoints (px) – layout only changes at these thresholds for stability */
 export const BENTO_BREAKPOINTS = {
@@ -118,6 +126,48 @@ export const BENTO_LAYOUTS: Record<
         { id: 'editorial', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 2 },
         { id: 'logo', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
         { id: 'colors', colStart: 3, rowStart: 3, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+  },
+
+  foodDrink: {
+    mobile: {
+      columns: 2,
+      rows: 6,
+      gap: 10,
+      placements: [
+        { id: 'image', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'logo', colStart: 1, rowStart: 2, colSpan: 2, rowSpan: 1 },
+        { id: 'hero', colStart: 1, rowStart: 3, colSpan: 2, rowSpan: 2 },
+        { id: 'buttons', colStart: 1, rowStart: 5, colSpan: 2, rowSpan: 1 },
+        { id: 'editorial', colStart: 1, rowStart: 6, colSpan: 1, rowSpan: 1 },
+        { id: 'colors', colStart: 2, rowStart: 6, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+    tablet: {
+      columns: 3,
+      rows: 4,
+      gap: 12,
+      placements: [
+        { id: 'image', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'logo', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
+        { id: 'hero', colStart: 1, rowStart: 2, colSpan: 2, rowSpan: 2 },
+        { id: 'buttons', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 2 },
+        { id: 'editorial', colStart: 1, rowStart: 4, colSpan: 1, rowSpan: 1 },
+        { id: 'colors', colStart: 2, rowStart: 4, colSpan: 2, rowSpan: 1 },
+      ],
+    },
+    desktop: {
+      columns: 4,
+      rows: 3,
+      gap: 14,
+      placements: [
+        { id: 'image', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'logo', colStart: 3, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'hero', colStart: 1, rowStart: 2, colSpan: 2, rowSpan: 2 },
+        { id: 'buttons', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 2 },
+        { id: 'editorial', colStart: 4, rowStart: 2, colSpan: 1, rowSpan: 1 },
+        { id: 'colors', colStart: 4, rowStart: 3, colSpan: 1, rowSpan: 1 },
       ],
     },
   },

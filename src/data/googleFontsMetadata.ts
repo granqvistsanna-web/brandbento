@@ -18,6 +18,8 @@ export const GOOGLE_FONTS: GoogleFontMeta[] = [
   { family: 'Lato', category: 'sans-serif', variants: ['100', '300', '400', '700', '900'] },
   { family: 'Montserrat', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] },
   { family: 'Poppins', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] },
+  { family: 'Plus Jakarta Sans', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700', '800'] },
+  { family: 'Sora', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '600', '700', '800'] },
   { family: 'Raleway', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] },
   { family: 'Nunito', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700', '800', '900'] },
   { family: 'Ubuntu', category: 'sans-serif', variants: ['300', '400', '500', '700'] },
@@ -32,6 +34,7 @@ export const GOOGLE_FONTS: GoogleFontMeta[] = [
   { family: 'Manrope', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700', '800'] },
   { family: 'DM Sans', category: 'sans-serif', variants: ['400', '500', '700'] },
   { family: 'Outfit', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '600', '700', '800', '900'] },
+  { family: 'Bricolage Grotesque', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700', '800'] },
 
   // Serif
   { family: 'Lora', category: 'serif', variants: ['400', '500', '600', '700'] },
@@ -79,6 +82,11 @@ export const GOOGLE_FONTS: GoogleFontMeta[] = [
   { family: 'Satisfy', category: 'handwriting', variants: ['400'] },
   { family: 'Great Vibes', category: 'handwriting', variants: ['400'] },
 ];
+
+// O(1) lookup by family name
+export const GOOGLE_FONTS_MAP = new Map<string, GoogleFontMeta>(
+  GOOGLE_FONTS.map(f => [f.family, f])
+);
 
 // Top 20 most popular fonts for default display
 export const POPULAR_FONTS = [
