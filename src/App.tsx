@@ -7,6 +7,8 @@ import ControlPanel from "./components/ControlPanel";
 import { useBrandStore, exportAsCSS, exportAsJSON } from "./store/useBrandStore";
 import { useTheme } from "./hooks/useTheme";
 import { ThemeToggle } from "./components/ThemeToggle";
+import toast, { Toaster } from 'react-hot-toast';
+import { generateShareUrl, copyToClipboard } from './utils/sharing';
 import {
   ChevronDown,
   RotateCcw,
@@ -247,7 +249,7 @@ const ExportMenu = () => {
 };
 
 // File menu dropdown
-const FileMenu = () => {
+const FileMenu = ({ onReset }: { onReset: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -298,6 +300,7 @@ const FileMenu = () => {
               { label: "Export as JSON", action: () => {} },
               { divider: true },
               { label: "Share...", action: () => {} },
+              { label: "Reset to Defaults", action: onReset },
             ].map((item, i) =>
               item.divider ? (
                 <div key={i} className="divider-h mx-2" />
@@ -337,8 +340,28 @@ export default function App() {
   // Initialize theme management
   useTheme();
 
-  const { undo, redo, history, loadRandomTemplate } =
+  const { brand, tiles, undo, redo, history, loadRandomTemplate, resetToDefaults } =
     useBrandStore();
+
+  const handleShare = async () => {
+    const shareUrl = generateShareUrl({ brand, tiles });
+    const success = await copyToClipboard(shareUrl);
+    if (success) {
+      toast.success('Copied!');
+    } else {
+      toast.error('Failed to copy link');
+    }
+  };
+
+  const handleReset = () => {
+    const confirmed = window.confirm(
+      'Reset moodboard to defaults? This can be undone with Cmd+Z.'
+    );
+    if (confirmed) {
+      resetToDefaults();
+      toast.success('Moodboard reset!');
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -356,7 +379,7 @@ export default function App() {
 
           <ToolbarDivider />
 
-          <FileMenu />
+          <FileMenu onReset={handleReset} />
 
           <motion.button
             className="flex items-center gap-1 px-3 py-1.5 rounded-md transition-fast"
@@ -413,6 +436,7 @@ export default function App() {
         <div className="flex items-center gap-2">
           <motion.button
             className="btn-figma btn-figma-ghost"
+            onClick={handleShare}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -518,6 +542,18 @@ export default function App() {
           </span>
         </div>
       </footer>
+
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          duration: 2000,
+          style: {
+            background: '#1f2937',
+            color: '#f9fafb',
+            fontSize: '13px',
+          },
+        }}
+      />
     </div>
   );
 }
