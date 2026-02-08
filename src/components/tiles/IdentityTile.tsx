@@ -1,11 +1,36 @@
+/**
+ * Identity Tile Component
+ *
+ * Displays the brand logo/wordmark with adaptive colors.
+ * Automatically adjusts logo color based on surface brightness.
+ *
+ * ## Features
+ *
+ * - Displays brand wordmark/logo text
+ * - Adaptive text color for contrast (light surface → brand color, dark → white)
+ * - Surface color from tileSurfaces overrides or default (index 1)
+ * - Framer Motion layoutId for smooth transitions
+ * - Uses primary typography for logo
+ *
+ * @component
+ * @example
+ * <IdentityTile placementId="hero" />
+ */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { motion } from 'motion/react';
 import { hexToHSL } from '@/utils/colorMapping';
 
+/**
+ * Props for IdentityTile component.
+ */
 interface IdentityTileProps {
-    placementId?: string;
+  /** Grid placement ID for surface color override lookup */
+  placementId?: string;
 }
 
+/**
+ * Brand identity tile displaying logo/wordmark.
+ */
 export function IdentityTile({ placementId }: IdentityTileProps) {
     const brand = useBrandStore((state: BrandStore) => state.brand);
     const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);

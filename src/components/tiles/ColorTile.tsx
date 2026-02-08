@@ -1,9 +1,32 @@
+/**
+ * Color Tile Component
+ *
+ * Color palette showcase displaying brand colors with copy-to-clipboard.
+ * Shows core colors (primary, accent) and surface variations.
+ *
+ * ## Features
+ *
+ * - Core colors row (Primary, Accent) with hex values
+ * - Surface palette grid (up to 6 surfaces)
+ * - Click-to-copy hex values
+ * - Visual feedback on copy (checkmark)
+ * - Adaptive text colors for readability
+ * - Background indicator showing canvas background
+ *
+ * @component
+ * @example
+ * <ColorTile />
+ */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { motion } from 'motion/react';
 import { Copy } from 'lucide-react';
 import { useState } from 'react';
 import { hexToHSL } from '@/utils/colorMapping';
 
+/**
+ * Color palette showcase tile.
+ * Displays brand colors with copy functionality.
+ */
 export function ColorTile() {
   const brand = useBrandStore((state: BrandStore) => state.brand);
   const colors = brand.colors;

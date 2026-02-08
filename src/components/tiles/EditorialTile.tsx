@@ -1,10 +1,36 @@
+/**
+ * Editorial Tile Component
+ *
+ * Typography showcase tile displaying headline and body text.
+ * Demonstrates the brand's font pairing and type scale.
+ *
+ * ## Features
+ *
+ * - Headline using primary font + headline weight
+ * - Body text using secondary font + body weight
+ * - Type scale applied (baseSize × scale² for headlines)
+ * - Letter spacing from brand settings
+ * - Adaptive text colors based on surface brightness
+ * - Surface color from tileSurfaces overrides or default (index 0)
+ *
+ * @component
+ * @example
+ * <EditorialTile placementId="editorial" />
+ */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { hexToHSL } from '@/utils/colorMapping';
 
+/**
+ * Props for EditorialTile component.
+ */
 interface EditorialTileProps {
-    placementId?: string;
+  /** Grid placement ID for surface color override lookup */
+  placementId?: string;
 }
 
+/**
+ * Typography showcase tile with headline and body.
+ */
 export function EditorialTile({ placementId }: EditorialTileProps) {
     const brand = useBrandStore((state: BrandStore) => state.brand);
     const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);

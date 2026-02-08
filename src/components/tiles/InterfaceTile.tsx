@@ -1,11 +1,37 @@
+/**
+ * Interface Tile Component
+ *
+ * UI component showcase displaying buttons in the brand style.
+ * Demonstrates how the brand colors work in interactive elements.
+ *
+ * ## Features
+ *
+ * - Primary button with brand primary color
+ * - Secondary/outline button with border
+ * - Adaptive button text color based on primary brightness
+ * - Hover and active states with micro-interactions
+ * - Uses secondary/UI font for button text
+ * - Surface color from tileSurfaces overrides or default (index 2)
+ *
+ * @component
+ * @example
+ * <InterfaceTile placementId="buttons" />
+ */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { ArrowRight } from 'lucide-react';
 import { hexToHSL } from '@/utils/colorMapping';
 
+/**
+ * Props for InterfaceTile component.
+ */
 interface InterfaceTileProps {
-    placementId?: string;
+  /** Grid placement ID for surface color override lookup */
+  placementId?: string;
 }
 
+/**
+ * UI components showcase tile with buttons.
+ */
 export function InterfaceTile({ placementId }: InterfaceTileProps) {
     const brand = useBrandStore((state: BrandStore) => state.brand);
     const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);

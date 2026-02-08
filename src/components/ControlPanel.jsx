@@ -1,3 +1,36 @@
+/**
+ * Control Panel Component
+ *
+ * Figma-inspired sidebar for editing brand assets. Provides comprehensive
+ * controls for typography, colors, layout, and export functionality.
+ *
+ * ## Architecture
+ *
+ * The control panel is built from composable micro-components that follow
+ * Figma's design patterns (collapsible sections, inline controls, tooltips).
+ *
+ * ## Sections
+ *
+ * 1. **Header** - Collapse toggle, theme switcher, share/reset actions
+ * 2. **Typography** - Font selection, weights, scale, letter spacing
+ * 3. **Colors** - Palette browser, color pickers, role assignment
+ * 4. **Layout** - Grid preset selection, density toggle
+ * 5. **Export** - CSS/JSON export with copy-to-clipboard
+ *
+ * ## Micro-Components
+ *
+ * - `Kbd` - Keyboard shortcut badge
+ * - `Badge` - Status/info badge
+ * - `Tooltip` - Hover tooltip with positioning
+ * - `IconButton` - Icon-only button with tooltip
+ * - `Section` - Collapsible section with header
+ * - `Row` - Label + control layout
+ * - `ColorSwatch` - Clickable color preview
+ *
+ * @component
+ * @example
+ * <ControlPanel />
+ */
 import React, { useState, useRef, useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
@@ -55,12 +88,21 @@ import { motion, AnimatePresence } from "motion/react";
 // FIGMA-STYLE MICRO COMPONENTS
 // ============================================
 
+/** Keyboard shortcut display badge */
 const Kbd = ({ children }) => <span className="kbd">{children}</span>;
 
+/** Status/info badge with variant styling (muted, success, warning) */
 const Badge = ({ children, variant = "muted" }) => (
   <span className={`badge badge-${variant}`}>{children}</span>
 );
 
+/**
+ * Animated tooltip with configurable positioning.
+ * Shows on hover with fade-in animation.
+ * @param {ReactNode} children - Trigger element
+ * @param {string} content - Tooltip text content
+ * @param {'top'|'right'|'bottom'|'left'} position - Tooltip placement
+ */
 const Tooltip = ({ children, content, position = "right" }) => {
   const [show, setShow] = useState(false);
 
@@ -95,6 +137,10 @@ const Tooltip = ({ children, content, position = "right" }) => {
   );
 };
 
+/**
+ * Icon-only button with tooltip.
+ * Used for toolbar actions and compact controls.
+ */
 const IconButton = ({
   icon: Icon,
   onClick,
@@ -119,6 +165,15 @@ const IconButton = ({
 // COLLAPSIBLE SECTION
 // ============================================
 
+/**
+ * Collapsible section with icon header.
+ * Used for organizing control panel into logical groups.
+ * @param {LucideIcon} icon - Section header icon
+ * @param {string} title - Section title
+ * @param {boolean} defaultOpen - Initial collapsed state
+ * @param {ReactNode} actions - Optional header actions
+ * @param {ReactNode} children - Section content
+ */
 const Section = ({
   title,
   icon: Icon,

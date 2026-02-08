@@ -1,10 +1,36 @@
+/**
+ * Social Post Tile Component
+ *
+ * Instagram-style social media mockup showcasing brand imagery.
+ * Displays hero image in a realistic social post context.
+ *
+ * ## Features
+ *
+ * - Instagram-style post layout (header, image, actions, caption)
+ * - Brand avatar using logo initial and primary color
+ * - Hero image from brand.imagery.url
+ * - Social actions (like, comment, share, save icons)
+ * - Branded caption with logo name
+ * - Surface color from tileSurfaces overrides or default (index 3)
+ *
+ * @component
+ * @example
+ * <SocialPostTile placementId="image" />
+ */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { Heart, MessageCircle, Send, Bookmark } from 'lucide-react';
 
+/**
+ * Props for SocialPostTile component.
+ */
 interface SocialPostTileProps {
-    placementId?: string;
+  /** Grid placement ID for surface color override lookup */
+  placementId?: string;
 }
 
+/**
+ * Social media mockup tile displaying brand imagery.
+ */
 export function SocialPostTile({ placementId }: SocialPostTileProps) {
     const brand = useBrandStore((state: BrandStore) => state.brand);
     const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);
