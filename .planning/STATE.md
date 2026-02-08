@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 
 ## Current Position
 
-Phase: Phase 6 (Workflows) - 2 plans remaining
-Plan: 06-03 of 4 completed - Share + Reset
+Phase: Phase 6 (Workflows) - 1 plan remaining
+Plan: 06-02 of 4 completed - PNG Export
 Status: Active development
-Last activity: 2026-02-08 - Completed 06-03-PLAN.md
+Last activity: 2026-02-08 - Completed 06-02-PLAN.md
 
-Progress: [███████████░] ~93% (Phase 5 superseded, Phase 6 half done, verifications pending)
+Progress: [███████████░] ~95% (Phase 5 superseded, Phase 6 3/4 done, verifications pending)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 28
+- Total plans completed: 29
 - Average duration: ~5.8 min
-- Total execution time: ~2h 45min
+- Total execution time: ~2h 52min
 
 **By Phase:**
 
@@ -33,7 +33,7 @@ Progress: [███████████░] ~93% (Phase 5 superseded, Phase
 | 03 | 6/6 ✓ | ~39 min | ~6.5 min | |
 | 04 | 4/5 | ~12 min | ~3 min | 04-05 verification pending |
 | 05 | N/A ✓ | - | - | Superseded - goal achieved via new tile architecture |
-| 06 | 2/4 | ~2 min | ~1 min | CSS/JSON export done (outside GSD), Share+Reset done, PNG/readonly remaining |
+| 06 | 3/4 | ~9 min | ~3 min | CSS/JSON+Share+Reset done (outside GSD), PNG export done, readonly remaining |
 | 08 | 5/5 ✓ | ~17 min | ~3.4 min | |
 | 09 | 5/6 | ~10 min | ~2 min | 09-05 verification pending |
 
@@ -125,13 +125,18 @@ Recent decisions affecting current work:
 - 06-03: Reset shows confirmation dialog before executing
 - 06-03: Reset preserves state in history.past for undo capability
 - 06-03: Clipboard API with document.execCommand fallback for older browsers
+- 06-02: html-to-image (not html2canvas) for PNG export
+- 06-02: data-export-exclude attribute pattern for filtering UI from exports
+- 06-02: forwardRef pattern for BentoCanvasNew to expose canvas ref to App
+- 06-02: PNG export as first option in Export dropdown menu
+- 06-02: devicePixelRatio scaling for high-DPI screens in PNG exports
 
 ### Pending Todos
 
 - [ ] Make sure bento looks great and like a bento, and is responsive
 - [ ] Run 04-05 verification checkpoint
 - [ ] Run 09-05 verification checkpoint
-- [ ] Execute 06-02: PNG export with html-to-image
+- [x] Execute 06-02: PNG export with html-to-image (completed 2026-02-08)
 - [x] Execute 06-03: Share link + toast + reset with confirmation (completed 2026-02-08)
 - [ ] Execute 06-04: Read-only view for shared links
 
@@ -163,11 +168,11 @@ Active code now uses:
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 06-03-PLAN.md (Share + Reset)
+Stopped at: Completed 06-02-PLAN.md (PNG Export)
 Resume file: None
 
 **Current active architecture:**
-- src/components/BentoCanvasNew.jsx (main canvas)
+- src/components/BentoCanvasNew.jsx (main canvas with forwardRef)
 - src/components/BentoGridNew.tsx (responsive grid)
 - src/components/tiles/IdentityTile.tsx
 - src/components/tiles/EditorialTile.tsx
@@ -176,8 +181,9 @@ Resume file: None
 - src/components/tiles/ColorTile.tsx
 - src/config/bentoLayouts.ts (includes 'geos' preset)
 - src/utils/sharing.ts (URL generation and clipboard)
+- src/utils/export.ts (PNG export with filtering)
 - src/store/useBrandStore.ts (with resetToDefaults action)
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-08 after completing 06-03*
+*Last updated: 2026-02-08 after completing 06-02*
