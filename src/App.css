@@ -83,7 +83,7 @@
 .extraction-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: color-mix(in srgb, var(--sidebar-bg) 95%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,7 +91,7 @@
 }
 
 .dark .extraction-overlay {
-  background: rgba(0, 0, 0, 0.95);
+  background: color-mix(in srgb, var(--sidebar-bg) 95%, transparent);
 }
 
 .extraction-status {

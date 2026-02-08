@@ -18,8 +18,10 @@
  * <InterfaceTile placementId="buttons" />
  */
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
+import { useShallow } from 'zustand/react/shallow';
 import { ArrowRight } from 'lucide-react';
-import { hexToHSL } from '@/utils/colorMapping';
+import { getAdaptiveTextColor } from '@/utils/color';
+import { resolveSurfaceColor } from '@/utils/surface';
 
 /**
  * Props for InterfaceTile component.
@@ -33,21 +35,29 @@ interface InterfaceTileProps {
  * UI components showcase tile with buttons.
  */
 export function InterfaceTile({ placementId }: InterfaceTileProps) {
-    const brand = useBrandStore((state: BrandStore) => state.brand);
-    const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);
-    const { primary, text, bg, surfaces } = brand.colors;
-    const { secondary: bodyFont } = brand.typography;
+    const { colors, bodyFont } = useBrandStore(
+        useShallow((state: BrandStore) => ({
+            colors: state.brand.colors,
+            bodyFont: state.brand.typography.secondary,
+        }))
+    );
+    const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
+        placementId ? state.tileSurfaces[placementId] : undefined
+    );
+    const { primary, text, bg, surfaces } = colors;
 
     // Get surface index: user override > default (2 for interface)
-    const surfaceIndex = placementId && tileSurfaces[placementId] !== undefined
-        ? tileSurfaces[placementId]
-        : 2;
-    const bgColor = surfaces?.[surfaceIndex ?? 2] || bg;
+    const bgColor = resolveSurfaceColor({
+        placementId,
+        tileSurfaceIndex,
+        surfaces,
+        bg,
+        defaultIndex: 2,
+    });
 
     // Adapt text colors based on surface brightness
-    const { l } = hexToHSL(bgColor);
-    const adaptiveText = l > 55 ? text : '#FAFAFA';
-    const buttonTextColor = l > 55 ? bg : '#0A0A0A';
+    const adaptiveText = getAdaptiveTextColor(bgColor, text, '#FAFAFA');
+    const buttonTextColor = getAdaptiveTextColor(bgColor, bg, '#0A0A0A');
 
     return (
         <div
@@ -57,7 +67,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
             {/* Primary Button */}
             <div className="w-full max-w-[200px] group relative z-10">
                 <button
-                    className="w-full py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
+                    className="w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-fast shadow-sm hover:shadow-md active:scale-[0.98]"
                     style={{
                         backgroundColor: primary,
                         color: buttonTextColor,
@@ -74,7 +84,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
             {/* Secondary Button */}
             <div className="w-full max-w-[200px] z-10">
                 <button
-                    className="w-full py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border transition-all duration-200 hover:opacity-80 active:scale-[0.98]"
+                    className="w-full py-3 px-4 rounded-lg flex items-center justify-center gap-2 border transition-fast hover:opacity-80 active:scale-[0.98]"
                     style={{
                         borderColor: adaptiveText,
                         color: adaptiveText,

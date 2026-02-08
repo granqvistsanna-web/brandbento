@@ -258,7 +258,7 @@ export const BENTO_LAYOUTS: Record<
       gap: 12,
       placements: [
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
-        { id: 'a', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
         { id: 'b', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 1 },
       ],
     },
@@ -268,7 +268,7 @@ export const BENTO_LAYOUTS: Record<
       gap: 14,
       placements: [
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
-        { id: 'a', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
         { id: 'b', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
       ],
     },
@@ -278,7 +278,7 @@ export const BENTO_LAYOUTS: Record<
       gap: 16,
       placements: [
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
-        { id: 'a', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
         { id: 'b', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
       ],
     },

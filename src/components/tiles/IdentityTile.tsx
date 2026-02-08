@@ -16,9 +16,10 @@
  * @example
  * <IdentityTile placementId="hero" />
  */
-import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
-import { motion } from 'motion/react';
-import { hexToHSL } from '@/utils/colorMapping';
+import { useBrandStore } from '@/store/useBrandStore';
+import { useShallow } from 'zustand/react/shallow';
+import { getAdaptiveTextColor } from '@/utils/color';
+import { resolveSurfaceColor } from '@/utils/surface';
 
 /**
  * Props for IdentityTile component.
@@ -29,23 +30,46 @@ interface IdentityTileProps {
 }
 
 /**
- * Brand identity tile displaying logo/wordmark.
+ * Brand identity tile displaying brand colors in a grid.
  */
 export function IdentityTile({ placementId }: IdentityTileProps) {
-    const brand = useBrandStore((state: BrandStore) => state.brand);
-    const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);
-    const { text, size, padding } = brand.logo;
-    const { primary, bg, surfaces } = brand.colors;
+    const { logo, colors } = useBrandStore(
+        useShallow((state) => ({
+            logo: state.brand.logo,
+            colors: state.brand.colors,
+        }))
+    );
+    const tileSurfaceIndex = useBrandStore((state) =>
+        placementId ? state.tileSurfaces[placementId] : undefined
+    );
+    const { padding, size: logoSize, text: logoText } = logo;
+    const { primary, bg, surfaces } = colors;
 
     // Get surface index: user override > default (1 for identity)
-    const surfaceIndex = placementId && tileSurfaces[placementId] !== undefined
-        ? tileSurfaces[placementId]
-        : 1;
-    const surfaceBg = surfaces?.[surfaceIndex ?? 1] || bg;
+    const surfaceBg = resolveSurfaceColor({
+        placementId,
+        tileSurfaceIndex,
+        surfaces,
+        bg,
+        defaultIndex: 1,
+    });
 
-    // Adapt logo color based on surface brightness
-    const { l } = hexToHSL(surfaceBg);
-    const adaptivePrimary = l > 55 ? primary : '#FAFAFA';
+    const swatches = [primary, bg, ...(surfaces || [])].filter(Boolean);
+    const gridSwatches =
+        swatches.length > 0
+            ? Array.from({ length: 9 }, (_, i) => swatches[i % swatches.length])
+            : [];
+
+    const isHero = placementId === 'hero';
+    const showWordmark = Boolean(logoText && logoText.trim().length > 0);
+    const wordmarkColor = getAdaptiveTextColor(surfaceBg, primary, '#FFFFFF');
+    const heroFontSize = Math.max(32, logoSize * 2);
+    const wordmarkStyle = {
+        fontSize: `${isHero ? heroFontSize : logoSize}px`,
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        color: wordmarkColor,
+    };
 
     return (
         <div className="w-full h-full relative overflow-hidden">
@@ -56,22 +80,47 @@ export function IdentityTile({ placementId }: IdentityTileProps) {
             />
 
             {/* Content Layer */}
-            <div
-                className="relative h-full w-full flex items-center justify-center"
-                style={{ padding: `${padding}px` }}
-            >
-                <motion.div
-                    layoutId="identity-logo"
-                    className="font-bold tracking-tight leading-none text-center select-none z-10"
-                    style={{
-                        fontFamily: brand.typography.primary,
-                        fontSize: `${size * 2}px`,
-                        color: adaptivePrimary,
-                    }}
+            {isHero ? (
+                <>
+                    <div
+                        className="absolute inset-0 grid grid-cols-3 gap-2 opacity-20"
+                        style={{ padding: `${padding}px` }}
+                    >
+                        {gridSwatches.map((color, index) => (
+                            <div
+                                key={`${color}-${index}`}
+                                className="w-full h-full"
+                                style={{ backgroundColor: color }}
+                                aria-hidden="true"
+                            />
+                        ))}
+                    </div>
+                    <div
+                        className="relative h-full w-full flex items-center justify-center text-center"
+                        style={{ padding: `${padding}px` }}
+                    >
+                        {showWordmark ? (
+                            <span style={wordmarkStyle}>{logoText}</span>
+                        ) : null}
+                    </div>
+                </>
+            ) : (
+                <div
+                    className="relative h-full w-full"
+                    style={{ padding: `${padding}px` }}
                 >
-                    {text}
-                </motion.div>
-            </div>
+                    <div className="h-full w-full grid grid-cols-3 gap-2">
+                        {gridSwatches.map((color, index) => (
+                            <div
+                                key={`${color}-${index}`}
+                                className="w-full aspect-square"
+                                style={{ backgroundColor: color }}
+                                aria-label={`Color swatch ${index + 1}`}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

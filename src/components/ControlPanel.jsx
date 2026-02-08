@@ -77,12 +77,14 @@ import {
   AlignCenter,
   AlignRight,
   Bold,
+  MessageCircle,
   Minus,
   Plus,
   Info,
 } from "lucide-react";
 import { HexColorPicker } from "react-colorful";
 import { motion, AnimatePresence } from "motion/react";
+import { getPlacementKind, getPlacementTileType } from "../config/placements";
 
 // ============================================
 // FIGMA-STYLE MICRO COMPONENTS
@@ -235,7 +237,7 @@ const Section = ({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className={noPadding ? "" : "px-2.5 pb-2 space-y-2"}>
+            <div className={noPadding ? "" : "px-3 pb-2 space-y-2"}>
               {children}
             </div>
           </motion.div>
@@ -254,7 +256,7 @@ const PropRow = ({ label, children, hint }) => (
     <span className="prop-label">{label}</span>
     <div className="prop-value">{children}</div>
     {hint && (
-      <span className="text-[10px]" style={{ color: "var(--sidebar-text-muted)" }}>
+      <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
         {hint}
       </span>
     )}
@@ -273,14 +275,15 @@ const Input = ({ value, onChange, placeholder, type = "text", mono, ...props }) 
   />
 );
 
-const TextArea = ({ value, onChange, placeholder, rows = 3 }) => (
+const TextArea = ({ value, onChange, placeholder, rows = 3, ...props }) => (
   <textarea
     value={value}
     onChange={onChange}
     placeholder={placeholder}
     rows={rows}
     className="input-figma w-full resize-none"
-    style={{ height: "auto", padding: "8px 10px" }}
+    style={{ height: "auto", padding: "var(--space-2) var(--space-3)" }}
+    {...props}
   />
 );
 
@@ -328,7 +331,7 @@ const NumberInput = ({
             (e.currentTarget.style.background = "transparent")
           }
         >
-          <Minus size={10} />
+          <Minus size={12} />
         </button>
         <input
           type="number"
@@ -352,7 +355,7 @@ const NumberInput = ({
             (e.currentTarget.style.background = "transparent")
           }
         >
-          <Plus size={10} />
+          <Plus size={12} />
         </button>
       </div>
       {unit && (
@@ -570,13 +573,13 @@ const UsagePreview = ({ colorKey }) => {
 
   return (
     <div
-      className="flex flex-wrap gap-1 mt-1.5 mb-0.5"
-      style={{ marginLeft: "2px" }}
+      className="flex flex-wrap gap-1 mt-2 mb-1"
+      style={{ marginLeft: "var(--space-1)" }}
     >
       {usage.uses.map((use, i) => (
         <span
           key={i}
-          className="text-[9px] px-1.5 py-0.5 rounded"
+          className="text-10 px-2 py-1 rounded"
           style={{
             background: "var(--sidebar-bg-active)",
             color: "var(--sidebar-text-muted)",
@@ -613,7 +616,7 @@ const ColorRoleGroup = ({ title, description, children }) => (
       </span>
       {description && (
         <p
-          className="text-[9px] mt-0.5"
+          className="text-10 mt-1"
           style={{ color: "var(--sidebar-text-muted)" }}
         >
           {description}
@@ -687,7 +690,7 @@ const ColorSwatch = ({
           {hint && (
             <Tooltip content={hint} position="right">
               <Info
-                size={10}
+                size={12}
                 style={{ color: "var(--sidebar-text-muted)", cursor: "help" }}
               />
             </Tooltip>
@@ -706,7 +709,7 @@ const ColorSwatch = ({
               className="w-5 h-5 rounded"
               style={{
                 background: value,
-                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.1)",
+                boxShadow: "inset 0 0 0 1px var(--sidebar-border-subtle)",
               }}
             />
             <span
@@ -768,7 +771,7 @@ const ColorSwatch = ({
             </div>
 
             {/* Presets */}
-            <div className="grid grid-cols-6 gap-1.5">
+            <div className="grid grid-cols-6 gap-2">
               {presets.map((preset) => (
                 <button
                   key={preset}
@@ -779,7 +782,7 @@ const ColorSwatch = ({
                   className="aspect-square rounded transition-fast"
                   style={{
                     background: preset,
-                    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.1)",
+                    boxShadow: "inset 0 0 0 1px var(--sidebar-border-subtle)",
                   }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.transform = "scale(1.1)")
@@ -820,21 +823,21 @@ const PaletteCard = ({ palette, onClick }) => {
       whileTap={{ scale: 0.98 }}
     >
       {/* Color swatches preview */}
-      <div className="flex -space-x-0.5">
+      <div className="flex -space-x-1">
         {previewColors.map((color, i) => (
           <div
             key={i}
             className="w-4 h-4 rounded-full first:rounded-l last:rounded-r"
             style={{
               background: color,
-              border: "1px solid rgba(0,0,0,0.1)",
+              border: "1px solid var(--sidebar-border-subtle)",
               zIndex: previewColors.length - i,
             }}
           />
         ))}
         {palette.colors.length > 6 && (
           <div
-            className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-medium"
+            className="w-4 h-4 rounded-full flex items-center justify-center text-10 font-medium"
             style={{
               background: "var(--sidebar-bg-active)",
               color: "var(--sidebar-text-muted)",
@@ -879,7 +882,7 @@ const PaletteSection = ({ section, onSelectPalette }) => {
           transition={{ duration: 0.15 }}
           style={{ color: "var(--sidebar-text-muted)" }}
         >
-          <ChevronRight size={10} />
+          <ChevronRight size={12} />
         </motion.div>
         <span
           className="text-11 font-medium flex-1 text-left"
@@ -888,7 +891,7 @@ const PaletteSection = ({ section, onSelectPalette }) => {
           {section.name}
         </span>
         <span
-          className="text-[9px] px-1.5 py-0.5 rounded"
+          className="text-10 px-2 py-1 rounded"
           style={{
             background: "var(--sidebar-bg-active)",
             color: "var(--sidebar-text-muted)",
@@ -910,7 +913,7 @@ const PaletteSection = ({ section, onSelectPalette }) => {
             <div className="px-3 pb-2 space-y-1">
               {/* Personality tag */}
               <div
-                className="text-[9px] italic mb-2"
+                className="text-10 italic mb-2"
                 style={{ color: "var(--sidebar-text-muted)" }}
               >
                 {section.personality}
@@ -955,7 +958,7 @@ const COMPLEXITY_OPTIONS = [
 
 const ComplexitySelector = ({ value, onChange }) => (
   <div
-    className="px-3 py-2.5 space-y-2"
+    className="px-3 py-3 space-y-2"
     style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
   >
     <div className="flex items-center justify-between">
@@ -970,7 +973,7 @@ const ComplexitySelector = ({ value, onChange }) => (
         position="left"
       >
         <Info
-          size={10}
+          size={12}
           style={{ color: "var(--sidebar-text-muted)", cursor: "help" }}
         />
       </Tooltip>
@@ -982,7 +985,7 @@ const ComplexitySelector = ({ value, onChange }) => (
           <Tooltip key={option.value} content={option.description} position="bottom">
             <motion.button
               onClick={() => onChange(option.value)}
-              className="flex flex-col items-center gap-0.5 p-2 rounded-md transition-fast"
+              className="flex flex-col items-center gap-1 p-2 rounded-md transition-fast"
               style={{
                 background: isActive ? "var(--accent-muted)" : "var(--sidebar-bg)",
                 border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
@@ -991,7 +994,7 @@ const ComplexitySelector = ({ value, onChange }) => (
               whileTap={{ scale: 0.98 }}
             >
               {/* Visual indicator */}
-              <div className="flex gap-0.5">
+              <div className="flex gap-1">
                 {option.value === 'simple' && (
                   <>
                     <div className="w-3 h-3 rounded-full" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)" }} />
@@ -1000,9 +1003,9 @@ const ComplexitySelector = ({ value, onChange }) => (
                 )}
                 {option.value === 'curated' && (
                   <>
-                    <div className="w-2.5 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)" }} />
-                    <div className="w-2.5 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)", opacity: 0.6 }} />
-                    <div className="w-2.5 h-3 rounded-sm" style={{ background: "var(--sidebar-bg-active)" }} />
+                    <div className="w-3 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)" }} />
+                    <div className="w-3 h-3 rounded-sm" style={{ background: isActive ? "var(--accent)" : "var(--sidebar-text-muted)", opacity: 0.6 }} />
+                    <div className="w-3 h-3 rounded-sm" style={{ background: "var(--sidebar-bg-active)" }} />
                   </>
                 )}
                 {option.value === 'full' && (
@@ -1015,7 +1018,7 @@ const ComplexitySelector = ({ value, onChange }) => (
                 )}
               </div>
               <span
-                className="text-[9px] font-medium"
+                className="text-10 font-medium"
                 style={{ color: isActive ? "var(--accent)" : "var(--sidebar-text-secondary)" }}
               >
                 {option.label}
@@ -1064,7 +1067,7 @@ const PaletteCustomizer = ({
 
   return (
     <div
-      className="px-3 py-2.5 space-y-2"
+      className="px-3 py-3 space-y-2"
       style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
     >
       {/* Header */}
@@ -1098,24 +1101,24 @@ const PaletteCustomizer = ({
       >
         <button
           onClick={() => onModeChange('subtract')}
-          className="flex-1 h-7 text-[9px] font-medium transition-fast flex items-center justify-center gap-1"
+          className="flex-1 h-7 text-10 font-medium transition-fast flex items-center justify-center gap-1"
           style={{
             background: mode === 'subtract' ? "var(--accent-muted)" : "transparent",
             color: mode === 'subtract' ? "var(--accent)" : "var(--sidebar-text-secondary)",
           }}
         >
-          <Minus size={10} />
+          <Minus size={12} />
           Subtract
         </button>
         <button
           onClick={() => onModeChange('assign')}
-          className="flex-1 h-7 text-[9px] font-medium transition-fast flex items-center justify-center gap-1"
+          className="flex-1 h-7 text-10 font-medium transition-fast flex items-center justify-center gap-1"
           style={{
             background: mode === 'assign' ? "var(--accent-muted)" : "transparent",
             color: mode === 'assign' ? "var(--accent)" : "var(--sidebar-text-secondary)",
           }}
         >
-          <Sliders size={10} />
+          <Sliders size={12} />
           Assign Roles
         </button>
       </div>
@@ -1130,7 +1133,7 @@ const PaletteCustomizer = ({
             className="space-y-2"
           >
             {/* Color grid with toggles */}
-            <div className="grid grid-cols-6 gap-1.5">
+            <div className="grid grid-cols-6 gap-2">
               {palette.colors.map((color, index) => {
                 const isIncluded = includedColors[index];
                 return (
@@ -1141,16 +1144,16 @@ const PaletteCustomizer = ({
                     style={{
                       background: color,
                       boxShadow: isIncluded
-                        ? "inset 0 0 0 2px var(--accent), 0 0 0 1px rgba(0,0,0,0.1)"
-                        : "inset 0 0 0 1px rgba(0,0,0,0.1)",
+                        ? "inset 0 0 0 2px var(--accent), 0 0 0 1px var(--sidebar-border-subtle)"
+                        : "inset 0 0 0 1px var(--sidebar-border-subtle)",
                       opacity: isIncluded ? 1 : 0.4,
                     }}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     {!isIncluded && (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ color: "rgba(0,0,0,0.5)" }}>
-                        <X size={10} />
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ color: "var(--sidebar-text-muted)" }}>
+                        <X size={12} />
                       </div>
                     )}
                     {isIncluded && (
@@ -1158,7 +1161,7 @@ const PaletteCustomizer = ({
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         className="absolute -top-1 -right-1 w-3 h-3 rounded-full flex items-center justify-center"
-                        style={{ background: "var(--accent)", boxShadow: "0 1px 2px rgba(0,0,0,0.2)" }}
+                        style={{ background: "var(--accent)", boxShadow: "var(--shadow-sm)" }}
                       >
                         <Check size={8} style={{ color: "white" }} />
                       </motion.div>
@@ -1167,7 +1170,7 @@ const PaletteCustomizer = ({
                 );
               })}
             </div>
-            <p className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
+            <p className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
               Click colors to include/exclude
             </p>
           </motion.div>
@@ -1181,7 +1184,7 @@ const PaletteCustomizer = ({
           >
             {/* Available Colors */}
             <div>
-              <p className="text-[9px] mb-1.5" style={{ color: "var(--sidebar-text-muted)" }}>
+              <p className="text-10 mb-2" style={{ color: "var(--sidebar-text-muted)" }}>
                 Available Colors
               </p>
               <div className="flex flex-wrap gap-1">
@@ -1197,7 +1200,7 @@ const PaletteCustomizer = ({
                       className="w-6 h-6 rounded-md transition-fast relative"
                       style={{
                         background: color,
-                        boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)",
+                        boxShadow: "inset 0 0 0 1px var(--sidebar-border-subtle)",
                         opacity: isAssigned ? 0.3 : 1,
                         cursor: isAssigned ? "not-allowed" : selectedRole ? "pointer" : "default",
                         outline: !isAssigned && selectedRole ? "2px dashed var(--accent)" : "none",
@@ -1208,7 +1211,7 @@ const PaletteCustomizer = ({
                     >
                       {isAssigned && (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <Check size={10} style={{ color: "rgba(0,0,0,0.5)" }} />
+                          <Check size={12} style={{ color: "var(--sidebar-text-muted)" }} />
                         </div>
                       )}
                     </motion.button>
@@ -1219,7 +1222,7 @@ const PaletteCustomizer = ({
 
             {/* Role Slots */}
             <div>
-              <p className="text-[9px] mb-1.5" style={{ color: "var(--sidebar-text-muted)" }}>
+              <p className="text-10 mb-2" style={{ color: "var(--sidebar-text-muted)" }}>
                 Assign to Roles {selectedRole && <span style={{ color: "var(--accent)" }}>• Select a color above</span>}
               </p>
               <div className="space-y-1">
@@ -1231,7 +1234,7 @@ const PaletteCustomizer = ({
                   return (
                     <motion.div
                       key={role.key}
-                      className="flex items-center gap-2 p-1.5 rounded-md transition-fast"
+                      className="flex items-center gap-2 p-2 rounded-md transition-fast"
                       style={{
                         background: isSelected ? "var(--accent-muted)" : "var(--sidebar-bg)",
                         border: `1px solid ${isSelected ? "var(--accent)" : "var(--sidebar-border)"}`,
@@ -1246,7 +1249,7 @@ const PaletteCustomizer = ({
                           style={{ color: isSelected ? "var(--accent)" : "var(--sidebar-text-muted)" }}
                         />
                         <span
-                          className="text-[10px] font-medium"
+                          className="text-10 font-medium"
                           style={{ color: isSelected ? "var(--accent)" : "var(--sidebar-text)" }}
                         >
                           {role.label}
@@ -1261,15 +1264,15 @@ const PaletteCustomizer = ({
                               className="w-5 h-5 rounded"
                               style={{
                                 background: assignedColor,
-                                boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.1)",
+                                boxShadow: "inset 0 0 0 1px var(--sidebar-border-subtle)",
                               }}
                             />
                             <button
                               onClick={() => onClearRole(role.key)}
-                              className="p-0.5 rounded transition-fast"
+                              className="p-1 rounded transition-fast"
                               style={{ color: "var(--sidebar-text-muted)" }}
                             >
-                              <X size={10} />
+                              <X size={12} />
                             </button>
                           </>
                         ) : (
@@ -1280,7 +1283,7 @@ const PaletteCustomizer = ({
                             }}
                           >
                             {isSelected && (
-                              <Plus size={10} style={{ color: "var(--accent)" }} />
+                              <Plus size={12} style={{ color: "var(--accent)" }} />
                             )}
                           </div>
                         )}
@@ -1298,7 +1301,7 @@ const PaletteCustomizer = ({
       <motion.button
         onClick={onApply}
         disabled={mode === 'subtract' ? includedCount === 0 : assignedCount < 2}
-        className="w-full h-7 rounded-md text-10 font-medium transition-fast flex items-center justify-center gap-1.5"
+        className="w-full h-7 rounded-md text-10 font-medium transition-fast flex items-center justify-center gap-2"
         style={{
           background: (mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? "var(--accent)" : "var(--sidebar-bg-active)",
           color: (mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? "white" : "var(--sidebar-text-muted)",
@@ -1325,6 +1328,8 @@ const DEFAULT_ROLE_ASSIGNMENTS = {
   text: null,
   surface: null,
 };
+
+const EMPTY_PLACEMENT_CONTENT = {};
 
 const PaletteBrowser = () => {
   const applyPalette = useBrandStore((s) => s.applyPalette);
@@ -1484,7 +1489,7 @@ const PaletteBrowser = () => {
 const PresetCard = ({ name, brand, isActive, onClick }) => (
   <motion.button
     onClick={onClick}
-    className="w-full p-2.5 rounded-lg flex items-center gap-2.5 transition-all group relative overflow-hidden"
+    className="w-full p-3 rounded-lg flex items-center gap-3 transition-fast group relative overflow-hidden"
     style={{
       background: isActive ? "var(--accent-muted)" : "var(--sidebar-bg)",
       border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
@@ -1492,12 +1497,12 @@ const PresetCard = ({ name, brand, isActive, onClick }) => (
     whileHover={{
       borderColor: isActive ? "var(--accent)" : "var(--sidebar-border-hover)",
       y: -1,
-      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+      boxShadow: "var(--shadow-sm)",
     }}
     whileTap={{ scale: 0.98, y: 0 }}
   >
     {/* Color preview */}
-    <div className="flex -space-x-1.5 shrink-0">
+    <div className="flex -space-x-2 shrink-0">
       {[brand.colors.bg, brand.colors.text, brand.colors.primary].map(
         (color, i) => (
           <div
@@ -1516,8 +1521,11 @@ const PresetCard = ({ name, brand, isActive, onClick }) => (
       {name}
     </span>
     {isActive && (
-      <div className="w-4 h-4 rounded-full flex items-center justify-center bg-[var(--accent)] text-white shadow-sm">
-        <Check size={10} strokeWidth={3} />
+      <div
+        className="w-4 h-4 rounded-full flex items-center justify-center shadow-sm"
+        style={{ background: "var(--accent)", color: "var(--sidebar-bg)" }}
+      >
+        <Check size={12} strokeWidth={3} />
       </div>
     )}
   </motion.button>
@@ -1648,12 +1656,12 @@ const LayoutSelector = () => {
             <motion.button
               key={p.key}
               onClick={() => setPreset(p.key)}
-              className="flex flex-col items-center gap-1.5 p-1.5 rounded-lg transition-all relative overflow-hidden"
+              className="flex flex-col items-center gap-2 p-2 rounded-lg transition-fast relative overflow-hidden"
               style={{
                 background: isActive
                   ? "var(--sidebar-bg-hover)"
                   : "var(--sidebar-bg)",
-                border: `1.5px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
+                border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
               }}
               whileHover={{
                 borderColor: isActive ? "var(--accent)" : "var(--sidebar-text-muted)",
@@ -1662,7 +1670,7 @@ const LayoutSelector = () => {
             >
               <LayoutPreview preset={p.key} isActive={isActive} displaySize={32} />
               <span
-                className="text-[10px] font-semibold tracking-wide"
+                className="text-10 font-semibold tracking-wide"
                 style={{
                   color: isActive ? "var(--accent)" : "var(--sidebar-text-secondary)",
                 }}
@@ -2017,7 +2025,7 @@ const GlobalControls = () => {
               color: brand.colors.primary,
               letterSpacing: "0.15em",
               fontWeight: "800",
-              borderRadius: "6px",
+              borderRadius: "var(--radius-sm)",
             }}
           >
             {brand.logo.text}
@@ -2038,20 +2046,61 @@ const TileControls = ({ tile, placementId }) => {
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const surfaces = useBrandStore((s) => s.brand.colors.surfaces);
   const bg = useBrandStore((s) => s.brand.colors.bg);
-  const tileSurfaces = useBrandStore((s) => s.tileSurfaces);
+  const tileSurfaceIndex = useBrandStore((s) =>
+    placementId ? s.tileSurfaces[placementId] : undefined
+  );
   const setTileSurface = useBrandStore((s) => s.setTileSurface);
+  const placementContent = useBrandStore(
+    (s) => s.placementContent?.[placementId] ?? EMPTY_PLACEMENT_CONTENT
+  );
+  const setPlacementContent = useBrandStore((s) => s.setPlacementContent);
+  const imageInputRef = useRef(null);
 
   // Get current surface index for this placement
-  const currentSurfaceIndex = tileSurfaces[placementId];
+  const currentSurfaceIndex = tileSurfaceIndex;
 
   const handleChange = (key, value) => {
     if (tile) {
-      updateTile(tile.id, { [key]: value });
+      updateTile(tile.id, { [key]: value }, false);
+    }
+  };
+
+  const handleCommit = (key) => {
+    if (tile) {
+      updateTile(tile.id, { [key]: tile.content[key] }, true);
     }
   };
 
   const handleSurfaceChange = (index) => {
     setTileSurface(placementId, index);
+  };
+
+  const placementKind = getPlacementKind(placementId);
+  const isSocialPlacement = placementKind === 'social';
+  const handlePlacementChange = (key, value, isCommit = false) => {
+    setPlacementContent(placementId, { [key]: value }, isCommit);
+  };
+
+  const handlePlacementCommit = (key, fallback = '') => {
+    const value =
+      placementContent && Object.prototype.hasOwnProperty.call(placementContent, key)
+        ? placementContent[key]
+        : fallback;
+    setPlacementContent(placementId, { [key]: value }, true);
+  };
+  const handleImageUpload = (event) => {
+    if (!tile) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (result) {
+        updateTile(tile.id, { image: result }, true);
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
   };
 
   const tileTypes = [
@@ -2065,15 +2114,7 @@ const TileControls = ({ tile, placementId }) => {
   ];
 
   // Get tile type from placement ID mapping (fallback for when tile object is undefined)
-  const tileTypeFromPlacement = {
-    'hero': 'hero', 'a': 'hero',
-    'editorial': 'editorial', 'b': 'editorial',
-    'buttons': 'ui-preview', 'c': 'ui-preview',
-    'image': 'image', 'd': 'image',
-    'logo': 'logo', 'e': 'logo',
-    'colors': 'utility', 'f': 'utility',
-  };
-  const currentTileType = tile?.type || tileTypeFromPlacement[placementId] || 'hero';
+  const currentTileType = tile?.type || getPlacementTileType(placementId) || 'hero';
   const currentType = tileTypes.find((t) => t.value === currentTileType);
   const CurrentIcon = currentType?.icon || Layers;
 
@@ -2103,7 +2144,7 @@ const TileControls = ({ tile, placementId }) => {
         </div>
         <motion.button
           onClick={() => setFocusedTile(null)}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-11 font-medium transition-fast"
+          className="flex items-center gap-2 px-3 py-1 rounded-md text-11 font-medium transition-fast"
           style={{
             background: "var(--accent-muted)",
             color: "var(--accent)",
@@ -2138,7 +2179,7 @@ const TileControls = ({ tile, placementId }) => {
                   }}
                 >
                   <TypeIcon size={14} />
-                  <span className="text-[9px]">{type.label}</span>
+                  <span className="text-10">{type.label}</span>
                 </button>
               );
             })}
@@ -2148,7 +2189,7 @@ const TileControls = ({ tile, placementId }) => {
 
       {/* Surface Color */}
       <Section title="Surface" icon={Palette} defaultOpen={true}>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-4 gap-2">
           {/* Auto option - uses default assignment */}
           <button
             onClick={() => handleSurfaceChange(undefined)}
@@ -2161,7 +2202,7 @@ const TileControls = ({ tile, placementId }) => {
             }}
           >
             <div
-              className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-medium"
+              className="w-6 h-6 rounded-md flex items-center justify-center text-10 font-medium"
               style={{
                 background: `linear-gradient(135deg, ${surfaces?.[0] || bg} 50%, ${surfaces?.[1] || bg} 50%)`,
                 color: "var(--sidebar-text-muted)",
@@ -2170,7 +2211,7 @@ const TileControls = ({ tile, placementId }) => {
               A
             </div>
             <span
-              className="text-[9px]"
+              className="text-10"
               style={{
                 color: currentSurfaceIndex === undefined
                   ? "var(--accent)"
@@ -2206,7 +2247,7 @@ const TileControls = ({ tile, placementId }) => {
                   }}
                 />
                 <span
-                  className="text-[9px]"
+                  className="text-10"
                   style={{
                     color: isSelected
                       ? "var(--accent)"
@@ -2221,6 +2262,92 @@ const TileControls = ({ tile, placementId }) => {
         </div>
       </Section>
 
+      {/* Social Post */}
+      {isSocialPlacement && (
+        <Section title="Social" icon={MessageCircle} defaultOpen={true}>
+          <PropRow label="Aspect">
+            <SegmentedControl
+              options={[
+                { value: "4:5", label: "4:5" },
+                { value: "1:1", label: "1:1" },
+                { value: "1.91:1", label: "Wide" },
+              ]}
+              value={placementContent.socialAspect || "4:5"}
+              onChange={(val) => handlePlacementChange("socialAspect", val, true)}
+            />
+          </PropRow>
+
+          <PropRow label="Handle">
+            <Input
+              value={placementContent.socialHandle || ""}
+              onChange={(e) => handlePlacementChange("socialHandle", e.target.value, false)}
+              onBlur={() => handlePlacementCommit("socialHandle", "")}
+              placeholder="brandname"
+            />
+          </PropRow>
+
+          <PropRow label="Likes">
+            <Input
+              value={placementContent.socialLikes || ""}
+              onChange={(e) => handlePlacementChange("socialLikes", e.target.value, false)}
+              onBlur={() => handlePlacementCommit("socialLikes", "")}
+              placeholder="1,204 likes"
+            />
+          </PropRow>
+
+          <PropRow label="Sponsored">
+            <Input
+              value={placementContent.socialSponsored || ""}
+              onChange={(e) => handlePlacementChange("socialSponsored", e.target.value, false)}
+              onBlur={() => handlePlacementCommit("socialSponsored", "")}
+              placeholder="Sponsored"
+            />
+          </PropRow>
+
+          <div>
+            <span
+              className="text-11 block mb-2"
+              style={{ color: "var(--sidebar-text-secondary)" }}
+            >
+              Caption
+            </span>
+            <TextArea
+              value={placementContent.socialCaption || ""}
+              onChange={(e) => handlePlacementChange("socialCaption", e.target.value, false)}
+              onBlur={() => handlePlacementCommit("socialCaption", "")}
+              placeholder="Write a short caption..."
+            />
+          </div>
+
+          <div>
+            <span
+              className="text-11 block mb-2"
+              style={{ color: "var(--sidebar-text-secondary)" }}
+            >
+              Image URL
+            </span>
+            <Input
+              value={placementContent.image || ""}
+              onChange={(e) => handlePlacementChange("image", e.target.value, false)}
+              onBlur={() => handlePlacementCommit("image", "")}
+              placeholder="https://images.unsplash.com/..."
+            />
+            {placementContent.image && (
+              <div
+                className="mt-2 h-20 rounded-md overflow-hidden"
+                style={{ background: "var(--sidebar-bg-active)" }}
+              >
+                <img
+                  src={placementContent.image}
+                  alt=""
+                  className="w-full h-full object-cover opacity-80"
+                />
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+
       {/* Content - only show if tile exists */}
       {tile && (
       <Section title="Content" icon={FileText}>
@@ -2229,6 +2356,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.headline}
               onChange={(e) => handleChange("headline", e.target.value)}
+              onBlur={() => handleCommit("headline")}
               placeholder="Enter headline..."
             />
           </PropRow>
@@ -2239,6 +2367,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.subcopy}
               onChange={(e) => handleChange("subcopy", e.target.value)}
+              onBlur={() => handleCommit("subcopy")}
               placeholder="Supporting text..."
             />
           </PropRow>
@@ -2247,7 +2376,7 @@ const TileControls = ({ tile, placementId }) => {
         {tile.content.body !== undefined && (
           <div>
             <span
-              className="text-11 block mb-1.5"
+              className="text-11 block mb-2"
               style={{ color: "var(--sidebar-text-secondary)" }}
             >
               Body
@@ -2255,6 +2384,7 @@ const TileControls = ({ tile, placementId }) => {
             <TextArea
               value={tile.content.body}
               onChange={(e) => handleChange("body", e.target.value)}
+              onBlur={() => handleCommit("body")}
               placeholder="Body content..."
             />
           </div>
@@ -2265,6 +2395,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.cta}
               onChange={(e) => handleChange("cta", e.target.value)}
+              onBlur={() => handleCommit("cta")}
               placeholder="Call to action..."
             />
           </PropRow>
@@ -2275,6 +2406,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.label}
               onChange={(e) => handleChange("label", e.target.value)}
+              onBlur={() => handleCommit("label")}
               placeholder="Label..."
             />
           </PropRow>
@@ -2285,6 +2417,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.price}
               onChange={(e) => handleChange("price", e.target.value)}
+              onBlur={() => handleCommit("price")}
               placeholder="$99"
             />
           </PropRow>
@@ -2293,7 +2426,7 @@ const TileControls = ({ tile, placementId }) => {
         {tile.content.image !== undefined && (
           <div>
             <span
-              className="text-11 block mb-1.5"
+              className="text-11 block mb-2"
               style={{ color: "var(--sidebar-text-secondary)" }}
             >
               Image URL
@@ -2301,8 +2434,23 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.image}
               onChange={(e) => handleChange("image", e.target.value)}
+              onBlur={() => handleCommit("image")}
               placeholder="https://images.unsplash.com/..."
             />
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+            <button
+              type="button"
+              className="btn-figma btn-figma-ghost mt-2 w-full justify-center"
+              onClick={() => imageInputRef.current?.click()}
+            >
+              Upload Image
+            </button>
             {tile.content.image && (
               <div
                 className="mt-2 h-20 rounded-md overflow-hidden"
@@ -2323,6 +2471,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.overlayText}
               onChange={(e) => handleChange("overlayText", e.target.value)}
+              onBlur={() => handleCommit("overlayText")}
               placeholder="Overlay text..."
             />
           </PropRow>
@@ -2331,7 +2480,7 @@ const TileControls = ({ tile, placementId }) => {
         {tile.content.items !== undefined && (
           <div>
             <span
-              className="text-11 block mb-1.5"
+              className="text-11 block mb-2"
               style={{ color: "var(--sidebar-text-secondary)" }}
             >
               List Items
@@ -2344,6 +2493,7 @@ const TileControls = ({ tile, placementId }) => {
                   e.target.value.split(",").map((s) => s.trim())
                 )
               }
+              onBlur={() => handleCommit("items")}
               placeholder="Item 1, Item 2, Item 3"
             />
           </div>
@@ -2354,6 +2504,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.headerTitle}
               onChange={(e) => handleChange("headerTitle", e.target.value)}
+              onBlur={() => handleCommit("headerTitle")}
               placeholder="Header..."
             />
           </PropRow>
@@ -2364,6 +2515,7 @@ const TileControls = ({ tile, placementId }) => {
             <Input
               value={tile.content.buttonLabel}
               onChange={(e) => handleChange("buttonLabel", e.target.value)}
+              onBlur={() => handleCommit("buttonLabel")}
               placeholder="Submit"
             />
           </PropRow>
@@ -2376,6 +2528,7 @@ const TileControls = ({ tile, placementId }) => {
               onChange={(e) =>
                 handleChange("inputPlaceholder", e.target.value)
               }
+              onBlur={() => handleCommit("inputPlaceholder")}
               placeholder="Search..."
             />
           </PropRow>
@@ -2516,7 +2669,7 @@ const ControlPanel = () => {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Panel header */}
           <div
-            className="px-3 py-2.5 flex items-center justify-between flex-shrink-0"
+            className="px-3 py-3 flex items-center justify-between flex-shrink-0"
             style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
           >
             <span
@@ -2527,7 +2680,7 @@ const ControlPanel = () => {
             </span>
             <div className="flex items-center gap-2 mr-8">
               <span
-                className="text-10 px-2 py-0.5 rounded"
+                className="text-10 px-2 py-1 rounded"
                 style={{
                   background: "var(--sidebar-bg-hover)",
                   color: "var(--sidebar-text-muted)",
@@ -2567,20 +2720,20 @@ const ControlPanel = () => {
 
           {/* Panel footer */}
           <div
-            className="px-2 py-1.5 flex items-center justify-between flex-shrink-0"
+            className="px-2 py-2 flex items-center justify-between flex-shrink-0"
             style={{
               borderTop: "1px solid var(--sidebar-border-subtle)",
               background: "var(--sidebar-bg-elevated)",
             }}
           >
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1">
               <Kbd>⌘</Kbd>
               <Kbd>Z</Kbd>
             </div>
-            <span className="text-[9px]" style={{ color: "var(--sidebar-text-muted)" }}>
+            <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
               Undo/Redo
             </span>
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1">
               <Kbd>⌘</Kbd>
               <Kbd>\</Kbd>
             </div>

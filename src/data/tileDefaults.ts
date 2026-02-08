@@ -19,6 +19,11 @@ interface TileContent {
   headerTitle?: string;
   buttonLabel?: string;
   inputPlaceholder?: string;
+  socialHandle?: string;
+  socialCaption?: string;
+  socialLikes?: string;
+  socialSponsored?: string;
+  socialAspect?: string;
 }
 
 interface Tile {

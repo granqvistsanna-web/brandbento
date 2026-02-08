@@ -62,23 +62,35 @@ export const DebugGrid = () => {
         {placements.map((p) => (
           <div
             key={p.id}
-            className="border-2 border-dashed border-pink-500/50 bg-pink-500/10 rounded-lg flex flex-col items-center justify-center"
+            className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center"
             style={{
               gridColumn: `${p.colStart} / span ${p.colSpan}`,
               gridRow: `${p.rowStart} / span ${p.rowSpan}`,
+              borderColor: "var(--accent)",
+              background: "var(--accent-subtle)",
             }}
           >
-            <span className="text-xs font-mono text-pink-600 font-bold">
+            <span className="text-xs font-mono font-bold" style={{ color: "var(--accent)" }}>
               {p.id}
             </span>
-            <span className="text-[9px] font-mono text-pink-500/80">
+            <span className="text-10 font-mono" style={{ color: "var(--accent)" }}>
               {p.colSpan}×{p.rowSpan}
             </span>
           </div>
         ))}
 
         {/* Debug info panel */}
-        <div className="absolute top-2 right-2 bg-pink-600 text-white text-[10px] font-mono px-3 py-2 rounded-lg shadow-lg space-y-0.5">
+        <div
+          className="absolute text-10 font-mono rounded-lg shadow-lg space-y-1"
+          style={{
+            top: "var(--space-2)",
+            right: "var(--space-2)",
+            padding: "var(--space-2) var(--space-3)",
+            background: "var(--sidebar-bg-elevated)",
+            border: "1px solid var(--accent)",
+            color: "var(--sidebar-text)",
+          }}
+        >
           <div className="font-bold">{preset}</div>
           <div>{breakpoint} · {columns}×{rows}</div>
           <div>{density} · {gap}px gap</div>

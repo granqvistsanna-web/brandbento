@@ -55,14 +55,18 @@ export function useImageLuminance(imageUrl: string | null): UseImageLuminanceRes
 
   useEffect(() => {
     if (!imageUrl) {
-      setLuminance(null);
-      setBackground('light');
-      setError(null);
+      Promise.resolve().then(() => {
+        setLuminance(null);
+        setBackground('light');
+        setError(null);
+      });
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    Promise.resolve().then(() => {
+      setLoading(true);
+      setError(null);
+    });
 
     getImageLuminance(imageUrl)
       .then(l => {

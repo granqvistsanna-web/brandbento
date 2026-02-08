@@ -66,7 +66,7 @@ export function BentoGridNew({
       className={twMerge(
         'h-full w-full',
         'flex items-center justify-center',
-        'transition-colors duration-200',
+        'transition-fast',
         className
       )}
       style={{

@@ -84,9 +84,15 @@ export function useGoogleFonts(
 
   // Auto-load on family change
   useEffect(() => {
+    let mounted = true;
     if (family) {
-      loadFontAsync(family);
+      // Use microtask to avoid synchronous setState warning
+      Promise.resolve().then(() => {
+        if (!mounted) return;
+        loadFontAsync(family);
+      });
     }
+    return () => { mounted = false; };
   }, [family, loadFontAsync]);
 
   return { loading, error, fontFamily, loadFont: loadFontAsync };

@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-// @ts-ignore
+import { useShallow } from "zustand/react/shallow";
+// @ts-expect-error - legacy component
 import BentoCanvas from "./components/BentoCanvasNew";
-// @ts-ignore
+// @ts-expect-error - missing types
 import ControlPanel from "./components/ControlPanel";
-// @ts-ignore
 import { useBrandStore, exportAsCSS, exportAsJSON } from "./store/useBrandStore";
 import { useTheme } from "./hooks/useTheme";
-import { ReadOnlyProvider, useReadOnly } from './hooks/useReadOnly';
+import { ReadOnlyProvider } from './components/ReadOnlyProvider';
+import { useReadOnly } from './hooks/useReadOnly';
 import { ThemeToggle } from "./components/ThemeToggle";
 import toast, { Toaster } from 'react-hot-toast';
 import { generateShareUrl, copyToClipboard } from './utils/sharing';
@@ -24,6 +25,9 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import "./index.css";
 
+const TRANSITION_FAST = { duration: 0.1, ease: [0.4, 0, 0.2, 1] };
+const TRANSITION_BASE = { duration: 0.15, ease: [0.4, 0, 0.2, 1] };
+
 // Figma-style toolbar button
 const ToolbarButton = ({
   icon: Icon,
@@ -33,7 +37,7 @@ const ToolbarButton = ({
   onClick,
   disabled,
 }: {
-  icon: any;
+  icon: React.ElementType;
   label?: string;
   shortcut?: string;
   active?: boolean;
@@ -62,6 +66,7 @@ const ToolbarButton = ({
         }}
         whileHover={!disabled ? { scale: 1.05 } : {}}
         whileTap={!disabled ? { scale: 0.95 } : {}}
+        transition={TRANSITION_FAST}
       >
         <Icon size={16} />
       </motion.button>
@@ -72,9 +77,14 @@ const ToolbarButton = ({
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
-            className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50"
+            transition={TRANSITION_FAST}
+            className="absolute top-full left-1/2 -translate-x-1/2 z-50"
+            style={{ marginTop: "var(--space-2)" }}
           >
-            <div className="tooltip flex items-center gap-2">
+            <div
+              className="tooltip flex items-center"
+              style={{ gap: "var(--space-2)" }}
+            >
               <span>{label}</span>
               {shortcut && <span className="kbd">{shortcut}</span>}
             </div>
@@ -89,17 +99,27 @@ const ToolbarButton = ({
 const ToolbarDivider = () => <div className="divider-v" />;
 
 // Zoom control
-const ZoomControl = () => {
-  const [zoom, setZoom] = useState(100);
+const ZoomControl = ({
+  zoom,
+  onZoomChange,
+}: {
+  zoom: number;
+  onZoomChange: (nextZoom: number) => void;
+}) => {
+  const clampZoom = (value: number) => Math.max(25, Math.min(200, value));
 
   return (
-    <div className="flex items-center gap-1 px-2">
+    <div
+      className="flex items-center"
+      style={{ gap: "var(--space-1)", paddingInline: "var(--space-2)" }}
+    >
       <motion.button
-        onClick={() => setZoom(Math.max(25, zoom - 25))}
+        onClick={() => onZoomChange(clampZoom(zoom - 25))}
         className="icon-btn"
         style={{ width: 24, height: 24 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        transition={TRANSITION_FAST}
       >
         <span
           className="text-11 font-medium"
@@ -115,11 +135,12 @@ const ZoomControl = () => {
         {zoom}%
       </div>
       <motion.button
-        onClick={() => setZoom(Math.min(200, zoom + 25))}
+        onClick={() => onZoomChange(clampZoom(zoom + 25))}
         className="icon-btn"
         style={{ width: 24, height: 24 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        transition={TRANSITION_FAST}
       >
         <span
           className="text-11 font-medium"
@@ -134,7 +155,7 @@ const ZoomControl = () => {
 
 // Logo/Brand mark
 const AppLogo = () => (
-  <div className="flex items-center px-3">
+  <div className="flex items-center" style={{ paddingInline: "var(--space-3)" }}>
     <span
       className="text-13 font-semibold tracking-tight"
       style={{ color: "var(--sidebar-text)" }}
@@ -145,10 +166,10 @@ const AppLogo = () => (
 );
 
 // Export menu dropdown
-const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> }) => {
+const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement | null> }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { brand } = useBrandStore();
+  const brand = useBrandStore((s) => s.brand);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -183,7 +204,8 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
       await exportToPng(canvasRef.current, 'brandbento');
       toast.success('PNG exported!');
       setIsOpen(false);
-    } catch (error) {
+    } catch (err) {
+      console.error('PNG export failed:', err);
       toast.error('Export failed. Please try again.');
     }
   };
@@ -195,10 +217,11 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
         className="btn-figma btn-figma-primary"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        transition={TRANSITION_FAST}
       >
         <Download size={14} />
         <span>Export</span>
-        <ChevronDown size={12} />
+        <ChevronDown size={14} />
       </motion.button>
 
       <AnimatePresence>
@@ -207,8 +230,11 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full right-0 mt-1 w-44 py-1 rounded-lg z-50"
+            transition={TRANSITION_BASE}
+            className="absolute top-full right-0 w-44 rounded-lg z-50"
             style={{
+              marginTop: "var(--space-1)",
+              paddingBlock: "var(--space-1)",
               background: "var(--sidebar-bg-elevated)",
               border: "1px solid var(--sidebar-border)",
               boxShadow: "var(--shadow-xl)",
@@ -216,8 +242,12 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
           >
             <button
               onClick={handleExportPng}
-              className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
-              style={{ color: "var(--sidebar-text)" }}
+              className="w-full flex items-center text-left transition-fast"
+              style={{
+                padding: "var(--space-2) var(--space-3)",
+                gap: "var(--space-2)",
+                color: "var(--sidebar-text)",
+              }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
               }
@@ -227,8 +257,10 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
             >
               <span className="text-11">Export as PNG</span>
               <span
-                className="ml-auto text-10 px-1.5 py-0.5 rounded"
+                className="text-10 rounded"
                 style={{
+                  marginLeft: "auto",
+                  padding: "var(--space-1) var(--space-1)",
                   background: "var(--sidebar-bg-active)",
                   color: "var(--sidebar-text-muted)",
                 }}
@@ -238,8 +270,12 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
             </button>
             <button
               onClick={() => handleExport("css")}
-              className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
-              style={{ color: "var(--sidebar-text)" }}
+              className="w-full flex items-center text-left transition-fast"
+              style={{
+                padding: "var(--space-2) var(--space-3)",
+                gap: "var(--space-2)",
+                color: "var(--sidebar-text)",
+              }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
               }
@@ -249,8 +285,10 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
             >
               <span className="text-11">Export as CSS</span>
               <span
-                className="ml-auto text-10 px-1.5 py-0.5 rounded"
+                className="text-10 rounded"
                 style={{
+                  marginLeft: "auto",
+                  padding: "var(--space-1) var(--space-1)",
                   background: "var(--sidebar-bg-active)",
                   color: "var(--sidebar-text-muted)",
                 }}
@@ -260,8 +298,12 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
             </button>
             <button
               onClick={() => handleExport("json")}
-              className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
-              style={{ color: "var(--sidebar-text)" }}
+              className="w-full flex items-center text-left transition-fast"
+              style={{
+                padding: "var(--space-2) var(--space-3)",
+                gap: "var(--space-2)",
+                color: "var(--sidebar-text)",
+              }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
               }
@@ -271,8 +313,10 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement> 
             >
               <span className="text-11">Export as JSON</span>
               <span
-                className="ml-auto text-10 px-1.5 py-0.5 rounded"
+                className="text-10 rounded"
                 style={{
+                  marginLeft: "auto",
+                  padding: "var(--space-1) var(--space-1)",
                   background: "var(--sidebar-bg-active)",
                   color: "var(--sidebar-text-muted)",
                 }}
@@ -306,15 +350,18 @@ const FileMenu = ({ onReset }: { onReset: () => void }) => {
     <div className="relative" ref={menuRef}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-md transition-fast"
+        className="flex items-center rounded-md transition-fast"
         style={{
+          gap: "var(--space-1)",
+          padding: "var(--space-2) var(--space-3)",
           background: isOpen ? "var(--sidebar-bg-hover)" : "transparent",
           color: "var(--sidebar-text-secondary)",
         }}
         whileHover={{ background: "var(--sidebar-bg-hover)" }}
+        transition={TRANSITION_FAST}
       >
         <span className="text-11 font-medium">File</span>
-        <ChevronDown size={12} />
+        <ChevronDown size={14} />
       </motion.button>
 
       <AnimatePresence>
@@ -323,26 +370,29 @@ const FileMenu = ({ onReset }: { onReset: () => void }) => {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full left-0 mt-1 w-52 py-1 rounded-lg z-50"
+            transition={TRANSITION_BASE}
+            className="absolute top-full left-0 w-52 rounded-lg z-50"
             style={{
+              marginTop: "var(--space-1)",
+              paddingBlock: "var(--space-1)",
               background: "var(--sidebar-bg-elevated)",
               border: "1px solid var(--sidebar-border)",
               boxShadow: "var(--shadow-xl)",
             }}
           >
             {[
-              { label: "New Moodboard", shortcut: "N", action: () => {} },
-              { label: "Open...", shortcut: "O", action: () => {} },
+              { label: "New Moodboard", shortcut: "N", action: () => { } },
+              { label: "Open...", shortcut: "O", action: () => { } },
               { divider: true },
-              { label: "Save", shortcut: "S", action: () => {} },
-              { label: "Export as CSS", action: () => {} },
-              { label: "Export as JSON", action: () => {} },
+              { label: "Save", shortcut: "S", action: () => { } },
+              { label: "Export as CSS", action: () => { } },
+              { label: "Export as JSON", action: () => { } },
               { divider: true },
-              { label: "Share...", action: () => {} },
+              { label: "Share...", action: () => { } },
               { label: "Reset to Defaults", action: onReset },
             ].map((item, i) =>
               item.divider ? (
-                <div key={i} className="divider-h mx-2" />
+                <div key={i} className="divider-h" style={{ marginInline: "var(--space-2)" }} />
               ) : (
                 <button
                   key={i}
@@ -350,8 +400,11 @@ const FileMenu = ({ onReset }: { onReset: () => void }) => {
                     item.action?.();
                     setIsOpen(false);
                   }}
-                  className="w-full px-3 py-1.5 flex items-center justify-between text-left transition-fast"
-                  style={{ color: "var(--sidebar-text)" }}
+                  className="w-full flex items-center justify-between text-left transition-fast"
+                  style={{
+                    padding: "var(--space-2) var(--space-3)",
+                    color: "var(--sidebar-text)",
+                  }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
                   }
@@ -381,11 +434,21 @@ function AppContent() {
 
   const isReadOnly = useReadOnly();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(100);
 
-  const { brand, tiles, undo, redo, history, loadRandomTemplate, resetToDefaults } =
-    useBrandStore();
+  const { undo, redo, history, loadRandomTemplate, resetToDefaults } =
+    useBrandStore(
+      useShallow((s) => ({
+        undo: s.undo,
+        redo: s.redo,
+        history: s.history,
+        loadRandomTemplate: s.loadRandomTemplate,
+        resetToDefaults: s.resetToDefaults,
+      }))
+    );
 
   const handleShare = async () => {
+    const { brand, tiles } = useBrandStore.getState();
     const shareUrl = generateShareUrl({ brand, tiles });
     const success = await copyToClipboard(shareUrl);
     if (success) {
@@ -417,92 +480,117 @@ function AppContent() {
 
       {/* === TOP TOOLBAR (Figma Style) === */}
       {!isReadOnly && (
-      <header
-        data-export-exclude="true"
-        className="h-12 flex items-center justify-between px-2 z-20 flex-shrink-0"
-        style={{
-          background: "var(--sidebar-bg)",
-          borderBottom: "1px solid var(--sidebar-border)",
-        }}
-      >
-        {/* Left: Logo + File Menu */}
-        <div className="flex items-center gap-1">
-          <AppLogo />
+        <header
+          data-export-exclude="true"
+          className="flex items-center justify-between z-20 flex-shrink-0"
+          style={{
+            height: "var(--space-12)",
+            paddingInline: "var(--space-2)",
+            background: "var(--sidebar-bg)",
+            borderBottom: "1px solid var(--sidebar-border)",
+          }}
+        >
+          {/* Left: Logo + File Menu */}
+          <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
+            <AppLogo />
 
-          <ToolbarDivider />
+            <ToolbarDivider />
 
-          <FileMenu onReset={handleReset} />
+            <FileMenu onReset={handleReset} />
 
-          <motion.button
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md transition-fast"
-            style={{ color: "var(--sidebar-text-secondary)" }}
-            whileHover={{ background: "var(--sidebar-bg-hover)" }}
-          >
-            <span className="text-11 font-medium">Edit</span>
-          </motion.button>
+            <motion.button
+              className="flex items-center rounded-md transition-fast"
+              style={{ color: "var(--sidebar-text-secondary)" }}
+              whileHover={{ background: "var(--sidebar-bg-hover)" }}
+              transition={TRANSITION_FAST}
+            >
+              <span
+                className="text-11 font-medium"
+                style={{
+                  padding: "var(--space-2) var(--space-3)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "var(--space-1)",
+                }}
+              >
+                Edit
+              </span>
+            </motion.button>
 
-          <motion.button
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md transition-fast"
-            style={{ color: "var(--sidebar-text-secondary)" }}
-            whileHover={{ background: "var(--sidebar-bg-hover)" }}
-          >
-            <span className="text-11 font-medium">View</span>
-          </motion.button>
-        </div>
+            <motion.button
+              className="flex items-center rounded-md transition-fast"
+              style={{ color: "var(--sidebar-text-secondary)" }}
+              whileHover={{ background: "var(--sidebar-bg-hover)" }}
+              transition={TRANSITION_FAST}
+            >
+              <span
+                className="text-11 font-medium"
+                style={{
+                  padding: "var(--space-2) var(--space-3)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "var(--space-1)",
+                }}
+              >
+                View
+              </span>
+            </motion.button>
+          </div>
 
-        {/* Center: Tool buttons */}
-        <div className="flex items-center gap-1">
-          <ToolbarButton
-            icon={RotateCcw}
-            label="Undo"
-            shortcut="⌘Z"
-            onClick={undo}
-            disabled={history.past.length === 0}
-          />
-          <ToolbarButton
-            icon={RotateCw}
-            label="Redo"
-            shortcut="⇧⌘Z"
-            onClick={redo}
-            disabled={history.future.length === 0}
-          />
+          {/* Center: Tool buttons */}
+          <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
+            <ToolbarButton
+              icon={RotateCcw}
+              label="Undo"
+              shortcut="⌘Z"
+              onClick={undo}
+              disabled={history.past.length === 0}
+            />
+            <ToolbarButton
+              icon={RotateCw}
+              label="Redo"
+              shortcut="⇧⌘Z"
+              onClick={redo}
+              disabled={history.future.length === 0}
+            />
 
-          <ToolbarDivider />
+            <ToolbarDivider />
 
-          <ThemeToggle />
+            <ThemeToggle />
 
-          <ToolbarButton
-            icon={Layers}
-            label="Shuffle Template"
-            onClick={loadRandomTemplate}
-          />
+            <ToolbarButton
+              icon={Layers}
+              label="Shuffle Template"
+              onClick={loadRandomTemplate}
+            />
 
-          <ToolbarDivider />
+            <ToolbarDivider />
 
-          <ZoomControl />
+            <ZoomControl zoom={zoom} onZoomChange={setZoom} />
 
-          <ToolbarButton icon={Maximize2} label="Fit to Screen" shortcut="1" />
-        </div>
+            <ToolbarButton icon={Maximize2} label="Fit to Screen" shortcut="1" />
+          </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          <motion.button
-            className="btn-figma btn-figma-ghost"
-            onClick={handleShare}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Share2 size={14} />
-            <span>Share</span>
-          </motion.button>
+          {/* Right: Actions */}
+          <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
+            <motion.button
+              className="btn-figma btn-figma-ghost"
+              onClick={handleShare}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={TRANSITION_FAST}
+            >
+              <Share2 size={14} />
+              <span>Share</span>
+            </motion.button>
 
-          <ExportMenu canvasRef={canvasRef} />
+            <ExportMenu canvasRef={canvasRef} />
 
-          <ToolbarDivider />
+            <ToolbarDivider />
 
-          <ToolbarButton icon={HelpCircle} label="Help" shortcut="?" />
-        </div>
-      </header>
+            <ToolbarButton icon={HelpCircle} label="Help" shortcut="?" />
+          </div>
+        </header>
       )}
 
       {/* === MAIN LAYOUT === */}
@@ -511,106 +599,111 @@ function AppContent() {
         {!isReadOnly && <ControlPanel />}
 
         {/* Center: Canvas */}
-        <BentoCanvas ref={canvasRef} />
+        <BentoCanvas ref={canvasRef} zoom={zoom} />
 
       </main>
 
       {/* === BOTTOM STATUS BAR === */}
       {!isReadOnly && (
-      <footer
-        data-export-exclude="true"
-        className="h-6 flex items-center justify-between px-3 flex-shrink-0"
-        style={{
-          background: "var(--sidebar-bg)",
-          borderTop: "1px solid var(--sidebar-border)",
-        }}
-      >
-        {/* Left: Status */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <motion.div
-              className="w-2 h-2 rounded-full"
-              style={{ background: "var(--success)" }}
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.3 }}
-              key={history.past.length}
+        <footer
+          data-export-exclude="true"
+          className="flex items-center justify-between flex-shrink-0"
+          style={{
+            height: "var(--space-6)",
+            paddingInline: "var(--space-3)",
+            background: "var(--sidebar-bg)",
+            borderTop: "1px solid var(--sidebar-border)",
+          }}
+        >
+          {/* Left: Status */}
+          <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
+            <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
+              <motion.div
+                className="w-2 h-2 rounded-full"
+                style={{ background: "var(--success)" }}
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={TRANSITION_BASE}
+                key={history.past.length}
+              />
+              <span
+                className="text-10 flex items-center"
+                style={{
+                  color: "var(--sidebar-text-muted)",
+                  gap: "var(--space-1)",
+                }}
+              >
+                All changes saved
+              </span>
+            </div>
+
+            <div
+              className="h-3 w-px"
+              style={{ background: "var(--sidebar-border)" }}
             />
+
             <span
-              className="text-[10px] flex items-center gap-1"
+              className="text-10"
               style={{ color: "var(--sidebar-text-muted)" }}
             >
-              All changes saved
+              {history.past.length} changes
             </span>
           </div>
 
-          <div
-            className="h-3 w-px"
-            style={{ background: "var(--sidebar-border)" }}
-          />
+          {/* Center: Keyboard hints */}
+          <div className="flex items-center" style={{ gap: "var(--space-4)" }}>
+            <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
+              <span className="kbd">Esc</span>
+              <span
+                className="text-10"
+                style={{ color: "var(--sidebar-text-muted)" }}
+              >
+                Deselect
+              </span>
+            </div>
+            <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
+              <span className="kbd">⌘Z</span>
+              <span
+                className="text-10"
+                style={{ color: "var(--sidebar-text-muted)" }}
+              >
+                Undo
+              </span>
+            </div>
+            <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
+              <span className="kbd">⇧⌘Z</span>
+              <span
+                className="text-10"
+                style={{ color: "var(--sidebar-text-muted)" }}
+              >
+                Redo
+              </span>
+            </div>
+          </div>
 
-          <span
-            className="text-[10px]"
-            style={{ color: "var(--sidebar-text-muted)" }}
-          >
-            {history.past.length} changes
-          </span>
-        </div>
-
-        {/* Center: Keyboard hints */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1">
-            <span className="kbd">Esc</span>
+          {/* Right: Version */}
+          <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
             <span
-              className="text-[10px]"
+              className="text-10"
               style={{ color: "var(--sidebar-text-muted)" }}
             >
-              Deselect
+              v1.0.0
             </span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="kbd">⌘Z</span>
-            <span
-              className="text-[10px]"
-              style={{ color: "var(--sidebar-text-muted)" }}
-            >
-              Undo
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="kbd">⇧⌘Z</span>
-            <span
-              className="text-[10px]"
-              style={{ color: "var(--sidebar-text-muted)" }}
-            >
-              Redo
-            </span>
-          </div>
-        </div>
-
-        {/* Right: Version */}
-        <div className="flex items-center gap-2">
-          <span
-            className="text-[10px]"
-            style={{ color: "var(--sidebar-text-muted)" }}
-          >
-            v1.0.0
-          </span>
-        </div>
-      </footer>
+        </footer>
       )}
 
       {!isReadOnly && (
-      <Toaster
-        position="bottom-center"
-        toastOptions={{
-          duration: 2000,
-          style: {
-            background: '#1f2937',
-            color: '#f9fafb',
-            fontSize: '13px',
-          },
-        }}
-      />
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            duration: 2000,
+            style: {
+              background: '#1f2937',
+              color: '#f9fafb',
+              fontSize: '13px',
+            },
+          }}
+        />
       )}
     </div>
   );

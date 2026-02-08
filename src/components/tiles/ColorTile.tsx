@@ -17,7 +17,7 @@
  * @example
  * <ColorTile />
  */
-import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
+import { useBrandStore } from '@/store/useBrandStore';
 import { motion } from 'motion/react';
 import { Copy } from 'lucide-react';
 import { useState } from 'react';
@@ -28,8 +28,7 @@ import { hexToHSL } from '@/utils/colorMapping';
  * Displays brand colors with copy functionality.
  */
 export function ColorTile() {
-  const brand = useBrandStore((state: BrandStore) => state.brand);
-  const colors = brand.colors;
+  const colors = useBrandStore((state) => state.brand.colors);
 
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -66,28 +65,28 @@ export function ColorTile() {
         {coreColors.map((color) => (
           <motion.button
             key={color.name}
-            className="flex-1 rounded-lg p-2.5 flex flex-col justify-between text-left min-h-[52px]"
+            className="flex-1 rounded-lg p-3 flex flex-col justify-between text-left min-h-[52px]"
             style={{ backgroundColor: color.value }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleCopy(color.value)}
           >
             <span
-              className="text-[9px] font-medium opacity-70 uppercase tracking-wide"
+              className="text-10 font-medium opacity-70 uppercase tracking-wide"
               style={{ color: getTextColor(color.value) }}
             >
               {color.name}
             </span>
             <div className="flex justify-between items-center">
               <span
-                className="text-[10px] font-semibold"
+                className="text-10 font-semibold"
                 style={{ color: getTextColor(color.value) }}
               >
                 {color.value}
               </span>
               {copied === color.value ? (
-                <span className="text-[9px]" style={{ color: getTextColor(color.value) }}>✓</span>
+                <span className="text-10" style={{ color: getTextColor(color.value) }}>✓</span>
               ) : (
-                <Copy size={10} className="opacity-40" style={{ color: getTextColor(color.value) }} />
+                <Copy size={12} className="opacity-40" style={{ color: getTextColor(color.value) }} />
               )}
             </div>
           </motion.button>
@@ -95,14 +94,14 @@ export function ColorTile() {
       </div>
 
       {/* Surfaces Grid - shows palette identity */}
-      <div className="flex-1 flex flex-col gap-1.5">
+      <div className="flex-1 flex flex-col gap-2">
         <span
-          className="text-[9px] font-medium opacity-50 uppercase tracking-wider"
+          className="text-10 font-medium opacity-50 uppercase tracking-wider"
           style={{ color: colors.text }}
         >
           Surfaces
         </span>
-        <div className="grid grid-cols-3 gap-1.5 flex-1">
+        <div className="grid grid-cols-3 gap-2 flex-1">
           {surfaceColors.map((surface, index) => (
             <motion.button
               key={`surface-${index}`}
@@ -115,13 +114,13 @@ export function ColorTile() {
               onClick={() => handleCopy(surface)}
             >
               <span
-                className="text-[8px] font-medium opacity-60"
+                className="text-10 font-medium opacity-60"
                 style={{ color: getTextColor(surface) }}
               >
                 {index + 1}
               </span>
               {copied === surface && (
-                <span className="text-[8px]" style={{ color: getTextColor(surface) }}>✓</span>
+                <span className="text-10" style={{ color: getTextColor(surface) }}>✓</span>
               )}
             </motion.button>
           ))}
@@ -137,13 +136,13 @@ export function ColorTile() {
         }}
       >
         <span
-          className="text-[9px] font-medium opacity-50 uppercase"
+          className="text-10 font-medium opacity-50 uppercase"
           style={{ color: colors.text }}
         >
           Background
         </span>
         <span
-          className="text-[10px] font-semibold opacity-70"
+          className="text-10 font-semibold opacity-70"
           style={{ color: colors.text }}
         >
           {colors.bg}

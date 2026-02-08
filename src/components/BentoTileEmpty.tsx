@@ -44,7 +44,7 @@ export function BentoTileEmpty({ slotId, className, onClick }: BentoTileEmptyPro
         'h-full w-full rounded-xl',
         'flex items-center justify-center',
         'border border-dashed',
-        'transition-colors duration-200',
+        'transition-fast',
         'min-h-0 min-w-0 overflow-hidden',
         onClick && 'cursor-pointer text-left',
         className
@@ -56,7 +56,7 @@ export function BentoTileEmpty({ slotId, className, onClick }: BentoTileEmptyPro
       data-slot-id={slotId}
     >
       <span
-        className="text-[10px] font-medium uppercase tracking-wider opacity-40"
+        className="text-10 font-medium uppercase tracking-wider opacity-40"
         style={{ color: 'var(--canvas-text-secondary)' }}
       >
         {slotId}

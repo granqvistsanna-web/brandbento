@@ -21,6 +21,8 @@ import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../hooks/useTheme';
 
+const TRANSITION_FAST = { duration: 0.1, ease: [0.4, 0, 0.2, 1] };
+
 /** Available theme options with their display configuration */
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun },
@@ -61,6 +63,7 @@ export function ThemeToggle() {
         }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        transition={TRANSITION_FAST}
         aria-label="Toggle theme"
         aria-expanded={isOpen}
       >
@@ -73,8 +76,11 @@ export function ThemeToggle() {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full right-0 mt-1 py-1 rounded-lg z-50 min-w-[120px]"
+            transition={TRANSITION_FAST}
+            className="absolute top-full right-0 rounded-lg z-50 min-w-[120px]"
             style={{
+              marginTop: 'var(--space-1)',
+              paddingBlock: 'var(--space-1)',
               background: 'var(--sidebar-bg-elevated)',
               border: '1px solid var(--sidebar-border)',
               boxShadow: 'var(--shadow-xl)',
@@ -91,8 +97,10 @@ export function ThemeToggle() {
                     setTheme(option.value);
                     setIsOpen(false);
                   }}
-                  className="w-full px-3 py-1.5 flex items-center gap-2 text-left transition-fast"
+                  className="w-full flex items-center text-left transition-fast"
                   style={{
+                    padding: 'var(--space-2) var(--space-3)',
+                    gap: 'var(--space-2)',
                     background: isSelected ? 'var(--accent-muted)' : 'transparent',
                     color: isSelected ? 'var(--accent)' : 'var(--sidebar-text)',
                   }}
@@ -109,7 +117,7 @@ export function ThemeToggle() {
                 >
                   <Icon size={14} />
                   <span className="text-11 flex-1">{option.label}</span>
-                  {isSelected && <Check size={12} />}
+                  {isSelected && <Check size={14} />}
                 </button>
               );
             })}

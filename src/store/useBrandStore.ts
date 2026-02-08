@@ -41,7 +41,8 @@ import { persist } from "zustand/middleware";
 import { getPaletteById } from "../data/colorPalettes";
 import { mapPaletteToBrand } from "../utils/colorMapping";
 import { DEFAULT_BRAND, BRAND_PRESETS } from "../data/brandPresets";
-import { INITIAL_TILES, DEFAULT_TILE_CONTENT } from "../data/tileDefaults";
+import { INITIAL_TILES } from "../data/tileDefaults";
+import { getPlacementTileId, getPlacementTileType } from "../config/placements";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -163,6 +164,16 @@ export interface TileContent {
   buttonLabel?: string;
   /** Placeholder text for input fields in UI preview */
   inputPlaceholder?: string;
+  /** Social post handle/username */
+  socialHandle?: string;
+  /** Social post caption text */
+  socialCaption?: string;
+  /** Social post likes label */
+  socialLikes?: string;
+  /** Social post sponsored label */
+  socialSponsored?: string;
+  /** Social post aspect ratio */
+  socialAspect?: string;
 }
 
 /**
@@ -193,6 +204,10 @@ export interface HistoryState {
   brand: Brand;
   /** Tile configurations at this point in history */
   tiles: Tile[];
+  /** Surface overrides at this point in history */
+  tileSurfaces: Record<string, number | undefined>;
+  /** Placement-specific content overrides */
+  placementContent: Record<string, TileContent>;
 }
 
 /**
@@ -205,6 +220,35 @@ export interface History {
   /** Stack of undone states (for redo, most recent at start) */
   future: HistoryState[];
 }
+
+const createDefaultBrand = (): Brand => ({
+  typography: { ...DEFAULT_BRAND.typography },
+  colors: {
+    ...DEFAULT_BRAND.colors,
+    surfaces: [...DEFAULT_BRAND.colors.surfaces],
+    paletteColors: [...DEFAULT_BRAND.colors.paletteColors],
+  },
+  logo: { ...DEFAULT_BRAND.logo },
+  imagery: { ...DEFAULT_BRAND.imagery },
+});
+
+const mergeBrand = (source?: Partial<Brand> | null): Brand => {
+  const base = createDefaultBrand();
+
+  if (!source) return base;
+
+  return {
+    typography: { ...base.typography, ...(source.typography ?? {}) },
+    colors: {
+      ...base.colors,
+      ...(source.colors ?? {}),
+      surfaces: source.colors?.surfaces ?? base.colors.surfaces,
+      paletteColors: source.colors?.paletteColors ?? base.colors.paletteColors,
+    },
+    logo: { ...base.logo, ...(source.logo ?? {}) },
+    imagery: { ...base.imagery, ...(source.imagery ?? {}) },
+  };
+};
 
 /**
  * Maximum number of history entries to keep.
@@ -219,6 +263,75 @@ const pushToHistory = (
   currentPast: HistoryState[],
   newEntry: HistoryState
 ): HistoryState[] => [...currentPast, newEntry].slice(-MAX_HISTORY);
+
+const shallowEqualArray = (a?: unknown[], b?: unknown[]): boolean => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+};
+
+const hasBrandChanges = (brand: Brand, newBrand: Partial<Brand>): boolean => {
+  if (!newBrand || Object.keys(newBrand).length === 0) return false;
+
+  if (newBrand.typography) {
+    const current = brand.typography;
+    for (const key of Object.keys(newBrand.typography) as (keyof Typography)[]) {
+      if (newBrand.typography[key] !== current[key]) return true;
+    }
+  }
+
+  if (newBrand.logo) {
+    const current = brand.logo;
+    for (const key of Object.keys(newBrand.logo) as (keyof Logo)[]) {
+      if (newBrand.logo[key] !== current[key]) return true;
+    }
+  }
+
+  if (newBrand.imagery) {
+    const current = brand.imagery;
+    for (const key of Object.keys(newBrand.imagery) as (keyof Imagery)[]) {
+      if (newBrand.imagery[key] !== current[key]) return true;
+    }
+  }
+
+  if (newBrand.colors) {
+    const current = brand.colors;
+    for (const key of Object.keys(newBrand.colors) as (keyof Colors)[]) {
+      if (key === 'surfaces') {
+        if (!shallowEqualArray(newBrand.colors.surfaces, current.surfaces)) return true;
+        continue;
+      }
+      if (key === 'paletteColors') {
+        if (!shallowEqualArray(newBrand.colors.paletteColors, current.paletteColors)) return true;
+        continue;
+      }
+      if (newBrand.colors[key] !== current[key]) return true;
+    }
+  }
+
+  // Top-level direct updates (rare in this codebase)
+  const topLevelKeys = Object.keys(newBrand) as (keyof Brand)[];
+  return topLevelKeys.some((key) => {
+    if (key === 'typography' || key === 'colors' || key === 'logo' || key === 'imagery') {
+      return false;
+    }
+    return (newBrand[key] as unknown) !== (brand[key] as unknown);
+  });
+};
+
+const hasTileContentChanges = (
+  content: TileContent,
+  newContent: Partial<TileContent>
+): boolean => {
+  return Object.keys(newContent).some((key) => {
+    const typedKey = key as keyof TileContent;
+    return newContent[typedKey] !== content[typedKey];
+  });
+};
 
 /**
  * Temporary font preview state.
@@ -271,6 +384,8 @@ export interface BrandStore {
   history: History;
   /** Surface index overrides by placement ID (e.g., 'a', 'b', 'hero') */
   tileSurfaces: Record<string, number | undefined>;
+  /** Placement-specific content overrides (e.g., social post content) */
+  placementContent: Record<string, TileContent>;
 
   // ─────────────────────────────────────────────────────────────────
   // UI State Actions
@@ -307,7 +422,9 @@ export interface BrandStore {
   /** Updates tile content (isCommit=true creates undo point) */
   updateTile: (tileId: string, newContent: Partial<TileContent>, isCommit?: boolean) => void;
   /** Sets the surface color index for a specific tile placement */
-  setTileSurface: (placementId: string, surfaceIndex: number | undefined) => void;
+  setTileSurface: (placementId: string, surfaceIndex: number | undefined, isCommit?: boolean) => void;
+  /** Updates placement-specific content (isCommit=true creates undo point) */
+  setPlacementContent: (placementId: string, newContent: Partial<TileContent>, isCommit?: boolean) => void;
 
   // ─────────────────────────────────────────────────────────────────
   // Brand Actions
@@ -332,118 +449,24 @@ export interface BrandStore {
 // LOCAL PRESETS (extends imported BRAND_PRESETS)
 // ============================================
 
-// Additional preset configurations
-const LOCAL_BRAND_PRESETS: Record<string, Brand> = {
+// Additional preset configurations (empty for now)
+
+
+/*
   default: DEFAULT_BRAND,
   techStartup: {
-    typography: {
-      primary: "Sora",
+  typography: {
+    primary: "Sora",
       secondary: "Inter",
-      ui: "Inter",
-      scale: 1.2,
-      baseSize: 16,
-      weightHeadline: "700",
-      weightBody: "400",
-      letterSpacing: "normal",
+        ui: "Inter",
+          scale: 1.2,
+            baseSize: 16,
+              weightHeadline: "700",
+                weightBody: "400",
+                  letterSpacing: "normal",
     },
-    colors: {
-      bg: "#F5F7FA",
-      text: "#0F172A",
-      primary: "#3B82F6",
-      accent: "#64748B",
-      surface: "#FFFFFF",
-      surfaces: ["#FFFFFF", "#F1F5F9", "#E2E8F0", "#CBD5E1"],
-      paletteColors: [],
-    },
-    logo: {
-      text: "TECH",
-      padding: 16,
-      size: 24,
-    },
-    imagery: DEFAULT_BRAND.imagery,
-  },
-  luxuryRetail: {
-    typography: {
-      primary: "Playfair Display",
-      secondary: "Montserrat",
-      ui: "Montserrat",
-      scale: 1.33,
-      baseSize: 16,
-      weightHeadline: "700",
-      weightBody: "400",
-      letterSpacing: "wide",
-    },
-    colors: {
-      bg: "#FDFCFA",
-      text: "#1C1917",
-      primary: "#78716C",
-      accent: "#A8A29E",
-      surface: "#F5F5F4",
-      surfaces: ["#F5F5F4", "#FAFAF9", "#E7E5E4", "#D6D3D1"],
-      paletteColors: [],
-    },
-    logo: {
-      text: "LUXE",
-      padding: 20,
-      size: 22,
-    },
-    imagery: DEFAULT_BRAND.imagery,
-  },
-  communityNonprofit: {
-    typography: {
-      primary: "Plus Jakarta Sans",
-      secondary: "Plus Jakarta Sans",
-      ui: "Plus Jakarta Sans",
-      scale: 1.25,
-      baseSize: 16,
-      weightHeadline: "700",
-      weightBody: "400",
-      letterSpacing: "normal",
-    },
-    colors: {
-      bg: "#FFFFFF",
-      text: "#171717",
-      primary: "#0EA5E9",
-      accent: "#7DD3FC",
-      surface: "#F0F9FF",
-      surfaces: ["#F0F9FF", "#E0F2FE", "#BAE6FD", "#FFFFFF"],
-      paletteColors: [],
-    },
-    logo: {
-      text: "UNITE",
-      padding: 16,
-      size: 24,
-    },
-    imagery: DEFAULT_BRAND.imagery,
-  },
-  creativeStudio: {
-    typography: {
-      primary: "Bricolage Grotesque",
-      secondary: "Inter",
-      ui: "Inter",
-      scale: 1.3,
-      baseSize: 16,
-      weightHeadline: "700",
-      weightBody: "400",
-      letterSpacing: "normal",
-    },
-    colors: {
-      bg: "#FAFAFA",
-      text: "#171717",
-      primary: "#F97316",
-      accent: "#D946EF",
-      surface: "#FFFFFF",
-      surfaces: ["#FFFFFF", "#FFF7ED", "#FEFCE8", "#FAF5FF"],
-      paletteColors: [],
-    },
-    logo: {
-      text: "STUDIO",
-      padding: 18,
-      size: 26,
-    },
-    imagery: DEFAULT_BRAND.imagery,
-  },
-};
+*/
+
 
 // Ready-made templates with complete brand + tile layouts
 interface StarterTemplate {
@@ -969,9 +992,9 @@ const hexToHSL = (hex: string): HSL => {
     }
   }
 
-  let r = parseInt(rHex, 16) / 255;
-  let g = parseInt(gHex, 16) / 255;
-  let b = parseInt(bHex, 16) / 255;
+  const r = parseInt(rHex, 16) / 255;
+  const g = parseInt(gHex, 16) / 255;
+  const b = parseInt(bHex, 16) / 255;
 
   const max = Math.max(r, g, b),
     min = Math.min(r, g, b);
@@ -1187,81 +1210,8 @@ export const exportAsJSON = (brand: Brand | null): string => {
 // LOCAL INITIAL TILES (fallback if not imported)
 // ============================================
 
-const LOCAL_INITIAL_TILES: Tile[] = [
-  {
-    id: "hero-1",
-    type: "hero",
-    content: {
-      headline: "The future of brand storytelling",
-      subcopy: "Create cohesive brand worlds in minutes, not weeks.",
-      cta: "Get Started",
-      image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop",
-    },
-    colSpan: 2,
-    rowSpan: 2,
-  },
-  {
-    id: "image-1",
-    type: "image",
-    content: {
-      image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop",
-      overlayText: "Atmosphere",
-    },
-    colSpan: 1,
-    rowSpan: 2,
-  },
-  {
-    id: "editorial-1",
-    type: "editorial",
-    content: {
-      headline: "Design with intention",
-      body: "Every element in our system is designed to work together, ensuring your brand stays consistent across all touchpoints.",
-    },
-    colSpan: 1,
-    rowSpan: 1,
-  },
-  {
-    id: "product-1",
-    type: "product",
-    content: {
-      label: "Core Module",
-      price: "$299",
-      image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=500&auto=format&fit=crop",
-    },
-    colSpan: 2,
-    rowSpan: 1,
-  },
-  {
-    id: "ui-preview-1",
-    type: "ui-preview",
-    content: {
-      headerTitle: "Dashboard",
-      buttonLabel: "Submit",
-      inputPlaceholder: "Search...",
-    },
-    colSpan: 1,
-    rowSpan: 1,
-  },
-  {
-    id: "utility-1",
-    type: "utility",
-    content: {
-      headline: "Key Features",
-      items: ["Responsive Grid", "Live Tokens", "Undo/Redo Support"],
-    },
-    colSpan: 1,
-    rowSpan: 1,
-  },
-  {
-    id: "logo-1",
-    type: "logo",
-    content: {
-      label: "Brand Identity",
-    },
-    colSpan: 1,
-    rowSpan: 1,
-  },
-];
+
+
 
 // ============================================
 // DEFAULT TILE CONTENT
@@ -1290,6 +1240,19 @@ const defaultTileContent: Record<string, TileContent> = {
   },
   utility: { headline: "Features", items: ["Item 1", "Item 2", "Item 3"] },
   logo: { label: "Brand" },
+};
+
+const defaultSocialContent: TileContent = {
+  socialHandle: "bento",
+  socialCaption: "Defining the new standard for calm, focused brand systems.",
+  socialLikes: "1,204 likes",
+  socialSponsored: "Sponsored",
+  socialAspect: "4:5",
+};
+
+const defaultPlacementContent: Record<string, TileContent> = {
+  image: { ...defaultSocialContent },
+  d: { ...defaultSocialContent },
 };
 
 // ============================================
@@ -1326,6 +1289,7 @@ export const useBrandStore = create<BrandStore>()(
         future: [],
       },
       tileSurfaces: {},
+      placementContent: defaultPlacementContent,
 
       setFocusedTile: (id) => set({ focusedTileId: id }),
 
@@ -1345,6 +1309,8 @@ export const useBrandStore = create<BrandStore>()(
         set({
           brand: randomTemplate.brand,
           tiles: randomTemplate.tiles,
+          tileSurfaces: {},
+          placementContent: defaultPlacementContent,
           history: {
             past: [],
             future: [],
@@ -1353,21 +1319,21 @@ export const useBrandStore = create<BrandStore>()(
       },
 
       loadPreset: (presetName) => {
-        const { brand, tiles, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
         const preset = BRAND_PRESETS[presetName];
         if (!preset) return;
 
         set({
           brand: preset,
           history: {
-            past: pushToHistory(history.past, { brand, tiles }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: [],
           },
         });
       },
 
       applyPalette: (paletteId, complexity = 'full') => {
-        const { brand, tiles, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
         const palette = getPaletteById(paletteId);
         if (!palette) return;
 
@@ -1411,14 +1377,14 @@ export const useBrandStore = create<BrandStore>()(
             colors: colorMapping as Colors,
           },
           history: {
-            past: pushToHistory(history.past, { brand, tiles }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: [],
           },
         });
       },
 
       swapTileType: (tileId, newType) => {
-        const { brand, tiles, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
         const tile = tiles.find((t) => t.id === tileId);
         if (!tile) return;
 
@@ -1431,20 +1397,22 @@ export const useBrandStore = create<BrandStore>()(
         set({
           tiles: newTiles,
           history: {
-            past: pushToHistory(history.past, { brand, tiles }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: [],
           },
         });
       },
 
       updateBrand: (newBrand, isCommit = true) => {
-        const { brand, history, tiles } = get();
+        const { brand, history, tiles, tileSurfaces, placementContent } = get();
+        if (!newBrand || Object.keys(newBrand).length === 0) return;
+        if (!hasBrandChanges(brand, newBrand)) return;
 
         if (isCommit) {
           set({
             brand: { ...brand, ...newBrand } as Brand,
             history: {
-              past: pushToHistory(history.past, { brand, tiles }),
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
               future: [],
             },
           });
@@ -1454,7 +1422,10 @@ export const useBrandStore = create<BrandStore>()(
       },
 
       updateTile: (tileId, newContent, isCommit = true) => {
-        const { brand, tiles, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const currentTile = tiles.find((t) => t.id === tileId);
+        if (!currentTile) return;
+        if (!hasTileContentChanges(currentTile.content, newContent)) return;
         const newTiles = tiles.map((t) =>
           t.id === tileId ? { ...t, content: { ...t.content, ...newContent } } : t
         );
@@ -1463,7 +1434,7 @@ export const useBrandStore = create<BrandStore>()(
           set({
             tiles: newTiles,
             history: {
-              past: pushToHistory(history.past, { brand, tiles }),
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
               future: [],
             },
           });
@@ -1472,31 +1443,66 @@ export const useBrandStore = create<BrandStore>()(
         }
       },
 
-      setTileSurface: (placementId, surfaceIndex) => {
-        const { tileSurfaces } = get();
-        set({
-          tileSurfaces: {
-            ...tileSurfaces,
-            [placementId]: surfaceIndex,
-          },
-        });
+      setTileSurface: (placementId, surfaceIndex, isCommit = true) => {
+        const { tileSurfaces, history, brand, tiles, placementContent } = get();
+        if (tileSurfaces[placementId] === surfaceIndex) return;
+        const nextSurfaces = {
+          ...tileSurfaces,
+          [placementId]: surfaceIndex,
+        };
+
+        if (isCommit) {
+          set({
+            tileSurfaces: nextSurfaces,
+            history: {
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+              future: [],
+            },
+          });
+        } else {
+          set({ tileSurfaces: nextSurfaces });
+        }
+      },
+
+      setPlacementContent: (placementId, newContent, isCommit = true) => {
+        const { placementContent, history, brand, tiles, tileSurfaces } = get();
+        const currentContent = placementContent[placementId] || {};
+        if (!hasTileContentChanges(currentContent, newContent)) return;
+        const nextContent = {
+          ...placementContent,
+          [placementId]: { ...currentContent, ...newContent },
+        };
+
+        if (isCommit) {
+          set({
+            placementContent: nextContent,
+            history: {
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+              future: [],
+            },
+          });
+        } else {
+          set({ placementContent: nextContent });
+        }
       },
 
       resetToDefaults: () => {
-        const { history, brand, tiles } = get();
+        const { history, brand, tiles, tileSurfaces, placementContent } = get();
 
         set({
           brand: DEFAULT_BRAND,
           tiles: INITIAL_TILES,
+          tileSurfaces: {},
+          placementContent: defaultPlacementContent,
           history: {
-            past: pushToHistory(history.past, { brand, tiles }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: [],
           },
         });
       },
 
       undo: () => {
-        const { history, brand, tiles } = get();
+        const { history, brand, tiles, tileSurfaces, placementContent } = get();
         if (history.past.length === 0) return;
 
         const previous = history.past[history.past.length - 1];
@@ -1505,15 +1511,17 @@ export const useBrandStore = create<BrandStore>()(
         set({
           brand: previous.brand,
           tiles: previous.tiles,
+          tileSurfaces: previous.tileSurfaces,
+          placementContent: previous.placementContent ?? defaultPlacementContent,
           history: {
             past: newPast,
-            future: [{ brand, tiles }, ...history.future],
+            future: [{ brand, tiles, tileSurfaces, placementContent }, ...history.future],
           },
         });
       },
 
       redo: () => {
-        const { history, brand, tiles } = get();
+        const { history, brand, tiles, tileSurfaces, placementContent } = get();
         if (history.future.length === 0) return;
 
         const next = history.future[0];
@@ -1522,8 +1530,10 @@ export const useBrandStore = create<BrandStore>()(
         set({
           brand: next.brand,
           tiles: next.tiles,
+          tileSurfaces: next.tileSurfaces,
+          placementContent: next.placementContent ?? defaultPlacementContent,
           history: {
-            past: pushToHistory(history.past, { brand, tiles }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: newFuture,
           },
         });
@@ -1531,11 +1541,31 @@ export const useBrandStore = create<BrandStore>()(
     }),
     {
       name: "brand-store",
+      merge: (persisted, current) => {
+        const persistedState = persisted as Partial<BrandStore> | undefined;
+        if (!persistedState) return current;
+
+        return {
+          ...current,
+          ...persistedState,
+          brand: mergeBrand(persistedState.brand),
+          tiles: Array.isArray(persistedState.tiles) && persistedState.tiles.length > 0
+            ? persistedState.tiles
+            : current.tiles,
+          theme: persistedState.theme ?? current.theme,
+          tileSurfaces: persistedState.tileSurfaces ?? current.tileSurfaces,
+          placementContent: {
+            ...defaultPlacementContent,
+            ...(persistedState.placementContent ?? current.placementContent),
+          },
+        } as BrandStore;
+      },
       partialize: (state) => ({
         brand: state.brand,
         tiles: state.tiles,
         theme: state.theme,
         tileSurfaces: state.tileSurfaces,
+        placementContent: state.placementContent,
       }),
     }
   )
@@ -1550,7 +1580,11 @@ export const useBrandStore = create<BrandStore>()(
  * Use with: const focusedTile = useBrandStore(selectFocusedTile);
  */
 export const selectFocusedTile = (state: BrandStore): Tile | undefined =>
-  state.tiles.find((t) => t.id === state.focusedTileId);
+  state.focusedTileId
+    ? state.tiles.find((t) => t.id === getPlacementTileId(state.focusedTileId))
+      ?? state.tiles.find((t) => t.type === getPlacementTileType(state.focusedTileId))
+      ?? state.tiles.find((t) => t.id === state.focusedTileId)
+    : undefined;
 
 /**
  * Selector to check if undo is available.

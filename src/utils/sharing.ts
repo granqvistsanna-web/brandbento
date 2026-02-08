@@ -1,8 +1,9 @@
 import LZString from 'lz-string';
+import type { Brand, Tile } from '../store/useBrandStore';
 
 interface ShareableState {
-  brand: any;
-  tiles: any[];
+  brand: Brand;
+  tiles: Tile[];
 }
 
 export function generateShareUrl(state: ShareableState): string {

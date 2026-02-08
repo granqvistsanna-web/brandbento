@@ -17,8 +17,10 @@
  * @example
  * <EditorialTile placementId="editorial" />
  */
-import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
-import { hexToHSL } from '@/utils/colorMapping';
+import { useBrandStore } from '@/store/useBrandStore';
+import { useShallow } from 'zustand/react/shallow';
+import { getAdaptiveTextColor } from '@/utils/color';
+import { resolveSurfaceColor } from '@/utils/surface';
 
 /**
  * Props for EditorialTile component.
@@ -32,20 +34,29 @@ interface EditorialTileProps {
  * Typography showcase tile with headline and body.
  */
 export function EditorialTile({ placementId }: EditorialTileProps) {
-    const brand = useBrandStore((state: BrandStore) => state.brand);
-    const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);
-    const { primary, secondary, weightHeadline, weightBody, scale, baseSize, letterSpacing } = brand.typography;
-    const { text: textColor, bg, surfaces } = brand.colors;
+    const { typography, colors } = useBrandStore(
+        useShallow((state) => ({
+            typography: state.brand.typography,
+            colors: state.brand.colors,
+        }))
+    );
+    const tileSurfaceIndex = useBrandStore((state) =>
+        placementId ? state.tileSurfaces[placementId] : undefined
+    );
+    const { primary, secondary, weightHeadline, weightBody, scale, baseSize, letterSpacing } = typography;
+    const { text: textColor, bg, surfaces } = colors;
 
     // Get surface index: user override > default (0 for editorial)
-    const surfaceIndex = placementId && tileSurfaces[placementId] !== undefined
-        ? tileSurfaces[placementId]
-        : 0;
-    const surfaceBg = surfaces?.[surfaceIndex ?? 0] || bg;
+    const surfaceBg = resolveSurfaceColor({
+        placementId,
+        tileSurfaceIndex,
+        surfaces,
+        bg,
+        defaultIndex: 0,
+    });
 
     // Get readable text color for this surface
-    const { l } = hexToHSL(surfaceBg);
-    const adaptiveTextColor = l > 55 ? textColor : '#FAFAFA';
+    const adaptiveTextColor = getAdaptiveTextColor(surfaceBg, textColor, '#FAFAFA');
 
     // Calculate sizes based on type scale
     const titleSize = baseSize * scale * scale; // 2 steps up from base
