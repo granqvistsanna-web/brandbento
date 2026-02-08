@@ -6,6 +6,7 @@ import ControlPanel from "./components/ControlPanel";
 // @ts-ignore
 import { useBrandStore, exportAsCSS, exportAsJSON } from "./store/useBrandStore";
 import { useTheme } from "./hooks/useTheme";
+import { ReadOnlyProvider, useReadOnly } from './hooks/useReadOnly';
 import { ThemeToggle } from "./components/ThemeToggle";
 import toast, { Toaster } from 'react-hot-toast';
 import { generateShareUrl, copyToClipboard } from './utils/sharing';
@@ -374,10 +375,11 @@ const FileMenu = ({ onReset }: { onReset: () => void }) => {
   );
 };
 
-export default function App() {
+function AppContent() {
   // Initialize theme management
   useTheme();
 
+  const isReadOnly = useReadOnly();
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const { brand, tiles, undo, redo, history, loadRandomTemplate, resetToDefaults } =
@@ -404,8 +406,17 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className={`h-screen flex flex-col overflow-hidden ${isReadOnly ? 'read-only-mode' : ''}`}>
+      {/* Read-only banner */}
+      {isReadOnly && (
+        <div className="read-only-banner">
+          View-only mode
+          <a href={window.location.pathname}>Create your own</a>
+        </div>
+      )}
+
       {/* === TOP TOOLBAR (Figma Style) === */}
+      {!isReadOnly && (
       <header
         data-export-exclude="true"
         className="h-12 flex items-center justify-between px-2 z-20 flex-shrink-0"
@@ -492,11 +503,12 @@ export default function App() {
           <ToolbarButton icon={HelpCircle} label="Help" shortcut="?" />
         </div>
       </header>
+      )}
 
       {/* === MAIN LAYOUT === */}
       <main className="flex-1 flex overflow-hidden">
         {/* Left: Control Panel */}
-        <ControlPanel />
+        {!isReadOnly && <ControlPanel />}
 
         {/* Center: Canvas */}
         <BentoCanvas ref={canvasRef} />
@@ -504,6 +516,7 @@ export default function App() {
       </main>
 
       {/* === BOTTOM STATUS BAR === */}
+      {!isReadOnly && (
       <footer
         data-export-exclude="true"
         className="h-6 flex items-center justify-between px-3 flex-shrink-0"
@@ -584,7 +597,9 @@ export default function App() {
           </span>
         </div>
       </footer>
+      )}
 
+      {!isReadOnly && (
       <Toaster
         position="bottom-center"
         toastOptions={{
@@ -596,6 +611,15 @@ export default function App() {
           },
         }}
       />
+      )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ReadOnlyProvider>
+      <AppContent />
+    </ReadOnlyProvider>
   );
 }
