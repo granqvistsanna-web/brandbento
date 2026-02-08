@@ -6,16 +6,16 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** See typography, color, imagery, and logo working together as a system, not isolated assets.
 
-**Current focus:** Phase 9 - Responsive Bento Layout System (In Progress)
+**Current focus:** Reconciling work done outside GSD workflow
 
 ## Current Position
 
-Phase: 9 of 9 (Responsive Bento Layout System)
-Plan: 5 of 6 in current phase (09-04 complete)
-Status: In progress
-Last activity: 2026-02-07 - Completed 09-04-PLAN.md
+Phase: Multiple phases affected by external work
+Plan: Verification checkpoints pending (04-05, 09-05)
+Status: Needs reconciliation
+Last activity: 2026-02-08 - Audit of work done outside GSD
 
-Progress: [███████████░] ~90% (27 of ~30 plans)
+Progress: [███████████░] ~90% (28 of ~31 plans executed, but direction may have shifted)
 
 ## Performance Metrics
 
@@ -26,18 +26,20 @@ Progress: [███████████░] ~90% (27 of ~30 plans)
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01 | 4/4 ✓ | ~48 min | ~12 min |
-| 02 | 3/3 ✓ | ~19 min | ~6 min |
-| 03 | 6/6 ✓ | ~39 min | ~6.5 min |
-| 04 | 4/5 | ~12 min | ~3 min |
-| 08 | 5/5 ✓ | ~17 min | ~3.4 min |
-| 09 | 5/6 | ~10 min | ~2 min |
+| Phase | Plans | Total | Avg/Plan | Notes |
+|-------|-------|-------|----------|-------|
+| 01 | 4/4 ✓ | ~48 min | ~12 min | |
+| 02 | 3/3 ✓ | ~19 min | ~6 min | |
+| 03 | 6/6 ✓ | ~39 min | ~6.5 min | |
+| 04 | 4/5 | ~12 min | ~3 min | 04-05 verification pending |
+| 05 | 0/3 | - | - | Superseded by external work |
+| 06 | 0/5 | - | - | Partial external implementation |
+| 08 | 5/5 ✓ | ~17 min | ~3.4 min | |
+| 09 | 5/6 | ~10 min | ~2 min | 09-05 verification pending |
 
 **Recent Trend:**
-- Last 5 plans: 09-01, 09-02, 09-03, 09-06, 09-04
-- Trend: Layout phase nearly complete, debug controls added
+- Last GSD plans: 09-01, 09-02, 09-03, 09-06, 09-04
+- External work: New tiles and canvas refactor (2026-02-08)
 
 *Updated after each plan completion*
 
@@ -122,22 +124,55 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - [ ] Make sure bento looks great and like a bento, and is responsive
+- [ ] Run 04-05 verification checkpoint
+- [ ] Run 09-05 verification checkpoint
+- [ ] Decide on Phase 5 direction (update plans or mark superseded)
+- [ ] Decide on Phase 6 direction (some work already done externally)
 
 ### Blockers/Concerns
 
-None - Phase 8 complete with all blockers resolved.
+**Work done outside GSD workflow (2026-02-08):**
+- New tile components created: IdentityTile, EditorialTile, SocialPostTile, InterfaceTile, ColorTile
+- BentoCanvasNew.jsx created using new tile system
+- App.tsx switched to use BentoCanvasNew instead of BentoCanvas
+- Added 'geos' layout preset to bentoLayouts.ts
+- Export CSS/JSON functionality implemented in toolbar
+
+**Impact on existing plans:**
+- Phase 5 (System View): Original UIPreviewTile approach superseded by new InterfaceTile
+- Phase 6 (Workflows): Export functionality already implemented
+
+**Cleanup completed (2026-02-08):**
+Deleted unused legacy code:
+- Components: BentoCanvas.tsx, BentoCanvas.jsx, BentoGrid.tsx, BentoTile.tsx, Tile.tsx, TypographyTileWithPanel.tsx, EditPanel.tsx, index.ts
+- Directories: panels/, pickers/, filters/, controls/
+
+Active code now uses:
+- BentoCanvasNew.jsx → BentoGridNew.tsx
+- New tiles: IdentityTile, EditorialTile, SocialPostTile, InterfaceTile, ColorTile
 
 ### Roadmap Evolution
 
 - Phase 8 added: Implement dark/light mode theming
 - Phase 9 added: Responsive Bento Layout System (hole-free grid with presets, 100vh constraint, density modes)
+- 2026-02-08: Significant work done outside GSD - new tile architecture, canvas refactor, export functionality
 
 ## Session Continuity
 
-Last session: 2026-02-07
-Stopped at: Completed 09-04-PLAN.md (Debug grid and density controls)
+Last session: 2026-02-08
+Stopped at: Audit of work done outside GSD workflow
 Resume file: None
+
+**Current active architecture:**
+- src/components/BentoCanvasNew.jsx (main canvas)
+- src/components/BentoGridNew.tsx (responsive grid)
+- src/components/tiles/IdentityTile.tsx
+- src/components/tiles/EditorialTile.tsx
+- src/components/tiles/SocialPostTile.tsx
+- src/components/tiles/InterfaceTile.tsx
+- src/components/tiles/ColorTile.tsx
+- src/config/bentoLayouts.ts (includes 'geos' preset)
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-07 after 09-04 completion*
+*Last updated: 2026-02-08 after cleanup of unused legacy code*

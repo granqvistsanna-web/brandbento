@@ -84,12 +84,15 @@ Plans:
   6. User can adjust weight, size scale, and line height via sliders with live preview and single undo step per drag
   7. Fonts load on-demand from Google Fonts API, with system fallback shown on load failure
 
-**Plans**: 3 plans
+**Plans**: 6 plans
 
 Plans:
 - [x] 03-01-PLAN.md — Dependencies + undo/redo middleware + state extensions + luminance service
 - [x] 03-02-PLAN.md — Logo tile with edit panel (upload, variants, scale, background)
 - [x] 03-03-PLAN.md — Google Fonts service + font picker with search and filters
+- [x] 03-04-PLAN.md — Primary typography tile with large specimen display
+- [x] 03-05-PLAN.md — Secondary typography tile with body text sample
+- [x] 03-06-PLAN.md — Typography sliders and weight controls
 
 ### Phase 4: Color & Imagery Tiles
 **Goal**: Users can customize colors with WCAG contrast checking and apply imagery treatments with instant preview
@@ -226,14 +229,15 @@ Plans:
   9. Debug mode available showing grid cell boundaries and tile IDs
   10. Works with 6-14 tiles within the defined min/max range
 
-**Plans**: 5 plans in 4 waves
+**Plans**: 6 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Layout infrastructure: types, grid presets, layout store, viewport/breakpoint hooks
-- [ ] 09-02-PLAN.md — Responsive BentoGrid component with 100dvh viewport fitting
-- [ ] 09-03-PLAN.md — BentoTile wrapper with responsive spans per breakpoint
-- [ ] 09-04-PLAN.md — Density modes, debug overlay, and layout controls
+- [x] 09-01-PLAN.md — Layout infrastructure: types, grid presets, layout store, viewport/breakpoint hooks
+- [x] 09-02-PLAN.md — Responsive BentoGrid component with 100dvh viewport fitting
+- [x] 09-03-PLAN.md — BentoTile wrapper with responsive spans per breakpoint
+- [x] 09-04-PLAN.md — Density modes, debug overlay, and layout controls
 - [ ] 09-05-PLAN.md — Verification checkpoint
+- [x] 09-06-PLAN.md — Layout fitting utility for tile placement
 
 ## Progress
 
@@ -244,14 +248,18 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 |-------|----------------|--------|-----------|
 | 1. Foundation & Extraction | 4/4 | Complete | 2026-02-07 |
 | 2. Canvas System | 3/3 | Complete | 2026-02-07 |
-| 3. Logo & Typography Tiles | 3/3 | Complete | 2026-02-07 |
-| 4. Color & Imagery Tiles | 4/5 | In progress | - |
-| 5. System View | 0/3 | Planned | - |
-| 6. Workflows | 0/5 | Planned | - |
+| 3. Logo & Typography Tiles | 6/6 | Complete | 2026-02-07 |
+| 4. Color & Imagery Tiles | 4/5 | In progress (verification pending) | - |
+| 5. System View | 0/3 | Superseded* | - |
+| 6. Workflows | 0/5 | Partially done outside GSD* | - |
 | 7. Polish | 0/TBD | Not started | - |
 | 8. Dark/Light Mode | 5/5 | Complete | 2026-02-07 |
-| 9. Responsive Bento Layout | 0/5 | Planned | - |
+| 9. Responsive Bento Layout | 5/6 | In progress (verification pending) | - |
+
+**Notes:**
+- *Phase 5: New tile components (IdentityTile, EditorialTile, SocialPostTile, InterfaceTile) created outside GSD workflow on 2026-02-08. These take a different approach than the original UIPreviewTile plan. Consider updating plans or marking phase as superseded.
+- *Phase 6: Export CSS/JSON functionality already implemented in App.tsx toolbar outside GSD workflow.
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 after Phase 9 planning*
+*Last updated: 2026-02-08 after audit of work done outside GSD*

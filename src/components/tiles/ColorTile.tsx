@@ -32,10 +32,9 @@ export function ColorTile() {
         {displayColors.map((color) => (
           <motion.button
             key={color.name}
-            className={`relative rounded-lg p-3 flex flex-col justify-between text-left group transition-all ${color.border ? 'border border-gray-100' : ''
+            className={`relative rounded-lg p-3 flex flex-col justify-between text-left ${color.border ? 'border border-gray-100' : ''
               }`}
             style={{ backgroundColor: color.value }}
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleCopy(color.value)}
           >
@@ -57,7 +56,7 @@ export function ColorTile() {
               ) : (
                 <Copy
                   size={12}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="opacity-50"
                   style={{ color: color.textColor }}
                 />
               )}

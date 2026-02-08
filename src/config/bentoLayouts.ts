@@ -22,7 +22,7 @@ export interface BentoLayoutConfig {
   placements: CellPlacement[];
 }
 
-export type LayoutPresetName = 'balanced' | 'geos' | 'heroLeft' | 'heroCenter' | 'stacked';
+export type LayoutPresetName = 'balanced' | 'geos' | 'heroLeft' | 'heroCenter' | 'stacked' | 'minimal' | 'duo';
 
 /** Breakpoints (px) – layout only changes at these thresholds for stability */
 export const BENTO_BREAKPOINTS = {
@@ -59,7 +59,7 @@ export const BENTO_LAYOUTS: Record<
       placements: [
         { id: 'a', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
         { id: 'b', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
-        { id: 'c', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 2 },
+        { id: 'c', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 1 },
         { id: 'd', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 2 },
         { id: 'e', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
         { id: 'f', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 1 },
@@ -72,7 +72,7 @@ export const BENTO_LAYOUTS: Record<
       placements: [
         { id: 'a', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
         { id: 'b', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
-        { id: 'c', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 2 },
+        { id: 'c', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 1 },
         { id: 'd', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 2 },
         { id: 'e', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
         { id: 'f', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 1 },
@@ -228,7 +228,7 @@ export const BENTO_LAYOUTS: Record<
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 3, rowSpan: 1 },
         { id: 'a', colStart: 1, rowStart: 2, colSpan: 1, rowSpan: 2 },
         { id: 'b', colStart: 2, rowStart: 2, colSpan: 2, rowSpan: 1 },
-        { id: 'c', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 2 },
+        { id: 'c', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 1 },
         { id: 'd', colStart: 3, rowStart: 3, colSpan: 1, rowSpan: 2 },
         { id: 'e', colStart: 1, rowStart: 4, colSpan: 1, rowSpan: 1 },
         { id: 'f', colStart: 2, rowStart: 4, colSpan: 1, rowSpan: 1 },
@@ -242,10 +242,80 @@ export const BENTO_LAYOUTS: Record<
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 3, rowSpan: 1 },
         { id: 'a', colStart: 1, rowStart: 2, colSpan: 1, rowSpan: 2 },
         { id: 'b', colStart: 2, rowStart: 2, colSpan: 2, rowSpan: 1 },
-        { id: 'c', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 2 },
+        { id: 'c', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 1 },
         { id: 'd', colStart: 3, rowStart: 3, colSpan: 1, rowSpan: 2 },
         { id: 'e', colStart: 1, rowStart: 4, colSpan: 1, rowSpan: 1 },
         { id: 'f', colStart: 2, rowStart: 4, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+  },
+
+  // Minimal: 3 tiles - large hero with 2 supporting
+  minimal: {
+    mobile: {
+      columns: 2,
+      rows: 3,
+      gap: 12,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
+        { id: 'a', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
+        { id: 'b', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+    tablet: {
+      columns: 3,
+      rows: 2,
+      gap: 14,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
+        { id: 'a', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
+        { id: 'b', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+    desktop: {
+      columns: 3,
+      rows: 2,
+      gap: 16,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
+        { id: 'a', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
+        { id: 'b', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+  },
+
+  // Duo: 4 tiles - hero with 3 supporting tiles
+  duo: {
+    mobile: {
+      columns: 2,
+      rows: 3,
+      gap: 12,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
+        { id: 'a', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
+        { id: 'b', colStart: 2, rowStart: 3, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+    tablet: {
+      columns: 3,
+      rows: 2,
+      gap: 14,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
+        { id: 'a', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'b', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+    desktop: {
+      columns: 3,
+      rows: 2,
+      gap: 16,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
+        { id: 'a', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'b', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
       ],
     },
   },

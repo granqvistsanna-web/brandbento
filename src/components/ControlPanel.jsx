@@ -7,6 +7,7 @@ import {
   exportAsJSON,
 } from "../store/useBrandStore";
 import { useLayoutStore } from "../store/useLayoutStore";
+import { BENTO_LAYOUTS } from "../config/bentoLayouts";
 import {
   PALETTE_SECTIONS,
   ROLE_DESCRIPTIONS,
@@ -854,12 +855,196 @@ const PresetCard = ({ name, brand, isActive, onClick }) => (
 );
 
 // ============================================
+// LAYOUT PREVIEW - Mini bento grid visualization
+// ============================================
+
+const LayoutPreview = ({ preset, isActive }) => {
+  const config = BENTO_LAYOUTS[preset]?.desktop;
+  if (!config) return null;
+
+  const { columns, rows, placements } = config;
+  const cellSize = 12;
+  const gap = 2;
+  const padding = 2;
+  const width = columns * cellSize + (columns - 1) * gap + padding * 2;
+  const height = rows * cellSize + (rows - 1) * gap + padding * 2;
+
+  // Find the hero/largest tile for visual emphasis
+  const heroId = placements.reduce((largest, p) => {
+    const area = p.colSpan * p.rowSpan;
+    const largestArea = largest ? largest.colSpan * largest.rowSpan : 0;
+    return area > largestArea ? p : largest;
+  }, null)?.id;
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="transition-transform duration-150"
+      style={{ filter: isActive ? 'none' : 'saturate(0)' }}
+    >
+      {/* Subtle background */}
+      <rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        rx={3}
+        fill={isActive ? 'var(--accent-muted)' : 'var(--sidebar-bg-active)'}
+        opacity={0.5}
+      />
+      {placements.map((p) => {
+        const x = padding + (p.colStart - 1) * (cellSize + gap);
+        const y = padding + (p.rowStart - 1) * (cellSize + gap);
+        const w = p.colSpan * cellSize + (p.colSpan - 1) * gap;
+        const h = p.rowSpan * cellSize + (p.rowSpan - 1) * gap;
+        const isHero = p.id === heroId;
+
+        return (
+          <g key={p.id}>
+            {/* Tile fill */}
+            <rect
+              x={x}
+              y={y}
+              width={w}
+              height={h}
+              rx={2.5}
+              fill={isActive
+                ? (isHero ? 'var(--accent)' : 'var(--accent)')
+                : (isHero ? 'var(--sidebar-text-secondary)' : 'var(--sidebar-text-muted)')}
+              opacity={isHero ? (isActive ? 0.9 : 0.5) : (isActive ? 0.5 : 0.3)}
+            />
+            {/* Subtle inner highlight for depth */}
+            <rect
+              x={x + 0.5}
+              y={y + 0.5}
+              width={w - 1}
+              height={h - 1}
+              rx={2}
+              fill="none"
+              stroke="white"
+              strokeWidth={0.5}
+              opacity={isActive ? 0.2 : 0.1}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+// ============================================
+// LAYOUT SELECTOR - Top section with preview buttons
+// ============================================
+
+const LAYOUT_PRESETS_CONFIG = [
+  { key: "minimal", label: "Minimal" },
+  { key: "duo", label: "Duo" },
+  { key: "balanced", label: "Classic" },
+  { key: "heroLeft", label: "Left" },
+  { key: "heroCenter", label: "Center" },
+  { key: "stacked", label: "Stack" },
+];
+
+const LayoutSelector = () => {
+  const { preset, setPreset, density, setDensity } = useLayoutStore();
+
+  return (
+    <div
+      className="px-3 py-3 space-y-3"
+      style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
+    >
+      {/* Layout label */}
+      <div className="flex items-center gap-2">
+        <LayoutGrid size={14} style={{ color: "var(--accent)" }} />
+        <span
+          className="text-11 font-medium"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          Layout
+        </span>
+      </div>
+
+      {/* Layout preset buttons */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {LAYOUT_PRESETS_CONFIG.map((p) => {
+          const isActive = preset === p.key;
+          return (
+            <motion.button
+              key={p.key}
+              onClick={() => setPreset(p.key)}
+              className="flex flex-col items-center gap-2 p-2.5 rounded-lg transition-all relative overflow-hidden"
+              style={{
+                background: isActive
+                  ? "linear-gradient(135deg, var(--accent-muted) 0%, transparent 100%)"
+                  : "var(--sidebar-bg)",
+                border: `1.5px solid ${isActive ? "var(--accent)" : "var(--sidebar-border)"}`,
+                boxShadow: isActive
+                  ? "0 2px 8px -2px var(--accent-muted), inset 0 1px 0 rgba(255,255,255,0.1)"
+                  : "inset 0 1px 0 rgba(255,255,255,0.05)",
+              }}
+              whileHover={{
+                borderColor: isActive ? "var(--accent)" : "var(--sidebar-text-muted)",
+                y: -2,
+                boxShadow: isActive
+                  ? "0 4px 12px -2px var(--accent-muted)"
+                  : "0 2px 8px -2px rgba(0,0,0,0.1)",
+              }}
+              whileTap={{ scale: 0.96, y: 0 }}
+            >
+              <LayoutPreview preset={p.key} isActive={isActive} />
+              <span
+                className="text-[10px] font-semibold tracking-wide"
+                style={{
+                  color: isActive ? "var(--accent)" : "var(--sidebar-text-secondary)",
+                  textShadow: isActive ? "0 0 20px var(--accent-muted)" : "none",
+                }}
+              >
+                {p.label}
+              </span>
+              {isActive && (
+                <motion.div
+                  layoutId="activeLayoutIndicator"
+                  className="absolute inset-0 rounded-lg pointer-events-none"
+                  style={{
+                    border: "1.5px solid var(--accent)",
+                    boxShadow: "inset 0 0 12px -4px var(--accent)",
+                  }}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                />
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Density toggle */}
+      <div className="flex items-center gap-2">
+        <span className="text-10" style={{ color: "var(--sidebar-text-secondary)" }}>
+          Density
+        </span>
+        <div className="flex-1">
+          <SegmentedControl
+            options={[
+              { value: "cozy", label: "Cozy" },
+              { value: "dense", label: "Dense" },
+            ]}
+            value={density}
+            onChange={setDensity}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================
 // GLOBAL CONTROLS
 // ============================================
 
 const GlobalControls = () => {
   const { brand, updateBrand, loadPreset } = useBrandStore();
-  const { density, debugMode, preset: layoutPreset, setDensity, toggleDebug, setPreset: setLayoutPreset } = useLayoutStore();
 
   const handleChange = (section, key, value, isCommit = false) => {
     updateBrand(
@@ -912,6 +1097,9 @@ const GlobalControls = () => {
 
   return (
     <>
+      {/* Layout Selector at top */}
+      <LayoutSelector />
+
       {/* Quick Start */}
       <Section
         title="Quick Start"
@@ -1138,63 +1326,6 @@ const GlobalControls = () => {
             }}
           >
             {brand.logo.text}
-          </div>
-        </div>
-      </Section>
-
-      {/* Layout */}
-      <Section title="Layout" icon={LayoutGrid} defaultOpen={false}>
-        {/* Density Toggle */}
-        <PropRow label="Density">
-          <SegmentedControl
-            options={[
-              { value: "cozy", label: "Cozy" },
-              { value: "dense", label: "Dense" },
-            ]}
-            value={density}
-            onChange={setDensity}
-          />
-        </PropRow>
-
-        {/* Preset Selector */}
-        <PropRow label="Preset">
-          <select
-            value={layoutPreset}
-            onChange={(e) => setLayoutPreset(e.target.value)}
-            className="flex-1 h-8 px-2 rounded-md text-11 transition-fast"
-            style={{
-              background: "var(--sidebar-bg)",
-              border: "1px solid var(--sidebar-border)",
-              color: "var(--sidebar-text)",
-            }}
-          >
-            <option value="balanced">Balanced</option>
-            <option value="geos">Geos</option>
-            <option value="heroLeft">Hero Left</option>
-            <option value="heroCenter">Hero Center</option>
-            <option value="stacked">Stacked</option>
-          </select>
-        </PropRow>
-
-        {/* Debug Mode Toggle */}
-        <div className="prop-row">
-          <span className="prop-label">Debug Grid</span>
-          <div className="prop-value">
-            <button
-              onClick={toggleDebug}
-              className="relative w-10 h-5 rounded-full transition-colors"
-              style={{
-                background: debugMode ? "var(--accent)" : "var(--sidebar-bg-active)",
-              }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full shadow transition-transform"
-                style={{
-                  background: "var(--sidebar-bg-elevated)",
-                  transform: debugMode ? "translateX(20px)" : "translateX(0)",
-                }}
-              />
-            </button>
           </div>
         </div>
       </Section>
