@@ -20,7 +20,7 @@
 import { useBrandStore } from '@/store/useBrandStore';
 import { motion } from 'motion/react';
 import { Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { hexToHSL } from '@/utils/colorMapping';
 
 /**
@@ -32,11 +32,30 @@ export function ColorTile() {
 
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Get readable text color based on background
-  const getTextColor = (bgHex: string): string => {
-    const { l } = hexToHSL(bgHex);
-    return l > 55 ? '#000000' : '#FFFFFF';
-  };
+  const textColorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const ensure = (hex: string) => {
+      if (!hex || map.has(hex)) return;
+      const { l } = hexToHSL(hex);
+      map.set(hex, l > 55 ? '#000000' : '#FFFFFF');
+    };
+
+    [
+      colors.primary,
+      colors.accent,
+      colors.surface,
+      colors.bg,
+      colors.text,
+      ...(colors.surfaces ?? []),
+    ]
+      .filter(Boolean)
+      .forEach(ensure);
+
+    return map;
+  }, [colors]);
+
+  const getTextColor = (bgHex: string): string =>
+    textColorMap.get(bgHex) ?? '#000000';
 
   // Core brand colors
   const coreColors = [

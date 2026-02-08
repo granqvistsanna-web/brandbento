@@ -1182,6 +1182,16 @@ export const PALETTE_SECTIONS: PaletteSection[] = [
   },
 ];
 
+const PALETTE_INDEX = new Map<string, Palette>();
+const PALETTE_SECTION_BY_ID = new Map<string, PaletteSection>();
+
+for (const section of PALETTE_SECTIONS) {
+  for (const palette of section.palettes) {
+    PALETTE_INDEX.set(palette.id, palette);
+    PALETTE_SECTION_BY_ID.set(palette.id, section);
+  }
+}
+
 // Helper to get all palettes as a flat array
 export const getAllPalettes = (): Palette[] => {
   return PALETTE_SECTIONS.flatMap(section => section.palettes);
@@ -1189,18 +1199,12 @@ export const getAllPalettes = (): Palette[] => {
 
 // Helper to get palette by ID
 export const getPaletteById = (paletteId: string): Palette | undefined => {
-  for (const section of PALETTE_SECTIONS) {
-    const palette = section.palettes.find(p => p.id === paletteId);
-    if (palette) return palette;
-  }
-  return undefined;
+  return PALETTE_INDEX.get(paletteId);
 };
 
 // Helper to get section by palette ID
 export const getSectionByPaletteId = (paletteId: string): PaletteSection | undefined => {
-  return PALETTE_SECTIONS.find(section =>
-    section.palettes.some(p => p.id === paletteId)
-  );
+  return PALETTE_SECTION_BY_ID.get(paletteId);
 };
 
 // Total count

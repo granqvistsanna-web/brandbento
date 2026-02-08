@@ -29,6 +29,7 @@ interface Colors {
 
 interface Logo {
   text: string;
+  image?: string | null;
   padding: number;
   size: number;
 }
@@ -71,6 +72,7 @@ export const DEFAULT_BRAND: Brand = {
   },
   logo: {
     text: "BENTO",
+    image: null,
     padding: 16,
     size: 24,
   },
@@ -197,6 +199,38 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       size: 26,
     },
     imagery: DEFAULT_BRAND.imagery,
+  },
+
+  foodDrink: {
+    typography: {
+      primary: "Oswald",
+      secondary: "Montserrat",
+      ui: "Montserrat",
+      scale: 1.25,
+      baseSize: 16,
+      weightHeadline: "700",
+      weightBody: "400",
+      letterSpacing: "wide",
+    },
+    colors: {
+      bg: "#F7F2EA",
+      text: "#1E1C2E",
+      primary: "#2D2A57",
+      accent: "#9A79E8",
+      surface: "#E3DBC8",
+      surfaces: ["#E3DBC8", "#9A79E8", "#2D2A57", "#F2EDE4"],
+      paletteColors: [],
+    },
+    logo: {
+      text: "SAVOR SPIRE",
+      padding: 18,
+      size: 22,
+    },
+    imagery: {
+      url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop",
+      style: "default",
+      overlay: 0,
+    },
   },
 };
 

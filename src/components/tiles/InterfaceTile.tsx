@@ -22,6 +22,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { ArrowRight } from 'lucide-react';
 import { getAdaptiveTextColor } from '@/utils/color';
 import { resolveSurfaceColor } from '@/utils/surface';
+import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 
 /**
  * Props for InterfaceTile component.
@@ -41,10 +42,24 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
             bodyFont: state.brand.typography.secondary,
         }))
     );
+    const placementTileId = getPlacementTileId(placementId);
+    const placementTileType = getPlacementTileType(placementId);
+    const tile = useBrandStore((state: BrandStore) => {
+        if (placementTileId) {
+            return state.tiles.find((t) => t.id === placementTileId);
+        }
+        if (placementTileType) {
+            return state.tiles.find((t) => t.type === placementTileType);
+        }
+        return undefined;
+    });
     const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
         placementId ? state.tileSurfaces[placementId] : undefined
     );
     const { primary, text, bg, surfaces } = colors;
+    const content = tile?.content || {};
+    const primaryLabel = content.buttonLabel || 'Get Started';
+    const secondaryLabel = content.headerTitle || 'View Details';
 
     // Get surface index: user override > default (2 for interface)
     const bgColor = resolveSurfaceColor({
@@ -76,7 +91,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
                         fontSize: '0.9rem'
                     }}
                 >
-                    <span>Get Started</span>
+                    <span>{primaryLabel}</span>
                     <ArrowRight size={14} />
                 </button>
             </div>
@@ -94,7 +109,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
                         opacity: 0.8
                     }}
                 >
-                    <span>View Details</span>
+                    <span>{secondaryLabel}</span>
                 </button>
             </div>
 

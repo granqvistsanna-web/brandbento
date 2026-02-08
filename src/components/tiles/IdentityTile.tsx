@@ -42,7 +42,7 @@ export function IdentityTile({ placementId }: IdentityTileProps) {
     const tileSurfaceIndex = useBrandStore((state) =>
         placementId ? state.tileSurfaces[placementId] : undefined
     );
-    const { padding, size: logoSize, text: logoText } = logo;
+    const { padding, size: logoSize, text: logoText, image: logoImage } = logo;
     const { primary, bg, surfaces } = colors;
 
     // Get surface index: user override > default (1 for identity)
@@ -61,6 +61,7 @@ export function IdentityTile({ placementId }: IdentityTileProps) {
             : [];
 
     const isHero = placementId === 'hero';
+    const isLogoTile = placementId === 'a';
     const showWordmark = Boolean(logoText && logoText.trim().length > 0);
     const wordmarkColor = getAdaptiveTextColor(surfaceBg, primary, '#FFFFFF');
     const heroFontSize = Math.max(32, logoSize * 2);
@@ -70,6 +71,41 @@ export function IdentityTile({ placementId }: IdentityTileProps) {
         letterSpacing: '0.04em',
         color: wordmarkColor,
     };
+
+    if (isLogoTile) {
+        const logoBg = primary || surfaceBg;
+        const logoFg = getAdaptiveTextColor(logoBg, '#111111', '#FFFFFF');
+        return (
+            <div className="w-full h-full relative overflow-hidden">
+                <div className="absolute inset-0" style={{ backgroundColor: logoBg }} />
+                <div
+                    className="relative h-full w-full flex items-center justify-center text-center"
+                    style={{ padding: `${padding}px` }}
+                >
+                    {logoImage ? (
+                        <img
+                            src={logoImage}
+                            alt={showWordmark ? logoText : 'Brand logo'}
+                            className="max-w-full max-h-full object-contain"
+                            style={{
+                                filter: 'drop-shadow(0 6px 18px rgba(0,0,0,0.2))',
+                            }}
+                        />
+                    ) : (
+                        <span
+                            style={{
+                                ...wordmarkStyle,
+                                color: logoFg,
+                                fontSize: `${Math.max(24, logoSize * 1.6)}px`,
+                            }}
+                        >
+                            {showWordmark ? logoText : 'BRAND'}
+                        </span>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full h-full relative overflow-hidden">

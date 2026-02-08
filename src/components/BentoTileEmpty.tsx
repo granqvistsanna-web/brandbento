@@ -24,6 +24,10 @@ import { twMerge } from 'tailwind-merge';
 export interface BentoTileEmptyProps {
   /** Unique identifier for the grid slot */
   slotId: string;
+  /** Primary label for the placeholder */
+  label?: string;
+  /** Optional helper text to clarify expected content */
+  hint?: string;
   /** Additional CSS classes */
   className?: string;
   /** Click handler (makes component interactive) */
@@ -34,7 +38,8 @@ export interface BentoTileEmptyProps {
  * Empty tile placeholder – layout-stable, content-independent.
  * Uses theme-aware border/background from CSS variables.
  */
-export function BentoTileEmpty({ slotId, className, onClick }: BentoTileEmptyProps) {
+export function BentoTileEmpty({ slotId, label, hint, className, onClick }: BentoTileEmptyProps) {
+  const displayLabel = label || slotId;
   const Component = onClick ? 'button' : 'div';
   return (
     <Component
@@ -42,7 +47,7 @@ export function BentoTileEmpty({ slotId, className, onClick }: BentoTileEmptyPro
       onClick={onClick}
       className={twMerge(
         'h-full w-full rounded-xl',
-        'flex items-center justify-center',
+        'flex flex-col items-center justify-center gap-1',
         'border border-dashed',
         'transition-fast',
         'min-h-0 min-w-0 overflow-hidden',
@@ -56,11 +61,19 @@ export function BentoTileEmpty({ slotId, className, onClick }: BentoTileEmptyPro
       data-slot-id={slotId}
     >
       <span
-        className="text-10 font-medium uppercase tracking-wider opacity-40"
+        className="text-10 font-medium uppercase tracking-wider opacity-50"
         style={{ color: 'var(--canvas-text-secondary)' }}
       >
-        {slotId}
+        {displayLabel}
       </span>
+      {hint ? (
+        <span
+          className="text-10 font-medium opacity-35"
+          style={{ color: 'var(--canvas-text-secondary)' }}
+        >
+          {hint}
+        </span>
+      ) : null}
     </Component>
   );
 }

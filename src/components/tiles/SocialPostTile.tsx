@@ -17,6 +17,7 @@
  * @example
  * <SocialPostTile placementId="image" />
  */
+import { useEffect, useRef, useState } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Heart, MessageCircle, Send, Bookmark, Image as ImageIcon } from 'lucide-react';
@@ -35,6 +36,9 @@ interface SocialPostTileProps {
  * Social media mockup tile displaying brand imagery.
  */
 export function SocialPostTile({ placementId }: SocialPostTileProps) {
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [cardScale, setCardScale] = useState(1);
+    const [shouldHide, setShouldHide] = useState(false);
     const { colors, logoText, uiFont } = useBrandStore(
         useShallow((state: BrandStore) => ({
             colors: state.brand.colors,
@@ -78,18 +82,50 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
     });
 
     const fallbackInitial = (logoText || 'B').charAt(0);
+    const baseCardWidth = 200;
+    const baseCardHeight = 330;
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el || typeof ResizeObserver === 'undefined') return;
+
+        const updateScale = () => {
+            const rect = el.getBoundingClientRect();
+            const widthScale = rect.width / (baseCardWidth + 16);
+            const heightScale = rect.height / (baseCardHeight + 16);
+            const nextScale = Math.min(1, widthScale, heightScale);
+            setCardScale(Math.max(0.4, nextScale));
+            const aspect = rect.width / Math.max(1, rect.height);
+            const tooWide = aspect > 1.15;
+            const tooShort = rect.height < 200;
+            setShouldHide(tooWide || tooShort);
+        };
+
+        updateScale();
+
+        const observer = new ResizeObserver(updateScale);
+        observer.observe(el);
+
+        return () => observer.disconnect();
+    }, [baseCardWidth, baseCardHeight]);
+
+    if (shouldHide) return null;
 
     return (
         <div
+            ref={containerRef}
             className="w-full h-full p-4 flex items-center justify-center transition-fast"
             style={{ backgroundColor: surfaceBg }}
         >
             {/* Mock Phone/Card */}
             <div
-                className="w-full max-w-[200px] rounded-xl overflow-hidden shadow-sm relative"
+                className="rounded-xl overflow-hidden shadow-sm relative flex flex-col"
                 style={{
+                    width: `${baseCardWidth}px`,
                     background: "var(--canvas-surface)",
                     border: "1px solid var(--canvas-border)",
+                    transform: `scale(${cardScale})`,
+                    transformOrigin: "center",
                 }}
             >
                 <div
@@ -132,14 +168,16 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
 
                 {/* Image */}
                 <div
-                    className={`w-full relative px-1 ${
-                        socialAspect === '1:1'
-                            ? 'aspect-square'
-                            : socialAspect === '1.91:1'
-                                ? 'aspect-[1.91/1]'
-                                : 'aspect-[4/5]'
-                    }`}
-                    style={{ background: "var(--sidebar-bg-active)" }}
+                    className="w-full relative px-1 flex-1 min-h-0"
+                    style={{
+                        background: "var(--sidebar-bg-active)",
+                        aspectRatio:
+                            socialAspect === '1:1'
+                                ? '1 / 1'
+                                : socialAspect === '1.91:1'
+                                    ? '1.91 / 1'
+                                    : '4 / 5',
+                    }}
                 >
                     {imageUrl ? (
                         <img src={imageUrl} alt="Social" className="w-full h-full object-cover rounded-md" />

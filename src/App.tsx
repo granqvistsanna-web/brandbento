@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { useViewportHeight } from "./hooks/useViewportHeight";
 // @ts-expect-error - legacy component
 import BentoCanvas from "./components/BentoCanvasNew";
 // @ts-expect-error - missing types
@@ -468,8 +469,13 @@ function AppContent() {
     }
   };
 
+  const viewportHeight = useViewportHeight();
+
   return (
-    <div className={`h-screen flex flex-col overflow-hidden ${isReadOnly ? 'read-only-mode' : ''}`}>
+    <div
+      className={`flex flex-col overflow-hidden ${isReadOnly ? 'read-only-mode' : ''}`}
+      style={{ height: viewportHeight }}
+    >
       {/* Read-only banner */}
       {isReadOnly && (
         <div className="read-only-banner">
@@ -594,7 +600,7 @@ function AppContent() {
       )}
 
       {/* === MAIN LAYOUT === */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden min-h-0">
         {/* Left: Control Panel */}
         {!isReadOnly && <ControlPanel />}
 

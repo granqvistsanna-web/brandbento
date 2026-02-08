@@ -31,7 +31,7 @@
  * @example
  * <ControlPanel />
  */
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   useBrandStore,
@@ -649,10 +649,12 @@ const ColorSwatch = ({
   const [localValue, setLocalValue] = useState(value);
   const ref = useRef(null);
 
-  const contrast =
-    showContrast && contrastWith ? getContrastRatio(value, contrastWith) : null;
-  const passesAA = contrast >= 4.5;
-  const passesAAA = contrast >= 7;
+  const contrast = useMemo(() => {
+    if (!showContrast || !contrastWith) return null;
+    return getContrastRatio(value, contrastWith);
+  }, [showContrast, contrastWith, value]);
+  const passesAA = contrast !== null && contrast >= 4.5;
+  const passesAAA = contrast !== null && contrast >= 7;
 
   useEffect(() => {
     setLocalValue(value);
@@ -804,13 +806,12 @@ const ColorSwatch = ({
 // PALETTE CARD - Shows color swatches for a palette
 // ============================================
 
-const PaletteCard = ({ palette, onClick }) => {
-  // Show up to 6 colors in the preview
+const PaletteCard = React.memo(({ palette, onSelectPalette }) => {
   const previewColors = palette.colors.slice(0, 6);
 
   return (
     <motion.button
-      onClick={onClick}
+      onClick={() => onSelectPalette(palette.id)}
       className="w-full p-2 rounded-md flex items-center gap-2 transition-fast group"
       style={{
         background: "var(--sidebar-bg)",
@@ -855,13 +856,15 @@ const PaletteCard = ({ palette, onClick }) => {
       </span>
     </motion.button>
   );
-};
+});
+
+PaletteCard.displayName = 'PaletteCard';
 
 // ============================================
 // PALETTE SECTION - Collapsible group by mood
 // ============================================
 
-const PaletteSection = ({ section, onSelectPalette }) => {
+const PaletteSection = React.memo(({ section, onSelectPalette }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -923,7 +926,7 @@ const PaletteSection = ({ section, onSelectPalette }) => {
                 <PaletteCard
                   key={palette.id}
                   palette={palette}
-                  onClick={() => onSelectPalette(palette.id)}
+                  onSelectPalette={onSelectPalette}
                 />
               ))}
             </div>
@@ -932,7 +935,9 @@ const PaletteSection = ({ section, onSelectPalette }) => {
       </AnimatePresence>
     </div>
   );
-};
+});
+
+PaletteSection.displayName = 'PaletteSection';
 
 // ============================================
 // PALETTE COMPLEXITY SELECTOR
@@ -1331,7 +1336,7 @@ const DEFAULT_ROLE_ASSIGNMENTS = {
 
 const EMPTY_PLACEMENT_CONTENT = {};
 
-const PaletteBrowser = () => {
+const PaletteBrowser = React.memo(() => {
   const applyPalette = useBrandStore((s) => s.applyPalette);
   const updateBrand = useBrandStore((s) => s.updateBrand);
 
@@ -1349,7 +1354,7 @@ const PaletteBrowser = () => {
   const [roleAssignments, setRoleAssignments] = useState(DEFAULT_ROLE_ASSIGNMENTS);
   const [selectedRole, setSelectedRole] = useState(null);
 
-  const handleSelectPalette = (paletteId) => {
+  const handleSelectPalette = useCallback((paletteId) => {
     const palette = getPaletteById(paletteId);
     if (!palette) return;
 
@@ -1363,36 +1368,43 @@ const PaletteBrowser = () => {
     } else {
       applyPalette(paletteId, complexity);
     }
-  };
+  }, [applyPalette, complexity]);
 
   // Subtract mode handlers
-  const handleToggleColor = (index) => {
+  const handleToggleColor = useCallback((index) => {
     setIncludedColors(prev => {
       const next = [...prev];
       next[index] = !next[index];
       return next;
     });
-  };
+  }, []);
 
   // Role assignment handlers
-  const handleAssignColor = (color) => {
+  const handleAssignColor = useCallback((color) => {
     if (!selectedRole) return;
     setRoleAssignments(prev => ({
       ...prev,
       [selectedRole]: color,
     }));
     setSelectedRole(null); // Deselect after assignment
-  };
+  }, [selectedRole]);
 
-  const handleClearRole = (roleKey) => {
+  const handleClearRole = useCallback((roleKey) => {
     setRoleAssignments(prev => ({
       ...prev,
       [roleKey]: null,
     }));
-  };
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedPalette(null);
+    setIncludedColors([]);
+    setRoleAssignments(DEFAULT_ROLE_ASSIGNMENTS);
+    setSelectedRole(null);
+  }, []);
 
   // Apply handlers
-  const handleApply = () => {
+  const handleApply = useCallback(() => {
     if (!selectedPalette) return;
 
     if (customizerMode === 'subtract') {
@@ -1426,14 +1438,14 @@ const PaletteBrowser = () => {
 
     // Clear selection
     handleClearSelection();
-  };
-
-  const handleClearSelection = () => {
-    setSelectedPalette(null);
-    setIncludedColors([]);
-    setRoleAssignments(DEFAULT_ROLE_ASSIGNMENTS);
-    setSelectedRole(null);
-  };
+  }, [
+    customizerMode,
+    handleClearSelection,
+    includedColors,
+    roleAssignments,
+    selectedPalette,
+    updateBrand,
+  ]);
 
   return (
     <Section
@@ -1480,7 +1492,9 @@ const PaletteBrowser = () => {
       </div>
     </Section>
   );
-};
+});
+
+PaletteBrowser.displayName = 'PaletteBrowser';
 
 // ============================================
 // PRESET CARDS
@@ -1723,7 +1737,49 @@ const LayoutSelector = () => {
 // GLOBAL CONTROLS
 // ============================================
 
-const GlobalControls = () => {
+const FONT_OPTIONS = [
+  "Inter",
+  "Plus Jakarta Sans",
+  "Sora",
+  "Montserrat",
+  "Oswald",
+  "Poppins",
+  "Bricolage Grotesque",
+  "JetBrains Mono",
+  "Playfair Display",
+];
+
+const PRESET_OPTIONS = [
+  { key: "default", name: "General Brand" },
+  { key: "techStartup", name: "Tech SaaS" },
+  { key: "luxuryRetail", name: "Luxury Retail" },
+  { key: "communityNonprofit", name: "Community Nonprofit" },
+  { key: "creativeStudio", name: "Creative Studio" },
+  { key: "foodDrink", name: "Food & Drink" },
+];
+
+const PRESET_BRANDS = {
+  default: {
+    colors: { bg: "#FFFFFF", text: "#1A1A1A", primary: "#000000" },
+  },
+  techStartup: {
+    colors: { bg: "#F5F7FA", text: "#0F172A", primary: "#3B82F6" },
+  },
+  luxuryRetail: {
+    colors: { bg: "#FDFCFA", text: "#1C1917", primary: "#78716C" },
+  },
+  communityNonprofit: {
+    colors: { bg: "#FFFFFF", text: "#0C4A6E", primary: "#0EA5E9" },
+  },
+  creativeStudio: {
+    colors: { bg: "#FAFAFA", text: "#171717", primary: "#F97316" },
+  },
+  foodDrink: {
+    colors: { bg: "#F7F2EA", text: "#1E1C2E", primary: "#2D2A57" },
+  },
+};
+
+const GlobalControls = React.memo(() => {
   const brand = useBrandStore((s) => s.brand);
   const updateBrand = useBrandStore((s) => s.updateBrand);
   const loadPreset = useBrandStore((s) => s.loadPreset);
@@ -1739,42 +1795,18 @@ const GlobalControls = () => {
       isCommit
     );
   };
-
-  const fonts = [
-    "Inter",
-    "Plus Jakarta Sans",
-    "Sora",
-    "Montserrat",
-    "Poppins",
-    "Bricolage Grotesque",
-    "JetBrains Mono",
-    "Playfair Display",
-  ];
-
-  const presets = [
-    { key: "default", name: "Minimal" },
-    { key: "techStartup", name: "Tech" },
-    { key: "luxuryRetail", name: "Luxury" },
-    { key: "communityNonprofit", name: "Community" },
-    { key: "creativeStudio", name: "Creative" },
-  ];
-
-  const presetBrands = {
-    default: {
-      colors: { bg: "#FFFFFF", text: "#1A1A1A", primary: "#000000" },
-    },
-    techStartup: {
-      colors: { bg: "#F5F7FA", text: "#0F172A", primary: "#3B82F6" },
-    },
-    luxuryRetail: {
-      colors: { bg: "#FDFCFA", text: "#1C1917", primary: "#78716C" },
-    },
-    communityNonprofit: {
-      colors: { bg: "#FFFFFF", text: "#0C4A6E", primary: "#0EA5E9" },
-    },
-    creativeStudio: {
-      colors: { bg: "#FAFAFA", text: "#171717", primary: "#F97316" },
-    },
+  const handleLogoUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (result) {
+        handleChange("logo", "image", result, true);
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
   };
 
   return (
@@ -1782,18 +1814,21 @@ const GlobalControls = () => {
       {/* Layout Selector at top */}
       <LayoutSelector />
 
-      {/* Quick Start */}
+      {/* Industry Themes */}
       <Section
-        title="Quick Start"
+        title="Industry Themes"
         defaultOpen={false}
-        badge={<Badge variant="accent">{presets.length}</Badge>}
+        badge={<Badge variant="accent">{PRESET_OPTIONS.length}</Badge>}
       >
+        <p className="text-11" style={{ color: "var(--sidebar-text-secondary)" }}>
+          Pick a theme that matches your business to jumpstart the brand system.
+        </p>
         <div className="grid grid-cols-1 gap-2">
-          {presets.map((preset) => (
+          {PRESET_OPTIONS.map((preset) => (
             <PresetCard
               key={preset.key}
               name={preset.name}
-              brand={presetBrands[preset.key]}
+              brand={PRESET_BRANDS[preset.key]}
               isActive={false}
               onClick={() => loadPreset(preset.key)}
             />
@@ -1810,14 +1845,14 @@ const GlobalControls = () => {
           label="Headline"
           value={brand.typography.primary}
           onChange={(font) => handleChange("typography", "primary", font, true)}
-          fonts={fonts}
+          fonts={FONT_OPTIONS}
         />
 
         <FontSelector
           label="Body"
           value={brand.typography.secondary}
           onChange={(font) => handleChange("typography", "secondary", font, true)}
-          fonts={fonts}
+          fonts={FONT_OPTIONS}
         />
 
         <PropRow label="Spacing">
@@ -1975,6 +2010,34 @@ const GlobalControls = () => {
 
       {/* Logo */}
       <Section title="Logo" defaultOpen={false}>
+        <PropRow label="Image">
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept="image/svg+xml,image/png"
+              className="hidden"
+              onChange={handleLogoUpload}
+              id="logo-upload-input"
+            />
+            <button
+              type="button"
+              className="btn-figma btn-figma-ghost"
+              onClick={() => document.getElementById("logo-upload-input")?.click()}
+            >
+              Upload SVG/PNG
+            </button>
+            {brand.logo.image && (
+              <button
+                type="button"
+                className="btn-figma btn-figma-ghost"
+                onClick={() => handleChange("logo", "image", null, true)}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </PropRow>
+
         <PropRow label="Text">
           <Input
             value={brand.logo.text}
@@ -2016,25 +2079,43 @@ const GlobalControls = () => {
           className="p-4 rounded-md flex items-center justify-center"
           style={{ background: "var(--sidebar-bg-active)" }}
         >
-          <div
-            style={{
-              fontFamily: brand.typography.primary,
-              fontSize: `${brand.logo.size}px`,
-              padding: `${brand.logo.padding}px`,
-              backgroundColor: brand.colors.bg,
-              color: brand.colors.primary,
-              letterSpacing: "0.15em",
-              fontWeight: "800",
-              borderRadius: "var(--radius-sm)",
-            }}
-          >
-            {brand.logo.text}
-          </div>
+          {brand.logo.image ? (
+            <div
+              className="rounded-md flex items-center justify-center"
+              style={{
+                backgroundColor: brand.colors.bg,
+                padding: `${brand.logo.padding}px`,
+              }}
+            >
+              <img
+                src={brand.logo.image}
+                alt={brand.logo.text || "Logo"}
+                className="max-h-16 max-w-[160px] object-contain"
+              />
+            </div>
+          ) : (
+            <div
+              style={{
+                fontFamily: brand.typography.primary,
+                fontSize: `${brand.logo.size}px`,
+                padding: `${brand.logo.padding}px`,
+                backgroundColor: brand.colors.bg,
+                color: brand.colors.primary,
+                letterSpacing: "0.15em",
+                fontWeight: "800",
+                borderRadius: "var(--radius-sm)",
+              }}
+            >
+              {brand.logo.text}
+            </div>
+          )}
         </div>
       </Section>
     </>
   );
-};
+});
+
+GlobalControls.displayName = 'GlobalControls';
 
 // ============================================
 // TILE CONTROLS

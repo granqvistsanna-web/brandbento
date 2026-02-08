@@ -747,6 +747,101 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
     ],
   },
   {
+    name: "Food & Drink",
+    brand: {
+      typography: {
+        primary: "Oswald",
+        secondary: "Montserrat",
+        ui: "Montserrat",
+        scale: 1.25,
+        baseSize: 16,
+        weightHeadline: "700",
+        weightBody: "400",
+        letterSpacing: "wide",
+      },
+      colors: {
+        bg: "#F7F2EA",
+        text: "#1E1C2E",
+        primary: "#2D2A57",
+        accent: "#9A79E8",
+        surface: "#E3DBC8",
+        surfaces: ["#E3DBC8", "#9A79E8", "#2D2A57", "#F2EDE4"],
+        paletteColors: [],
+      },
+      logo: {
+        text: "SAVOR SPIRE",
+        padding: 18,
+        size: 22,
+      },
+      imagery: {
+        url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop",
+        style: "default",
+        overlay: 0,
+      },
+    },
+    tiles: [
+      {
+        id: "hero-1",
+        type: "hero",
+        content: {
+          headline: "We stand for food freedom",
+          subcopy: "Enjoy the foods you love, regardless of dietary lifestyle.",
+          image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop",
+        },
+        colSpan: 2,
+        rowSpan: 2,
+      },
+      {
+        id: "image-1",
+        type: "image",
+        content: {
+          image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1000&auto=format&fit=crop",
+          overlayText: "Fresh + Bright",
+        },
+        colSpan: 1,
+        rowSpan: 2,
+      },
+      {
+        id: "editorial-1",
+        type: "editorial",
+        content: {
+          headline: "Samba Sweetness",
+          body: "Succulent and bold, a dessert that captures bite.",
+        },
+        colSpan: 1,
+        rowSpan: 1,
+      },
+      {
+        id: "ui-preview-1",
+        type: "ui-preview",
+        content: {
+          headerTitle: "Menu",
+          buttonLabel: "See PDF",
+          inputPlaceholder: "Search dishes...",
+        },
+        colSpan: 1,
+        rowSpan: 1,
+      },
+      {
+        id: "logo-1",
+        type: "logo",
+        content: { label: "Food & Drink" },
+        colSpan: 1,
+        rowSpan: 1,
+      },
+      {
+        id: "utility-1",
+        type: "utility",
+        content: {
+          headline: "Now Serving",
+          items: ["Breakfast", "Vegan", "Seasonal Specials"],
+        },
+        colSpan: 1,
+        rowSpan: 1,
+      },
+    ],
+  },
+  {
     name: "Wellness Brand",
     brand: {
       typography: {
