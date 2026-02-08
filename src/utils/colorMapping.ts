@@ -148,56 +148,108 @@ const getNeutralText = (bgLightness: number, paletteColors: ColorAnalysis[]): st
 
 /**
  * Extract multiple surface colors from palette for moodboard variety
+ *
+ * Strategy for showcasing identity:
+ * 1. Include tinted/colored surfaces (not just neutrals)
+ * 2. Prioritize palette colors that create visual interest
+ * 3. Mix neutral and colored surfaces for balance
  */
 const extractSurfaceColors = (
   colors: ColorAnalysis[],
   bgColor: ColorAnalysis,
 ): string[] => {
   const isLightMode = bgColor.l > 50;
+  const surfaces: string[] = [];
+  const seen = new Set<string>();
 
-  // Filter for surface-suitable colors
-  const surfaceCandidates = colors.filter(c => {
+  // Helper to add unique surface
+  const addSurface = (hex: string) => {
+    if (!seen.has(hex) && surfaces.length < 8) {
+      surfaces.push(hex);
+      seen.add(hex);
+    }
+  };
+
+  // 1. TINTED SURFACES - colored surfaces that showcase palette identity
+  const tintedCandidates = colors.filter(c => {
     if (c.hex === bgColor.hex) return false;
 
     if (isLightMode) {
-      // Light mode: surfaces between 55-96% lightness
-      return c.l >= 55 && c.l <= 96;
+      // Light mode: pastel/tinted surfaces (60-95% lightness, some saturation)
+      return c.l >= 60 && c.l <= 95 && c.s >= 5;
     } else {
-      // Dark mode: surfaces between 5-45% lightness
-      return c.l >= 5 && c.l <= 45;
+      // Dark mode: deep tinted surfaces (8-40% lightness, some saturation)
+      return c.l >= 8 && c.l <= 40 && c.s >= 5;
     }
   });
 
-  // Sort by lightness difference from bg for depth variety
-  const sorted = surfaceCandidates.sort((a, b) => {
+  // Sort tinted by saturation (most colorful first) then by hue diversity
+  const sortedTinted = tintedCandidates.sort((a, b) => {
+    // Prefer moderate saturation (not too washed out, not too intense)
+    const aSatScore = a.s > 50 ? 100 - a.s : a.s;
+    const bSatScore = b.s > 50 ? 100 - b.s : b.s;
+    return bSatScore - aSatScore;
+  });
+
+  // Add tinted surfaces with hue diversity
+  const hueGroups = new Set<number>();
+  for (const color of sortedTinted) {
+    const hueGroup = Math.round(color.h / 60) * 60; // 6 hue groups
+    if (!hueGroups.has(hueGroup)) {
+      addSurface(color.hex);
+      hueGroups.add(hueGroup);
+    }
+  }
+
+  // 2. NEUTRAL SURFACES - for balance and contrast
+  const neutralCandidates = colors.filter(c => {
+    if (c.hex === bgColor.hex) return false;
+    if (seen.has(c.hex)) return false;
+
+    const isNeutralish = c.s < 15;
+    if (isLightMode) {
+      return isNeutralish && c.l >= 50 && c.l <= 98;
+    } else {
+      return isNeutralish && c.l >= 5 && c.l <= 50;
+    }
+  });
+
+  // Sort neutrals by lightness variety
+  const sortedNeutrals = neutralCandidates.sort((a, b) => {
     const aLightDiff = Math.abs(a.l - bgColor.l);
     const bLightDiff = Math.abs(b.l - bgColor.l);
     return bLightDiff - aLightDiff;
   });
 
-  // Collect unique surfaces by hue/lightness groups
-  const uniqueSurfaces: string[] = [];
-  const seen = new Set<string>();
+  // Add 2-3 neutrals for balance
+  for (let i = 0; i < Math.min(3, sortedNeutrals.length); i++) {
+    addSurface(sortedNeutrals[i].hex);
+  }
 
-  for (const color of sorted) {
-    const hueGroup = Math.round(color.h / 30) * 30;
-    const lightGroup = Math.round(color.l / 10) * 10;
-    const key = `${hueGroup}-${lightGroup}`;
+  // 3. ACCENT SURFACES - saturated colors for bold tiles
+  const accentCandidates = colors.filter(c => {
+    if (c.hex === bgColor.hex) return false;
+    if (seen.has(c.hex)) return false;
 
-    if (!seen.has(key)) {
-      uniqueSurfaces.push(color.hex);
-      seen.add(key);
+    // Medium saturation, usable lightness
+    if (isLightMode) {
+      return c.s >= 30 && c.l >= 45 && c.l <= 85;
+    } else {
+      return c.s >= 30 && c.l >= 15 && c.l <= 55;
     }
+  });
 
-    if (uniqueSurfaces.length >= 6) break;
+  // Add a couple accent surfaces
+  for (let i = 0; i < Math.min(2, accentCandidates.length); i++) {
+    addSurface(accentCandidates[i].hex);
   }
 
-  // Fallback if no surfaces found
-  if (uniqueSurfaces.length === 0) {
-    uniqueSurfaces.push(bgColor.hex);
+  // Fallback if nothing found
+  if (surfaces.length === 0) {
+    addSurface(bgColor.hex);
   }
 
-  return uniqueSurfaces;
+  return surfaces;
 };
 
 /**

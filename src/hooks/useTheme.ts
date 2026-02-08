@@ -1,20 +1,46 @@
+/**
+ * Theme Management Hook
+ *
+ * Manages dark/light/system theme preferences with automatic system
+ * preference detection and DOM synchronization.
+ *
+ * @module hooks/useTheme
+ */
 import { useEffect } from 'react';
-// @ts-expect-error - useBrandStore is JS, will be migrated to TS later
-import { useBrandStore } from '../store/useBrandStore';
+import { useBrandStore, type BrandStore } from '../store/useBrandStore';
 
-interface BrandStoreState {
-  theme: string;
-  setTheme: (theme: string) => void;
-  resolvedTheme: string;
-  setResolvedTheme: (theme: string) => void;
-}
-
+/**
+ * Hook for managing application theme (light/dark/system).
+ *
+ * Features:
+ * - Syncs with system preference when theme is set to "system"
+ * - Automatically updates DOM (adds/removes 'dark' class on <html>)
+ * - Persists preference in brand store (localStorage)
+ * - Listens for system preference changes in real-time
+ *
+ * @returns Object with theme controls
+ * @returns theme - Current preference: "light" | "dark" | "system"
+ * @returns setTheme - Function to update preference
+ * @returns resolvedTheme - Computed value: "light" | "dark" (resolves "system")
+ *
+ * @example
+ * function ThemeToggle() {
+ *   const { theme, setTheme, resolvedTheme } = useTheme();
+ *
+ *   return (
+ *     <button onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}>
+ *       Current: {resolvedTheme}
+ *     </button>
+ *   );
+ * }
+ */
 export function useTheme() {
-  const theme = useBrandStore((state: BrandStoreState) => state.theme);
-  const setTheme = useBrandStore((state: BrandStoreState) => state.setTheme);
-  const resolvedTheme = useBrandStore((state: BrandStoreState) => state.resolvedTheme);
-  const setResolvedTheme = useBrandStore((state: BrandStoreState) => state.setResolvedTheme);
+  const theme = useBrandStore((state: BrandStore) => state.theme);
+  const setTheme = useBrandStore((state: BrandStore) => state.setTheme);
+  const resolvedTheme = useBrandStore((state: BrandStore) => state.resolvedTheme);
+  const setResolvedTheme = useBrandStore((state: BrandStore) => state.setResolvedTheme);
 
+  // Sync resolved theme with system preference and update DOM
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 

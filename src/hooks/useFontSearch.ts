@@ -1,24 +1,60 @@
+/**
+ * Font Search Hook
+ *
+ * Provides fuzzy search and category filtering for Google Fonts
+ * with support for recently used fonts.
+ *
+ * @module hooks/useFontSearch
+ */
 import { useMemo, useState } from 'react';
 import Fuse from 'fuse.js';
 import { GOOGLE_FONTS, POPULAR_FONTS, type GoogleFontMeta } from '@/data/googleFontsMetadata';
 
+/** Font category filter type (null means no filter) */
 type FontCategory = GoogleFontMeta['category'] | null;
 
+/**
+ * Result object returned by useFontSearch hook.
+ */
 interface UseFontSearchResult {
+  /** Filtered and sorted fonts array */
   fonts: GoogleFontMeta[];
+  /** Current search query string */
   searchQuery: string;
+  /** Function to update search query */
   setSearchQuery: (query: string) => void;
+  /** Current category filter (null = all categories) */
   categoryFilter: FontCategory;
+  /** Function to update category filter */
   setCategoryFilter: (category: FontCategory) => void;
+  /** Number of recently used fonts in results */
   recentCount: number;
 }
 
 /**
- * Hook for searching and filtering Google Fonts
- * Uses Fuse.js for fuzzy (typo-tolerant) search
+ * Hook for searching and filtering Google Fonts.
  *
- * @param recentlyUsed Array of recently used font family names (most recent first)
- * @returns Filtered fonts list and control functions
+ * Features:
+ * - Fuzzy search with Fuse.js (typo-tolerant)
+ * - Category filtering (serif, sans-serif, display, handwriting, monospace)
+ * - Recently used fonts appear first
+ * - Popular fonts prioritized when no search query
+ *
+ * @param recentlyUsed - Array of recently used font family names (most recent first)
+ * @returns Object with filtered fonts and control functions
+ *
+ * @example
+ * function FontPicker() {
+ *   const { fonts, searchQuery, setSearchQuery, setCategoryFilter } = useFontSearch(['Inter', 'Roboto']);
+ *
+ *   return (
+ *     <>
+ *       <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+ *       <button onClick={() => setCategoryFilter('serif')}>Serif only</button>
+ *       {fonts.map(font => <FontOption key={font.family} font={font} />)}
+ *     </>
+ *   );
+ * }
  */
 export function useFontSearch(recentlyUsed: string[] = []): UseFontSearchResult {
   const [searchQuery, setSearchQuery] = useState('');

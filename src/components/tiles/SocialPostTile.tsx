@@ -1,19 +1,30 @@
-import { useBrandStore } from '@/store/useBrandStore';
+import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { Heart, MessageCircle, Send, Bookmark } from 'lucide-react';
 
-export function SocialPostTile() {
-    const brand = useBrandStore((state) => state.brand);
+interface SocialPostTileProps {
+    placementId?: string;
+}
+
+export function SocialPostTile({ placementId }: SocialPostTileProps) {
+    const brand = useBrandStore((state: BrandStore) => state.brand);
+    const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);
     const { url } = brand.imagery || {};
-    const { text, bg, primary } = brand.colors;
+    const { bg, primary, surfaces } = brand.colors;
     const { text: logoText } = brand.logo;
     const { ui } = brand.typography;
+
+    // Get surface index: user override > default (3 for social)
+    const surfaceIndex = placementId && tileSurfaces[placementId] !== undefined
+        ? tileSurfaces[placementId]
+        : 3;
+    const surfaceBg = surfaces?.[surfaceIndex ?? 3] || bg;
 
     if (!url) return <div className="w-full h-full bg-gray-100" />;
 
     return (
         <div
             className="w-full h-full p-4 flex items-center justify-center transition-colors duration-300"
-            style={{ backgroundColor: bg }}
+            style={{ backgroundColor: surfaceBg }}
         >
             {/* Mock Phone/Card */}
             <div className="w-full max-w-sm bg-white rounded-xl overflow-hidden shadow-sm border border-black/5">

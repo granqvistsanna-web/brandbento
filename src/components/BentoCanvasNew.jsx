@@ -22,21 +22,22 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
     switch (id) {
       case 'hero':
       case 'a': // Balanced layout
-        return <IdentityTile />;
+        return <IdentityTile placementId={id} />;
       case 'editorial':
       case 'b': // Balanced layout
-        return <EditorialTile />;
+        return <EditorialTile placementId={id} />;
       case 'image':
       case 'd': // Balanced Layout
-        return <SocialPostTile />;
+        return <SocialPostTile placementId={id} />;
       case 'buttons':
       case 'c':
-        return <InterfaceTile />;
+        return <InterfaceTile placementId={id} />;
       // Fallback for others
       case 'logo':
-        // Small logo slot
-        return <div className="w-full h-full bg-white flex items-center justify-center font-bold">Logo</div>;
+      case 'e':
+        return <IdentityTile placementId={id} />;
       case 'colors':
+      case 'f':
         return <ColorTile />;
       default:
         return null;

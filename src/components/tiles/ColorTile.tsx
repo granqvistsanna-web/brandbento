@@ -1,20 +1,31 @@
-import { useBrandStore } from '@/store/useBrandStore';
+import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { motion } from 'motion/react';
 import { Copy } from 'lucide-react';
 import { useState } from 'react';
+import { hexToHSL } from '@/utils/colorMapping';
 
 export function ColorTile() {
-  const brand = useBrandStore((state) => state.brand);
+  const brand = useBrandStore((state: BrandStore) => state.brand);
   const colors = brand.colors;
 
   const [copied, setCopied] = useState<string | null>(null);
 
-  const displayColors = [
-    { name: 'Primary', value: colors.primary, textColor: '#FFFFFF' },
-    { name: 'Accent', value: colors.accent, textColor: '#000000' },
-    { name: 'Surface', value: colors.surface, textColor: '#000000' },
-    { name: 'Background', value: colors.bg, textColor: '#000000', border: true },
+  // Get readable text color based on background
+  const getTextColor = (bgHex: string): string => {
+    const { l } = hexToHSL(bgHex);
+    return l > 55 ? '#000000' : '#FFFFFF';
+  };
+
+  // Core brand colors
+  const coreColors = [
+    { name: 'Primary', value: colors.primary },
+    { name: 'Accent', value: colors.accent },
   ];
+
+  // Surface palette - showcases identity
+  const surfaceColors = colors.surfaces?.length > 0
+    ? colors.surfaces.slice(0, 6)
+    : [colors.surface];
 
   const handleCopy = (color: string) => {
     navigator.clipboard.writeText(color);
@@ -23,46 +34,97 @@ export function ColorTile() {
   };
 
   return (
-    <div className="w-full h-full p-4 bg-white flex flex-col gap-2 overflow-hidden">
-      <div className="flex justify-between items-center mb-1">
-        <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">Palette</h3>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 flex-1">
-        {displayColors.map((color) => (
+    <div
+      className="w-full h-full p-4 flex flex-col gap-3 overflow-hidden"
+      style={{ backgroundColor: colors.bg }}
+    >
+      {/* Core Colors Row */}
+      <div className="flex gap-2">
+        {coreColors.map((color) => (
           <motion.button
             key={color.name}
-            className={`relative rounded-lg p-3 flex flex-col justify-between text-left ${color.border ? 'border border-gray-100' : ''
-              }`}
+            className="flex-1 rounded-lg p-2.5 flex flex-col justify-between text-left min-h-[52px]"
             style={{ backgroundColor: color.value }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleCopy(color.value)}
           >
             <span
-              className="text-[10px] font-medium opacity-60 uppercase"
-              style={{ color: color.textColor }}
+              className="text-[9px] font-medium opacity-70 uppercase tracking-wide"
+              style={{ color: getTextColor(color.value) }}
             >
               {color.name}
             </span>
-            <div className="flex justify-between items-end">
+            <div className="flex justify-between items-center">
               <span
-                className="text-xs font-semibold"
-                style={{ color: color.textColor }}
+                className="text-[10px] font-semibold"
+                style={{ color: getTextColor(color.value) }}
               >
                 {color.value}
               </span>
               {copied === color.value ? (
-                <span className="text-[10px]" style={{ color: color.textColor }}>Copied!</span>
+                <span className="text-[9px]" style={{ color: getTextColor(color.value) }}>✓</span>
               ) : (
-                <Copy
-                  size={12}
-                  className="opacity-50"
-                  style={{ color: color.textColor }}
-                />
+                <Copy size={10} className="opacity-40" style={{ color: getTextColor(color.value) }} />
               )}
             </div>
           </motion.button>
         ))}
+      </div>
+
+      {/* Surfaces Grid - shows palette identity */}
+      <div className="flex-1 flex flex-col gap-1.5">
+        <span
+          className="text-[9px] font-medium opacity-50 uppercase tracking-wider"
+          style={{ color: colors.text }}
+        >
+          Surfaces
+        </span>
+        <div className="grid grid-cols-3 gap-1.5 flex-1">
+          {surfaceColors.map((surface, index) => (
+            <motion.button
+              key={`surface-${index}`}
+              className="rounded-md flex items-end justify-between p-2"
+              style={{
+                backgroundColor: surface,
+                border: surface === colors.bg ? `1px solid ${colors.text}20` : 'none',
+              }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => handleCopy(surface)}
+            >
+              <span
+                className="text-[8px] font-medium opacity-60"
+                style={{ color: getTextColor(surface) }}
+              >
+                {index + 1}
+              </span>
+              {copied === surface && (
+                <span className="text-[8px]" style={{ color: getTextColor(surface) }}>✓</span>
+              )}
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* Background indicator */}
+      <div
+        className="rounded-md p-2 flex justify-between items-center"
+        style={{
+          backgroundColor: colors.bg,
+          border: `1px solid ${colors.text}15`,
+        }}
+      >
+        <span
+          className="text-[9px] font-medium opacity-50 uppercase"
+          style={{ color: colors.text }}
+        >
+          Background
+        </span>
+        <span
+          className="text-[10px] font-semibold opacity-70"
+          style={{ color: colors.text }}
+        >
+          {colors.bg}
+        </span>
       </div>
     </div>
   );

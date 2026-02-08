@@ -1,16 +1,51 @@
+/**
+ * Google Fonts Loading Hook
+ *
+ * Dynamically loads Google Fonts with automatic fallback handling
+ * and loading state management.
+ *
+ * @module hooks/useGoogleFonts
+ */
 import { useState, useEffect, useCallback } from 'react';
 import { loadFontWithFallback, getSystemFallback } from '@/services/googleFonts';
 import { GOOGLE_FONTS, type GoogleFontMeta } from '@/data/googleFontsMetadata';
 
+/**
+ * Result object returned by useGoogleFonts hook.
+ */
 interface UseGoogleFontsResult {
+  /** Whether font is currently loading */
   loading: boolean;
+  /** Error message if loading failed, null otherwise */
   error: string | null;
+  /** CSS font-family value with fallbacks (e.g., '"Inter", system-ui, sans-serif') */
   fontFamily: string;
+  /** Manual font loader for imperative loading */
   loadFont: (family: string, weights?: string[]) => Promise<boolean>;
 }
 
 /**
- * Hook for loading Google Fonts with auto-load on family change
+ * Hook for loading Google Fonts with automatic fallback handling.
+ *
+ * Features:
+ * - Auto-loads font when family prop changes
+ * - Provides CSS-ready font-family string with system fallbacks
+ * - Tracks loading/error states
+ * - Supports custom weight selection
+ *
+ * @param family - Google Font family name (e.g., "Inter", "Playfair Display")
+ * @param category - Font category for fallback selection (default: "sans-serif")
+ * @returns Object with loading state, fontFamily CSS value, and loadFont function
+ *
+ * @example
+ * function TypographyPreview({ fontName }: { fontName: string }) {
+ *   const { fontFamily, loading, error } = useGoogleFonts(fontName);
+ *
+ *   if (loading) return <Skeleton />;
+ *   if (error) return <span>Font unavailable</span>;
+ *
+ *   return <h1 style={{ fontFamily }}>Preview Text</h1>;
+ * }
  */
 export function useGoogleFonts(
   family: string,

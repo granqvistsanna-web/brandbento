@@ -1,13 +1,27 @@
-import { useBrandStore } from '@/store/useBrandStore';
-import { MousePointer2, ArrowRight } from 'lucide-react';
+import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
+import { ArrowRight } from 'lucide-react';
+import { hexToHSL } from '@/utils/colorMapping';
 
-export function InterfaceTile() {
-    const brand = useBrandStore((state) => state.brand);
-    const { primary, text, bg, surface } = brand.colors;
+interface InterfaceTileProps {
+    placementId?: string;
+}
+
+export function InterfaceTile({ placementId }: InterfaceTileProps) {
+    const brand = useBrandStore((state: BrandStore) => state.brand);
+    const tileSurfaces = useBrandStore((state: BrandStore) => state.tileSurfaces);
+    const { primary, text, bg, surfaces } = brand.colors;
     const { secondary: bodyFont } = brand.typography;
 
-    // Use bg color for better contrast with primary buttons
-    const bgColor = bg;
+    // Get surface index: user override > default (2 for interface)
+    const surfaceIndex = placementId && tileSurfaces[placementId] !== undefined
+        ? tileSurfaces[placementId]
+        : 2;
+    const bgColor = surfaces?.[surfaceIndex ?? 2] || bg;
+
+    // Adapt text colors based on surface brightness
+    const { l } = hexToHSL(bgColor);
+    const adaptiveText = l > 55 ? text : '#FAFAFA';
+    const buttonTextColor = l > 55 ? bg : '#0A0A0A';
 
     return (
         <div
@@ -20,7 +34,7 @@ export function InterfaceTile() {
                     className="w-full py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98]"
                     style={{
                         backgroundColor: primary,
-                        color: bg,
+                        color: buttonTextColor,
                         fontFamily: bodyFont,
                         fontWeight: 600,
                         fontSize: '0.9rem'
@@ -34,10 +48,10 @@ export function InterfaceTile() {
             {/* Secondary Button */}
             <div className="w-full max-w-[200px] z-10">
                 <button
-                    className="w-full py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border transition-all duration-200 hover:bg-black/5 active:scale-[0.98]"
+                    className="w-full py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border transition-all duration-200 hover:opacity-80 active:scale-[0.98]"
                     style={{
-                        borderColor: text,
-                        color: text,
+                        borderColor: adaptiveText,
+                        color: adaptiveText,
                         fontFamily: bodyFont,
                         fontWeight: 500,
                         fontSize: '0.9rem',
