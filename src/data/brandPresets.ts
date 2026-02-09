@@ -68,7 +68,7 @@ export const DEFAULT_BRAND: Brand = {
     accent: "#555555",
     surface: "#F5F5F5",
     surfaces: ["#FFFFFF", "#F5F5F5", "#FAFAFA", "#F0F0F0"],
-    paletteColors: [],
+    paletteColors: ["#000000", "#555555", "#171717", "#525252", "#A1A1A1", "#D4D4D4", "#F5F5F5", "#FFFFFF"],
   },
   logo: {
     text: "BENTO",
@@ -112,7 +112,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       accent: "#64748B",
       surface: "#FFFFFF",
       surfaces: ["#FFFFFF", "#F1F5F9", "#E2E8F0", "#CBD5E1"],
-      paletteColors: [],
+      paletteColors: ["#3B82F6", "#64748B", "#0F172A", "#314158", "#62748E", "#CAD5E2", "#F1F5F9", "#F5F7FA"],
     },
     logo: {
       text: "TECH",
@@ -141,7 +141,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       accent: "#A8A29E",
       surface: "#F5F5F4",
       surfaces: ["#F5F5F4", "#FAFAF9", "#E7E5E4", "#D6D3D1"],
-      paletteColors: [],
+      paletteColors: ["#78716C", "#A8A29E", "#1C1917", "#44403B", "#79716B", "#D6D3D1", "#F5F5F4", "#FDFCFA"],
     },
     logo: {
       text: "LUXE",
@@ -170,7 +170,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       accent: "#7DD3FC",
       surface: "#F0F9FF",
       surfaces: ["#F0F9FF", "#E0F2FE", "#BAE6FD", "#FFFFFF"],
-      paletteColors: [],
+      paletteColors: ["#0EA5E9", "#7DD3FC", "#171717", "#4A5565", "#99A1AF", "#D1D5DC", "#F3F4F6", "#FFFFFF"],
     },
     logo: {
       text: "UNITE",
@@ -199,7 +199,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       accent: "#D946EF",
       surface: "#FFFFFF",
       surfaces: ["#FFFFFF", "#FFF7ED", "#FEFCE8", "#FAF5FF"],
-      paletteColors: [],
+      paletteColors: ["#F97316", "#D946EF", "#171717", "#3F3F46", "#71717B", "#D4D4D8", "#F4F4F5", "#FAFAFA"],
     },
     logo: {
       text: "STUDIO",
@@ -228,7 +228,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       accent: "#9A79E8",
       surface: "#E3DBC8",
       surfaces: ["#E3DBC8", "#9A79E8", "#2D2A57", "#F2EDE4"],
-      paletteColors: [],
+      paletteColors: ["#2D2A57", "#9A79E8", "#1E1C2E", "#44403B", "#79716B", "#D6D3D1", "#E3DBC8", "#F7F2EA"],
     },
     logo: {
       text: "SAVOR SPIRE",

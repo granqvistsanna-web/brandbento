@@ -16,11 +16,21 @@ interface MenuTileProps {
   placementId?: string;
 }
 
+const INDUSTRY_DEFAULTS: Record<string, { subcopy: string; items: string[]; action: string }> = {
+  foodDrink: { subcopy: 'Currently featuring', items: ['Breakfast', 'Brunch', 'Seasonal'], action: 'View' },
+  techStartup: { subcopy: 'Explore', items: ['Platform', 'Pricing', 'Docs'], action: 'View' },
+  luxuryRetail: { subcopy: 'Discover', items: ['Collection', 'Lookbook', 'Atelier'], action: 'View' },
+  communityNonprofit: { subcopy: 'Our work', items: ['Programs', 'Impact', 'Get Involved'], action: 'View' },
+  creativeStudio: { subcopy: 'Selected', items: ['Work', 'Process', 'Studio'], action: 'View' },
+};
+const GENERIC_DEFAULTS = { subcopy: 'Explore', items: ['Services', 'Portfolio', 'Contact'], action: 'View' };
+
 export function MenuTile({ placementId }: MenuTileProps) {
-  const { colors, typography } = useBrandStore(
+  const { colors, typography, activePreset } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       typography: state.brand.typography,
+      activePreset: state.activePreset,
     }))
   );
   const placementTileId = getPlacementTileId(placementId);
@@ -38,7 +48,7 @@ export function MenuTile({ placementId }: MenuTileProps) {
     placementId ? state.tileSurfaces[placementId] : undefined
   );
 
-  const { bg, text, surfaces, primary } = colors;
+  const { bg, text, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({
     placementId,
     tileSurfaceIndex,
@@ -51,60 +61,53 @@ export function MenuTile({ placementId }: MenuTileProps) {
   const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
   const typeScale = getTypeScale(typography);
 
+  const industryDefaults = INDUSTRY_DEFAULTS[activePreset] || GENERIC_DEFAULTS;
   const content = tile?.content || {};
-  const title = content.headline || 'Menu';
-  const subcopy = content.subcopy || 'Currently featuring';
-  const items = content.items || ['Services', 'Portfolio', 'Contact'];
-  const actionLabel = (content.buttonLabel || 'View').toUpperCase();
+  const subcopy = content.subcopy || industryDefaults.subcopy;
+  const items = content.items || industryDefaults.items;
+  const actionLabel = (content.buttonLabel || industryDefaults.action).toUpperCase();
 
   return (
     <div
-      className="w-full h-full p-5 flex flex-col gap-3 transition-colors duration-300"
-      style={{ backgroundColor: surfaceBg }}
+      className="w-full h-full flex flex-col transition-colors duration-300 overflow-hidden"
+      style={{ backgroundColor: surfaceBg, padding: 'clamp(12px, 6%, 20px)' }}
     >
       <div
-        className="uppercase tracking-widest"
+        className="uppercase tracking-widest shrink-0"
         style={{
           color: adaptiveText,
           fontFamily: bodyFont,
           opacity: 0.5,
           fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
+          marginBottom: 'clamp(6px, 3%, 12px)',
         }}
       >
         {subcopy}
       </div>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col">
         {items.slice(0, 4).map((item, index) => (
-          <div key={`${item}-${index}`}>
+          <div key={`${item}-${index}`} className="min-h-0" style={{ flex: '1 1 0' }}>
             {index === 0 && (
               <div className="h-px w-full" style={{ backgroundColor: `color-mix(in srgb, ${adaptiveText} 15%, transparent)` }} />
             )}
-            <div className="flex items-center justify-between gap-3 py-3">
-              <span className="flex items-center gap-2.5">
-                <span
-                  className="rounded-full shrink-0"
-                  style={{
-                    width: '5px',
-                    height: '5px',
-                    backgroundColor: primary,
-                    opacity: 0.6,
-                  }}
-                />
-                <span
-                  className="uppercase"
-                  style={{
-                    color: adaptiveText,
-                    fontFamily: headlineFont,
-                    letterSpacing: '0.08em',
-                    fontSize: `${clampFontSize(typeScale.step1)}px`,
-                  }}
-                >
-                  {item}
-                </span>
+            <div
+              className="flex items-center justify-between gap-2 h-full"
+              style={{ padding: 'clamp(4px, 2%, 12px) 0' }}
+            >
+              <span
+                className="uppercase truncate"
+                style={{
+                  color: adaptiveText,
+                  fontFamily: headlineFont,
+                  letterSpacing: '0.08em',
+                  fontSize: `${clampFontSize(typeScale.step1)}px`,
+                }}
+              >
+                {item}
               </span>
               <span
-                className="uppercase tracking-wider"
+                className="uppercase tracking-wider shrink-0"
                 style={{
                   color: adaptiveText,
                   opacity: 0.45,

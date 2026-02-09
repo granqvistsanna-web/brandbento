@@ -1526,36 +1526,42 @@ PaletteBrowser.displayName = 'PaletteBrowser';
 const PresetCard = ({ name, brand, isActive, onClick }) => (
   <motion.button
     onClick={onClick}
-    className="w-full px-3 py-2.5 rounded-lg flex items-center gap-3 transition-fast group"
+    className="w-full flex items-center justify-between"
     style={{
-      background: isActive ? "var(--accent-muted)" : "transparent",
-      border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border-subtle)"}`,
+      height: "var(--control-height-md)",
+      padding: "0 var(--space-2)",
+      borderRadius: "var(--radius-sm)",
+      background: isActive ? "var(--accent-subtle)" : "transparent",
+      border: "none",
     }}
-    whileHover={{
-      background: "var(--sidebar-bg-hover)",
-    }}
-    whileTap={{ scale: 0.98 }}
+    whileHover={{ background: isActive ? "var(--accent-muted)" : "var(--sidebar-bg-hover)" }}
   >
-    {/* Color preview */}
-    <div className="flex -space-x-1.5 shrink-0">
+    <span
+      className="text-11 text-left truncate flex-1"
+      style={{
+        color: isActive ? "var(--sidebar-text)" : "var(--sidebar-text-secondary)",
+        transition: "color var(--transition-fast)",
+      }}
+    >
+      {name}
+    </span>
+    <div className="flex shrink-0">
       {[brand.colors.primary, brand.colors.text, brand.colors.bg].map(
         (color, i) => (
           <div
             key={i}
-            className="w-4 h-4 rounded-full"
+            className="rounded-full"
             style={{
+              width: 10,
+              height: 10,
               background: color,
-              border: "1.5px solid var(--sidebar-bg)",
-              boxShadow: "inset 0 0 0 0.5px rgba(0,0,0,0.1)",
-              zIndex: 3 - i,
+              border: "1px solid var(--sidebar-bg)",
+              marginLeft: i > 0 ? -3 : 0,
             }}
           />
         )
       )}
     </div>
-    <span className="text-11 flex-1 text-left truncate" style={{ color: "var(--sidebar-text-secondary)" }}>
-      {name}
-    </span>
   </motion.button>
 );
 
@@ -1766,6 +1772,7 @@ const GlobalControls = React.memo(() => {
   const brand = useBrandStore((s) => s.brand);
   const updateBrand = useBrandStore((s) => s.updateBrand);
   const loadPreset = useBrandStore((s) => s.loadPreset);
+  const activePreset = useBrandStore((s) => s.activePreset);
 
   const handleChange = (section, key, value, isCommit = false) => {
     updateBrand(
@@ -1805,13 +1812,13 @@ const GlobalControls = React.memo(() => {
         title="Industry Themes"
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 gap-1.5">
+        <div className="flex flex-col gap-1">
           {PRESET_OPTIONS.map((preset) => (
             <PresetCard
               key={preset.key}
               name={preset.name}
               brand={PRESET_BRANDS[preset.key]}
-              isActive={false}
+              isActive={activePreset === preset.key}
               onClick={() => loadPreset(preset.key)}
             />
           ))}

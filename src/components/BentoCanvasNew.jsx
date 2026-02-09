@@ -45,6 +45,9 @@ import { ColorTile } from "./tiles/ColorTile";
 import { ProductTile } from "./tiles/ProductTile";
 import { MenuTile } from "./tiles/MenuTile";
 import { IconTile } from "./tiles/IconTile";
+import { SplitHeroTile } from "./tiles/SplitHeroTile";
+import { OverlayTile } from "./tiles/OverlayTile";
+import { SplitListTile } from "./tiles/SplitListTile";
 import { getPlacementTileId, getPlacementTileType } from "../config/placements";
 const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
@@ -121,6 +124,12 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
         case 'menu':
         case 'utility':
           return <MenuTile placementId={id} />;
+        case 'split-hero':
+          return <SplitHeroTile placementId={id} />;
+        case 'overlay':
+          return <OverlayTile placementId={id} />;
+        case 'split-list':
+          return <SplitListTile placementId={id} />;
         case 'colors':
           return activePreset === 'foodDrink'
             ? <IconTile placementId={id} />

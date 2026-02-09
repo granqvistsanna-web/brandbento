@@ -73,6 +73,24 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
   logo: {
     label: "Brand",
   },
+  "split-hero": {
+    headline: "Defining Style",
+    body: "A fusion of creativity and craftsmanship. We bring timeless pieces that elevate everyday design.",
+    cta: "Read More",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop",
+  },
+  overlay: {
+    headline: "The Winter Collection",
+    body: "Garments and products so essential that they merge into the wholeness of our lives.",
+    label: "About Us",
+    image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=1000&auto=format&fit=crop",
+  },
+  "split-list": {
+    headline: "Design\nParadigm",
+    overlayText: "Core Services",
+    items: ["Brand Identity Systems", "Digital Experience Design", "Creative Direction"],
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1000&auto=format&fit=crop",
+  },
 };
 
 /**

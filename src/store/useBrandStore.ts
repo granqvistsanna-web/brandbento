@@ -658,23 +658,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         rowSpan: 1,
       },
       {
-        id: "hero-1",
-        type: "hero",
+        id: "split-hero-1",
+        type: "split-hero",
         content: {
-          headline: "Timeless Elegance",
-          subcopy: "Handcrafted pieces for the modern connoisseur",
-          cta: "Shop Collection",
+          headline: "Defining Style",
+          body: "A fusion of creativity and craftsmanship. We bring timeless pieces that elevate everyday fashion.",
+          cta: "Read More",
           image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1000&auto=format&fit=crop",
         },
         colSpan: 2,
         rowSpan: 1,
       },
       {
-        id: "utility-1",
-        type: "utility",
+        id: "split-list-1",
+        type: "split-list",
         content: {
-          headline: "Services",
-          items: ["Personal Styling", "Custom Orders", "Lifetime Warranty"],
+          headline: "Fashion\nParadigm",
+          overlayText: "Textiles Production",
+          items: ["Automated Fabric Cutting", "Eco-Friendly Dyeing", "Supply Chain Optimization"],
+          image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1000&auto=format&fit=crop",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -732,21 +734,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         rowSpan: 1,
       },
       {
-        id: "image-1",
-        type: "image",
+        id: "overlay-1",
+        type: "overlay",
         content: {
+          headline: "The Creative Process",
+          body: "Behind every great project is a story of obsession, revision, and breakthrough.",
+          label: "Case Study",
           image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1000&auto=format&fit=crop",
-          overlayText: "Creative Direction",
         },
         colSpan: 2,
         rowSpan: 2,
       },
       {
-        id: "utility-1",
-        type: "utility",
+        id: "split-list-1",
+        type: "split-list",
         content: {
-          headline: "What We Do",
-          items: ["Brand Identity", "Web Design", "Motion Graphics"],
+          headline: "Creative\nProcess",
+          overlayText: "Disciplines",
+          items: ["Brand Strategy", "Motion Design", "Art Direction"],
+          image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1000&auto=format&fit=crop",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -955,23 +961,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         rowSpan: 1,
       },
       {
-        id: "product-1",
-        type: "product",
+        id: "split-hero-1",
+        type: "split-hero",
         content: {
-          label: "Wellness Kit",
-          price: "$89",
+          headline: "Restore Balance",
+          body: "Holistic practices rooted in science, designed to bring you back to center.",
+          cta: "Learn More",
           image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=500&auto=format&fit=crop",
         },
         colSpan: 1,
         rowSpan: 1,
       },
       {
-        id: "ui-preview-1",
-        type: "ui-preview",
+        id: "overlay-1",
+        type: "overlay",
         content: {
-          headerTitle: "Your Plan",
-          buttonLabel: "Start",
-          inputPlaceholder: "Enter your goal...",
+          headline: "Mind & Body",
+          body: "A journey to wellness starts with a single breath.",
+          label: "Philosophy",
+          image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -1440,11 +1448,26 @@ export const useBrandStore = create<BrandStore>()(
       setResolvedTheme: (resolved) => set({ resolvedTheme: resolved }),
 
       loadRandomTemplate: () => {
-        const randomTemplate =
-          STARTER_TEMPLATES[Math.floor(Math.random() * STARTER_TEMPLATES.length)];
+        // Avoid picking the same template consecutively
+        let idx = Math.floor(Math.random() * STARTER_TEMPLATES.length);
+        if (STARTER_TEMPLATES.length > 1 && idx === _lastTemplateIdx) {
+          idx = (idx + 1) % STARTER_TEMPLATES.length;
+        }
+        _lastTemplateIdx = idx;
+        const randomTemplate = STARTER_TEMPLATES[idx];
+
+        // Deduplicate tile types — if a template somehow has
+        // duplicate types, keep only the first of each type
+        const seenTypes = new Set<string>();
+        const dedupedTiles = randomTemplate.tiles.filter((t) => {
+          if (seenTypes.has(t.type)) return false;
+          seenTypes.add(t.type);
+          return true;
+        });
+
         set({
           brand: randomTemplate.brand,
-          tiles: randomTemplate.tiles,
+          tiles: dedupedTiles,
           activePreset: "custom",
           tileSurfaces: {},
           placementContent: defaultPlacementContent,
