@@ -80,47 +80,54 @@ export function ProductTile({ placementId }: ProductTileProps) {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col justify-center gap-2">
-        <div className="flex flex-col gap-1">
+      <div className="flex-1 flex flex-col justify-center gap-2.5">
+        <div className="flex flex-col gap-1.5">
           <div
-            className="text-14 uppercase tracking-wide"
             style={{
               color: adaptiveText,
               fontFamily: headlineFont,
-              letterSpacing: '0.08em',
+              fontWeight: parseInt(typography.weightHeadline) || 700,
+              letterSpacing: '0.06em',
               fontSize: `${clampFontSize(typeScale.step1)}px`,
+              textTransform: 'uppercase' as const,
+              lineHeight: 1.15,
             }}
           >
             {label}
           </div>
           <div
-            className="text-11 uppercase tracking-wide"
             style={{
               color: adaptiveText,
-              opacity: 0.7,
+              opacity: 0.55,
               fontFamily: bodyFont,
               fontSize: `${clampFontSize(typeScale.stepMinus1)}px`,
+              lineHeight: 1.3,
             }}
           >
             {category}
           </div>
-          <div
-            className="text-11 uppercase tracking-wide"
+          <span
+            className="self-start rounded-full"
             style={{
-              color: adaptiveText,
-              opacity: 0.7,
+              backgroundColor: `color-mix(in srgb, ${primary} 12%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${primary} 20%, transparent)`,
+              color: primary,
               fontFamily: bodyFont,
-              fontSize: `${clampFontSize(typeScale.stepMinus1)}px`,
+              fontWeight: 600,
+              fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 12)}px`,
+              padding: '2px 10px',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase' as const,
             }}
           >
             {tag}
-          </div>
+          </span>
         </div>
         <div
-          className="text-12 font-semibold"
           style={{
             color: primary || adaptiveText,
             fontFamily: headlineFont,
+            fontWeight: 600,
             letterSpacing: '0.02em',
             fontSize: `${clampFontSize(typeScale.base)}px`,
           }}

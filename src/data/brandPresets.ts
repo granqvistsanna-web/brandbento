@@ -81,6 +81,11 @@ export const DEFAULT_BRAND: Brand = {
     style: "default",
     overlay: 0,
   },
+  ui: {
+    buttonRadius: 10,
+    buttonStyle: 'filled',
+    buttonColor: null,
+  },
 };
 
 /**
@@ -115,6 +120,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       size: 24,
     },
     imagery: DEFAULT_BRAND.imagery,
+    ui: DEFAULT_BRAND.ui,
   },
 
   luxuryRetail: {
@@ -143,6 +149,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       size: 22,
     },
     imagery: DEFAULT_BRAND.imagery,
+    ui: DEFAULT_BRAND.ui,
   },
 
   communityNonprofit: {
@@ -171,6 +178,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       size: 24,
     },
     imagery: DEFAULT_BRAND.imagery,
+    ui: DEFAULT_BRAND.ui,
   },
 
   creativeStudio: {
@@ -199,6 +207,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       size: 26,
     },
     imagery: DEFAULT_BRAND.imagery,
+    ui: DEFAULT_BRAND.ui,
   },
 
   foodDrink: {
@@ -231,6 +240,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       style: "default",
       overlay: 0,
     },
+    ui: DEFAULT_BRAND.ui,
   },
 };
 

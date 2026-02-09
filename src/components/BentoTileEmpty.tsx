@@ -31,6 +31,8 @@ export interface BentoTileEmptyProps {
   label?: string;
   /** Optional helper text to clarify expected content */
   hint?: string;
+  /** Whether this tile is currently focused/selected */
+  isFocused?: boolean;
   /** Additional CSS classes */
   className?: string;
   /** Click handler (makes component interactive) */
@@ -41,7 +43,7 @@ export interface BentoTileEmptyProps {
  * Empty tile placeholder – layout-stable, content-independent.
  * Uses theme-aware border/background from CSS variables.
  */
-export function BentoTileEmpty({ slotId, label, hint, className, onClick }: BentoTileEmptyProps) {
+export function BentoTileEmpty({ slotId, label, hint, isFocused, className, onClick }: BentoTileEmptyProps) {
   const typography = useBrandStore((state) => state.brand.typography);
   const { fontFamily: uiFont } = useGoogleFonts(typography.ui, getFontCategory(typography.ui));
   const typeScale = getTypeScale(typography);
@@ -55,14 +57,15 @@ export function BentoTileEmpty({ slotId, label, hint, className, onClick }: Bent
         'h-full w-full rounded-xl',
         'flex flex-col items-center justify-center gap-1',
         'border border-dashed',
-        'transition-fast',
+        'transition-all duration-150',
         'min-h-0 min-w-0 overflow-hidden',
-        onClick && 'cursor-pointer text-left',
+        onClick && 'cursor-pointer text-left hover:opacity-80 active:scale-[0.98]',
+        isFocused && 'ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--canvas-bg)]',
         className
       )}
       style={{
         backgroundColor: 'var(--canvas-surface)',
-        borderColor: 'var(--canvas-border)',
+        borderColor: isFocused ? 'var(--accent)' : 'var(--canvas-border)',
       }}
       data-slot-id={slotId}
     >

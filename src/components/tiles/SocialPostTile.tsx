@@ -1,31 +1,34 @@
 /**
  * Social Post Tile Component
  *
- * Streamlined Instagram-style social media mockup.
- * Reduced chrome for cleaner appearance at small tile sizes.
+ * Realistic Instagram-style social post card, centered within the tile.
+ * The card scales fluidly to fill available space while maintaining
+ * proper card proportions with surrounding padding.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Heart, MessageCircle, Send, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { getFontCategory } from '@/utils/typography';
+import { hexToHSL } from '@/utils/colorMapping';
+
+/* Fixed design dimensions — the card is authored at this size
+   then uniformly scaled to fit whatever tile it lives in. */
+const CARD_W = 320;
+const CARD_H = 420;
 
 interface SocialPostTileProps {
   placementId?: string;
 }
 
 export function SocialPostTile({ placementId }: SocialPostTileProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [cardScale, setCardScale] = useState(1);
-  const [shouldHide, setShouldHide] = useState(false);
-  const { colors, logoText, uiFont, typography } = useBrandStore(
+  const { colors, logoText, typography } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       logoText: state.brand.logo.text,
-      uiFont: state.brand.typography.ui,
       typography: state.brand.typography,
     }))
   );
@@ -35,28 +38,26 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
-    if (placementTileId) {
-      return state.tiles.find((t) => t.id === placementTileId);
-    }
-    if (placementTileType) {
-      return state.tiles.find((t) => t.type === placementTileType);
-    }
+    if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
+    if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);
     return undefined;
   });
   const placementContent = useBrandStore((state: BrandStore) =>
     placementId ? state.placementContent?.[placementId] : undefined
   );
-  const { bg, surfaces } = colors;
+  const { bg, surfaces, primary, text: textColor } = colors;
   const imageUrl = placementContent?.image || tile?.content?.image;
-  const socialHandle = placementContent?.socialHandle || logoText.toLowerCase();
-  const socialCaption =
-    placementContent?.socialCaption || 'Defining the new standard for calm, focused brand systems.';
-  const socialLikes = placementContent?.socialLikes || '1,204 likes';
-  const socialSponsored = placementContent?.socialSponsored || 'Sponsored';
-  const socialAspect = placementContent?.socialAspect || '4:5';
-  const { fontFamily: uiFontStack } = useGoogleFonts(uiFont, getFontCategory(uiFont));
-  const typeScale = getTypeScale(typography);
+  const handle = placementContent?.socialHandle || logoText?.toLowerCase() || 'brand';
+  const caption =
+    placementContent?.socialCaption ||
+    'Defining the new standard for calm, focused brand systems.';
+  const likesRaw = placementContent?.socialLikes || '1,204 likes';
+  const likes = likesRaw.toLowerCase().includes('like') ? likesRaw : `${likesRaw} likes`;
 
+  const { fontFamily: uiFontStack } = useGoogleFonts(
+    typography.ui,
+    getFontCategory(typography.ui)
+  );
   const surfaceBg = resolveSurfaceColor({
     placementId,
     tileSurfaceIndex,
@@ -65,149 +66,166 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
     defaultIndex: 3,
   });
 
-  const fallbackInitial = (logoText || 'B').charAt(0);
-  const baseCardWidth = 200;
-  const baseCardHeight = 330;
+  const surfaceL = hexToHSL(surfaceBg).l;
+  const isLight = surfaceL > 55;
+
+  // Card colors — the card itself is always a clean white/dark surface
+  const cardBg = isLight ? '#FFFFFF' : `color-mix(in srgb, ${surfaceBg} 80%, #FFFFFF)`;
+  const cardBorder = isLight
+    ? `color-mix(in srgb, ${textColor} 10%, transparent)`
+    : `color-mix(in srgb, ${textColor} 8%, transparent)`;
+  const cardText = isLight
+    ? `color-mix(in srgb, ${textColor} 85%, transparent)`
+    : `color-mix(in srgb, ${textColor} 80%, transparent)`;
+  const cardTextMuted = isLight
+    ? `color-mix(in srgb, ${textColor} 45%, transparent)`
+    : `color-mix(in srgb, ${textColor} 40%, transparent)`;
+  const iconColor = isLight
+    ? `color-mix(in srgb, ${textColor} 55%, transparent)`
+    : `color-mix(in srgb, ${textColor} 50%, transparent)`;
+
+  const initial = (handle || 'B').charAt(0).toUpperCase();
+
+  /* ── Scale-to-fit logic ── */
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-
-    const updateScale = () => {
-      const rect = el.getBoundingClientRect();
-      const widthScale = rect.width / (baseCardWidth + 16);
-      const heightScale = rect.height / (baseCardHeight + 16);
-      const nextScale = Math.min(1, widthScale, heightScale);
-      setCardScale(Math.max(0.4, nextScale));
-      const aspect = rect.width / Math.max(1, rect.height);
-      const tooWide = aspect > 1.15;
-      const tooShort = rect.height < 200;
-      setShouldHide(tooWide || tooShort);
+    if (!el) return;
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
+      const pad = Math.min(width, height) * 0.06;
+      const s = Math.min((width - pad * 2) / CARD_W, (height - pad * 2) / CARD_H);
+      setScale(s);
     };
-
-    updateScale();
-
-    const observer = new ResizeObserver(updateScale);
-    observer.observe(el);
-
-    return () => observer.disconnect();
-  }, [baseCardWidth, baseCardHeight]);
-
-  if (shouldHide) return null;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    update();
+    return () => ro.disconnect();
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      className="w-full h-full p-4 flex items-center justify-center transition-fast"
+      className="w-full h-full flex items-center justify-center overflow-hidden"
       style={{ backgroundColor: surfaceBg }}
     >
+      {/* Card rendered at fixed design size, then scaled uniformly */}
       <div
-        className="rounded-xl overflow-hidden relative flex flex-col"
+        className="flex flex-col overflow-hidden"
         style={{
-          width: `${baseCardWidth}px`,
-          background: "var(--canvas-surface)",
-          border: "1px solid var(--canvas-border)",
-          transform: `scale(${cardScale})`,
-          transformOrigin: "center",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          width: CARD_W,
+          height: CARD_H,
+          transform: `scale(${scale})`,
+          transformOrigin: 'center center',
+          flexShrink: 0,
+          backgroundColor: cardBg,
+          borderRadius: 12,
+          border: `1px solid ${cardBorder}`,
+          boxShadow: isLight
+            ? '0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)'
+            : '0 1px 3px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)',
+          fontFamily: uiFontStack,
         }}
       >
-        {/* Header */}
-        <div className="px-2.5 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        {/* ─── Header ─── */}
+        <div
+          className="flex items-center justify-between shrink-0"
+          style={{ padding: '10px 12px' }}
+        >
+          <div className="flex items-center" style={{ gap: 8 }}>
             <div
-              className="w-6 h-6 rounded-full flex items-center justify-center text-10 font-bold"
+              className="rounded-full flex items-center justify-center shrink-0"
               style={{
-                backgroundColor: "var(--canvas-bg)",
-                color: "var(--canvas-text)",
-                border: "1px solid var(--canvas-border)",
+                width: 26,
+                height: 26,
+                background: `linear-gradient(135deg, ${primary}20, ${primary}35)`,
+                border: `1.5px solid ${primary}30`,
+                color: primary,
+                fontSize: 10,
+                fontWeight: 700,
               }}
             >
-              {fallbackInitial}
+              {initial}
             </div>
             <span
-              className="text-10 font-semibold"
               style={{
-                fontFamily: uiFontStack,
-                color: "var(--canvas-text)",
-                fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
+                fontSize: 12,
+                fontWeight: 600,
+                color: cardText,
+                lineHeight: 1.2,
               }}
             >
-              {socialHandle}
+              {handle}
             </span>
           </div>
-          {socialSponsored && (
-            <span
-              className="text-[9px] px-1.5 py-0.5 rounded-full"
-              style={{
-                color: "var(--sidebar-text-muted)",
-                background: "var(--sidebar-bg-active)",
-                fontFamily: uiFontStack,
-                fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
-              }}
-            >
-              {socialSponsored}
-            </span>
-          )}
+          <MoreHorizontal
+            style={{ width: 15, height: 15, color: cardTextMuted }}
+            strokeWidth={1.5}
+          />
         </div>
 
-        {/* Image */}
+        {/* ─── Image ─── */}
         <div
-          className="w-full relative px-1 flex-1 min-h-0"
-          style={{
-            background: "var(--sidebar-bg-active)",
-            aspectRatio:
-              socialAspect === '1:1'
-                ? '1 / 1'
-                : socialAspect === '1.91:1'
-                  ? '1.91 / 1'
-                  : '4 / 5',
-          }}
+          className="relative w-full overflow-hidden"
+          style={{ flex: '1 1 0', minHeight: 0 }}
         >
           {imageUrl ? (
-            <img src={imageUrl} alt="Social" className="w-full h-full object-cover rounded-md" />
+            <img
+              src={imageUrl}
+              alt="Social post"
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div
-              className="w-full h-full rounded-md"
+              className="w-full h-full"
               style={{
-                background: `linear-gradient(145deg, ${colors.primary || '#666'}cc, ${colors.accent || colors.primary || '#888'}88)`,
+                background: `linear-gradient(155deg, ${primary}18 0%, ${primary}30 50%, ${colors.accent || primary}22 100%)`,
               }}
             />
           )}
         </div>
 
-        {/* Actions + caption */}
-        <div className="px-2.5 py-2">
-          <div className="flex justify-between mb-1.5" style={{ color: "var(--canvas-text)" }}>
-            <div className="flex gap-2.5">
-              <Heart size={14} />
-              <MessageCircle size={14} />
-              <Send size={14} />
+        {/* ─── Actions + caption ─── */}
+        <div className="shrink-0" style={{ padding: '9px 12px' }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
+            <div className="flex items-center" style={{ gap: 12 }}>
+              {[Heart, MessageCircle, Send].map((Icon, i) => (
+                <Icon
+                  key={i}
+                  strokeWidth={1.5}
+                  style={{ width: 16, height: 16, color: iconColor, display: 'block' }}
+                />
+              ))}
             </div>
-            <Bookmark size={14} />
+            <Bookmark
+              strokeWidth={1.5}
+              style={{ width: 16, height: 16, color: iconColor, display: 'block' }}
+            />
           </div>
-          {socialLikes && (
-            <p
-              className="text-10 font-semibold mb-0.5"
-              style={{
-                fontFamily: uiFontStack,
-                color: "var(--canvas-text-secondary)",
-                fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
-              }}
-            >
-              {socialLikes}
-            </p>
-          )}
+
           <p
-            className="text-10 font-medium leading-snug line-clamp-2"
             style={{
-              fontFamily: uiFontStack,
-              color: "var(--canvas-text)",
-              fontSize: `${clampFontSize(typeScale.stepMinus1)}px`,
+              fontSize: 11,
+              fontWeight: 600,
+              color: cardText,
+              lineHeight: 1.3,
+              marginBottom: 2,
             }}
           >
-            <span className="font-bold mr-1">{socialHandle}</span>
-            {socialCaption}
+            {likes}
+          </p>
+
+          <p
+            className="line-clamp-2"
+            style={{ fontSize: 11, color: cardTextMuted, lineHeight: 1.4 }}
+          >
+            <span style={{ fontWeight: 600, color: cardText, marginRight: 4 }}>
+              {handle}
+            </span>
+            {caption}
           </p>
         </div>
       </div>

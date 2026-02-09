@@ -122,6 +122,16 @@ export interface Imagery {
 }
 
 /**
+ * UI component styling.
+ * Controls button appearance in the interface tile.
+ */
+export interface UISettings {
+  buttonRadius: number;
+  buttonStyle: 'filled' | 'outline' | 'soft';
+  buttonColor: string | null;
+}
+
+/**
  * Complete brand configuration.
  * Aggregates all brand elements that define the visual identity.
  */
@@ -134,6 +144,8 @@ export interface Brand {
   logo: Logo;
   /** Hero imagery settings */
   imagery: Imagery;
+  /** UI component styling */
+  ui: UISettings;
 }
 
 /**
@@ -232,6 +244,7 @@ const createDefaultBrand = (): Brand => ({
   },
   logo: { ...DEFAULT_BRAND.logo },
   imagery: { ...DEFAULT_BRAND.imagery },
+  ui: { ...DEFAULT_BRAND.ui },
 });
 
 const isValidImageSrc = (src: unknown): src is string => {
@@ -260,6 +273,7 @@ const mergeBrand = (source?: Partial<Brand> | null): Brand => {
     },
     logo: mergedLogo,
     imagery: { ...base.imagery, ...(source.imagery ?? {}) },
+    ui: { ...base.ui, ...(source.ui ?? {}) },
   };
 };
 
@@ -519,6 +533,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         size: 24,
       },
       imagery: DEFAULT_BRAND.imagery,
+      ui: DEFAULT_BRAND.ui,
     },
     tiles: [
       {
@@ -601,6 +616,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         size: 22,
       },
       imagery: DEFAULT_BRAND.imagery,
+      ui: DEFAULT_BRAND.ui,
     },
     tiles: [
       {
@@ -693,6 +709,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         size: 26,
       },
       imagery: DEFAULT_BRAND.imagery,
+      ui: DEFAULT_BRAND.ui,
     },
     tiles: [
       {
@@ -789,6 +806,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         style: "default",
         overlay: 0,
       },
+      ui: DEFAULT_BRAND.ui,
     },
     tiles: [
       {
@@ -884,6 +902,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         size: 24,
       },
       imagery: DEFAULT_BRAND.imagery,
+      ui: DEFAULT_BRAND.ui,
     },
     tiles: [
       {
@@ -987,6 +1006,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         size: 28,
       },
       imagery: DEFAULT_BRAND.imagery,
+      ui: DEFAULT_BRAND.ui,
     },
     tiles: [
       {
@@ -1539,6 +1559,7 @@ export const useBrandStore = create<BrandStore>()(
           },
           logo: { ...brand.logo, ...(newBrand.logo ?? {}) },
           imagery: { ...brand.imagery, ...(newBrand.imagery ?? {}) },
+          ui: { ...brand.ui, ...(newBrand.ui ?? {}) },
         };
 
         if (isCommit) {

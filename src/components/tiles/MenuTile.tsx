@@ -53,9 +53,9 @@ export function MenuTile({ placementId }: MenuTileProps) {
 
   const content = tile?.content || {};
   const title = content.headline || 'Menu';
-  const subcopy = content.subcopy || 'Look what we are currently serving:';
-  const items = content.items || ['Menu', 'Wines', 'Brunch'];
-  const actionLabel = (content.buttonLabel || 'See PDF').toUpperCase();
+  const subcopy = content.subcopy || 'Currently featuring';
+  const items = content.items || ['Services', 'Portfolio', 'Contact'];
+  const actionLabel = (content.buttonLabel || 'View').toUpperCase();
 
   return (
     <div
@@ -81,16 +81,27 @@ export function MenuTile({ placementId }: MenuTileProps) {
               <div className="h-px w-full" style={{ backgroundColor: `color-mix(in srgb, ${adaptiveText} 15%, transparent)` }} />
             )}
             <div className="flex items-center justify-between gap-3 py-3">
-              <span
-                className="uppercase"
-                style={{
-                  color: adaptiveText,
-                  fontFamily: headlineFont,
-                  letterSpacing: '0.08em',
-                  fontSize: `${clampFontSize(typeScale.step1)}px`,
-                }}
-              >
-                {item}
+              <span className="flex items-center gap-2.5">
+                <span
+                  className="rounded-full shrink-0"
+                  style={{
+                    width: '5px',
+                    height: '5px',
+                    backgroundColor: primary,
+                    opacity: 0.6,
+                  }}
+                />
+                <span
+                  className="uppercase"
+                  style={{
+                    color: adaptiveText,
+                    fontFamily: headlineFont,
+                    letterSpacing: '0.08em',
+                    fontSize: `${clampFontSize(typeScale.step1)}px`,
+                  }}
+                >
+                  {item}
+                </span>
               </span>
               <span
                 className="uppercase tracking-wider"

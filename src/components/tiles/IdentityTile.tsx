@@ -168,13 +168,13 @@ export const IdentityTile = memo(function IdentityTile({ placementId }: Identity
             key={i}
             className="rounded-2xl flex items-center justify-center"
             style={{
-              background: `color-mix(in srgb, ${iconColor} 10%, transparent)`,
-              border: `1px solid color-mix(in srgb, ${iconColor} 16%, transparent)`,
+              background: `color-mix(in srgb, ${iconColor} 12%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${iconColor} 14%, transparent)`,
             }}
           >
             <Icon
-              size={22}
-              strokeWidth={1.5}
+              size={26}
+              strokeWidth={1.4}
               color={iconColor}
             />
           </div>

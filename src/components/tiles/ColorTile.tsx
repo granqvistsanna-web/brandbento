@@ -63,58 +63,40 @@ export function ColorTile() {
   const accent = colors.accent || colors.primary;
   const labelSize = `${clampFontSize(typeScale.stepMinus2)}px`;
 
+  const swatches = [
+    { color: neutral, role: 'Surface' },
+    { color: primary, role: 'Primary' },
+    { color: accent, role: 'Accent' },
+  ];
+
   return (
     <div
-      className="w-full h-full grid grid-rows-[1fr_auto_auto] gap-0 overflow-hidden"
+      className="w-full h-full grid grid-rows-[3fr_2fr_2fr] gap-0 overflow-hidden"
       style={{ backgroundColor: colors.bg }}
     >
-      {/* Dominant neutral — takes most vertical space */}
-      <motion.button
-        className="w-full flex items-end justify-start p-3 min-h-0"
-        style={{ backgroundColor: neutral }}
-        whileTap={{ scale: 0.99 }}
-        onClick={() => handleCopy(neutral)}
-      >
-        <span
-          className="font-medium uppercase tracking-wider flex items-center gap-1.5"
-          style={{ color: getTextColor(neutral), opacity: 0.55, fontFamily: uiFont, fontSize: labelSize }}
+      {swatches.map(({ color, role }) => (
+        <motion.button
+          key={role}
+          className="w-full flex items-end justify-between p-3 min-h-0"
+          style={{ backgroundColor: color }}
+          whileTap={{ scale: 0.99 }}
+          onClick={() => handleCopy(color)}
         >
-          {copied === neutral ? <Check size={10} strokeWidth={2.5} /> : null}
-          {neutral}
-        </span>
-      </motion.button>
-
-      {/* Primary strip */}
-      <motion.button
-        className="w-full flex items-center justify-start p-3 py-2.5"
-        style={{ backgroundColor: primary }}
-        whileTap={{ scale: 0.99 }}
-        onClick={() => handleCopy(primary)}
-      >
-        <span
-          className="font-medium uppercase tracking-wider flex items-center gap-1.5"
-          style={{ color: getTextColor(primary), opacity: 0.65, fontFamily: uiFont, fontSize: labelSize }}
-        >
-          {copied === primary ? <Check size={10} strokeWidth={2.5} /> : null}
-          {primary}
-        </span>
-      </motion.button>
-
-      {/* Accent strip — thinnest */}
-      <motion.button
-        className="w-full flex items-center justify-start p-3 py-2"
-        style={{ backgroundColor: accent }}
-        whileTap={{ scale: 0.99 }}
-        onClick={() => handleCopy(accent)}
-      >
-        <span
-          className="font-medium uppercase tracking-wider flex items-center gap-1.5"
-          style={{ color: getTextColor(accent), opacity: 0.65, fontFamily: uiFont, fontSize: labelSize }}
-        >
-          {copied === accent ? <Check size={10} strokeWidth={2.5} /> : null}
-          {accent}
-        </span>
-      </motion.button>
+          <span
+            className="font-medium uppercase tracking-wider"
+            style={{ color: getTextColor(color), opacity: 0.5, fontFamily: uiFont, fontSize: labelSize }}
+          >
+            {role}
+          </span>
+          <span
+            className="font-medium uppercase tracking-wider flex items-center gap-1.5"
+            style={{ color: getTextColor(color), opacity: 0.4, fontFamily: uiFont, fontSize: labelSize }}
+          >
+            {copied === color ? <Check size={10} strokeWidth={2.5} /> : null}
+            {color}
+          </span>
+        </motion.button>
+      ))}
     </div>
   );
 }

@@ -8,12 +8,14 @@ interface LayoutStore {
   preset: LayoutPresetName;
   density: DensityMode;
   debugMode: boolean;
+  canvasBg: string | null;
 
   // Actions
   setBreakpoint: (bp: BreakpointName) => void;
   setPreset: (preset: LayoutPresetName) => void;
   setDensity: (density: DensityMode) => void;
   toggleDebug: () => void;
+  setCanvasBg: (color: string | null) => void;
 }
 
 export const useLayoutStore = create<LayoutStore>()(
@@ -23,18 +25,20 @@ export const useLayoutStore = create<LayoutStore>()(
       preset: 'geos',
       density: 'cozy',
       debugMode: false,
+      canvasBg: null,
 
       setBreakpoint: (breakpoint) => set({ breakpoint }),
       setPreset: (preset) => set({ preset }),
       setDensity: (density) => set({ density }),
       toggleDebug: () => set((state) => ({ debugMode: !state.debugMode })),
+      setCanvasBg: (color) => set({ canvasBg: color }),
     }),
     {
       name: 'layout-store',
       partialize: (state) => ({
         preset: state.preset,
         density: state.density,
-        // Don't persist breakpoint (computed from window) or debugMode
+        canvasBg: state.canvasBg,
       }),
     }
   )

@@ -1,4 +1,5 @@
 import { useBrandStore } from '../../store/useBrandStore';
+import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
@@ -24,10 +25,10 @@ export const ImageTile = ({ placementId }: { placementId: string }) => {
         }
         return undefined;
     });
-    const { imagery, typography } = useBrandStore((s) => ({
+    const { imagery, typography } = useBrandStore(useShallow((s) => ({
         imagery: s.brand?.imagery,
         typography: s.brand?.typography,
-    }));
+    })));
     const { fontFamily: headlineFont } = useGoogleFonts(typography?.primary || 'Inter', getFontCategory(typography?.primary));
     const typeScale = getTypeScale(typography);
 

@@ -31,6 +31,7 @@ import { BentoGridNew } from "./BentoGridNew";
 import { BentoTileEmpty } from "./BentoTileEmpty";
 import { DebugGrid } from "./DebugGrid";
 import { useBrandStore } from "../store/useBrandStore";
+import { useLayoutStore } from "../store/useLayoutStore";
 import { getPlacementKind } from "../config/placements";
 
 // Tile Imports
@@ -51,6 +52,7 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
   const colors = useBrandStore((s) => s.brand.colors);
   const tiles = useBrandStore((s) => s.tiles);
   const activePreset = useBrandStore((s) => s.activePreset);
+  const canvasBg = useLayoutStore((s) => s.canvasBg);
   const zoom = typeof props.zoom === 'number' ? props.zoom : 100;
   const zoomScale = Math.max(25, Math.min(200, zoom)) / 100;
 
@@ -150,8 +152,7 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
       ref={ref}
       className="flex-1 h-full min-h-0 overflow-auto transition-fast relative"
       style={{
-        backgroundColor: "var(--canvas-bg)",
-        "--canvas-bg": colors.bg,
+        backgroundColor: canvasBg || "var(--canvas-bg)",
         "--canvas-surface": colors.surface,
         "--canvas-text": colors.text,
         "--canvas-text-secondary": `color-mix(in srgb, ${colors.text} 70%, ${colors.bg})`,
@@ -163,25 +164,47 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
         <BentoGridNew
           renderSlot={(placement) => {
             const content = renderTile(placement.id);
+            const isFocused = placement.id === focusedTileId;
+            const tileLabel = placement.id?.[0]?.toLowerCase();
+            const labelBadge = tileLabel ? (
+              <span
+                className="pointer-events-none absolute left-2 top-2 text-10 font-medium uppercase tracking-wider"
+                style={{
+                  color: 'var(--tile-label-text)',
+                  opacity: 0.35,
+                }}
+              >
+                {tileLabel}
+              </span>
+            ) : null;
             return content ? (
               <div
-                className="w-full h-full"
+                className={`w-full h-full rounded-xl overflow-hidden transition-shadow duration-150 relative ${
+                  isFocused
+                    ? 'ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--canvas-bg)]'
+                    : ''
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setFocusedTile(placement.id);
                 }}
               >
                 {content}
+                {labelBadge}
               </div>
             ) : (
-              <BentoTileEmpty
-                slotId={placement.id}
-                {...getPlaceholderMeta(placement.id)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setFocusedTile(placement.id);
-                }}
-              />
+              <div className="w-full h-full relative">
+                <BentoTileEmpty
+                  slotId={placement.id}
+                  {...getPlaceholderMeta(placement.id)}
+                  isFocused={isFocused}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFocusedTile(placement.id);
+                  }}
+                />
+                {labelBadge}
+              </div>
             );
           }}
         />

@@ -78,11 +78,15 @@ import {
   Minus,
   Plus,
   Info,
+  Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getPlacementKind, getPlacementTileType } from "../config/placements";
 import { ColorPalettePanel } from "./color/ColorPalettePanel";
-import { GOOGLE_FONTS } from "../data/googleFontsMetadata";
+import { ColorRoleSlot } from "./color/ColorRoleSlot";
+import { getContrastRatio } from "../utils/colorMapping";
+import { GOOGLE_FONTS, GOOGLE_FONTS_MAP, CURATED_FONTS } from "../data/googleFontsMetadata";
+import { loadFontWithFallback } from "../services/googleFonts";
 
 // ============================================
 // FIGMA-STYLE MICRO COMPONENTS
@@ -442,16 +446,64 @@ const SegmentedControl = ({ options, value, onChange }) => (
 );
 
 // ============================================
-// FONT SELECTOR - COMPACT DROPDOWN
+// FONT SELECTOR - SEARCHABLE DROPDOWN WITH CATEGORIES
 // ============================================
 
-const FontSelector = ({ label, value, onChange, fonts }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef(null);
+const CATEGORY_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "sans-serif", label: "Sans" },
+  { value: "serif", label: "Serif" },
+  { value: "display", label: "Display" },
+  { value: "monospace", label: "Mono" },
+];
 
+const FontItem = ({ font, isSelected, onSelect, onHover }) => (
+  <button
+    onClick={onSelect}
+    onMouseEnter={onHover}
+    className="w-full px-3 py-1.5 flex items-center gap-2 text-left transition-fast group"
+    style={{
+      background: isSelected ? "var(--accent-muted)" : "transparent",
+      color: isSelected ? "var(--accent)" : "var(--sidebar-text)",
+    }}
+    onMouseOver={(e) => {
+      if (!isSelected) e.currentTarget.style.background = "var(--sidebar-bg-hover)";
+    }}
+    onMouseOut={(e) => {
+      e.currentTarget.style.background = isSelected ? "var(--accent-muted)" : "transparent";
+    }}
+  >
+    <span
+      className="text-13 truncate flex-1"
+      style={{ fontFamily: `"${font.family}", ${font.category === 'serif' ? 'serif' : 'sans-serif'}` }}
+    >
+      {font.family}
+    </span>
+    {font.curated && !isSelected && (
+      <Star size={9} style={{ color: "var(--sidebar-text-muted)", opacity: 0.4, flexShrink: 0 }} />
+    )}
+    {isSelected && <Check size={12} style={{ flexShrink: 0 }} />}
+  </button>
+);
+
+const FontSelector = ({ label, value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [category, setCategory] = useState("all");
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const ref = useRef(null);
+  const buttonRef = useRef(null);
+  const listRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const loadedPreviewRef = useRef(new Set());
+
+  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+      if (
+        ref.current && !ref.current.contains(e.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -459,10 +511,92 @@ const FontSelector = ({ label, value, onChange, fonts }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Calculate position & focus search on open
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const maxHeight = 420;
+      const spaceBelow = window.innerHeight - rect.bottom - 8;
+      const spaceAbove = rect.top - 8;
+      const openUp = spaceBelow < 200 && spaceAbove > spaceBelow;
+
+      setDropdownPos({
+        top: openUp ? Math.max(8, rect.top - Math.min(maxHeight, spaceAbove)) : rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+      setTimeout(() => {
+        if (listRef.current) {
+          const selected = listRef.current.querySelector("[data-selected]");
+          if (selected) selected.scrollIntoView({ block: "center" });
+        }
+      }, 80);
+      setHighlightIdx(-1);
+    }
+  }, [isOpen]);
+
+  // Build filtered font list
+  const filteredFonts = useMemo(() => {
+    let list = GOOGLE_FONTS;
+
+    if (category !== "all") {
+      list = list.filter((f) => f.category === category);
+    }
+
+    return [...list].sort((a, b) => {
+      if (a.curated && !b.curated) return -1;
+      if (!a.curated && b.curated) return 1;
+      return a.family.localeCompare(b.family);
+    });
+  }, [category]);
+
+  // Index of first non-curated font (for section divider)
+  const firstNonCuratedIdx = useMemo(() => {
+    return filteredFonts.findIndex((f) => !f.curated);
+  }, [filteredFonts]);
+
+  // Preload font on hover
+  const handleFontHover = useCallback((family) => {
+    if (!loadedPreviewRef.current.has(family)) {
+      loadedPreviewRef.current.add(family);
+      loadFontWithFallback(family, ["400"]);
+    }
+  }, []);
+
+  // Keyboard nav
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!isOpen) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setHighlightIdx((i) => Math.min(i + 1, filteredFonts.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setHighlightIdx((i) => Math.max(i - 1, 0));
+      } else if (e.key === "Enter" && highlightIdx >= 0) {
+        e.preventDefault();
+        onChange(filteredFonts[highlightIdx].family);
+        setIsOpen(false);
+      } else if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    },
+    [isOpen, highlightIdx, filteredFonts, onChange]
+  );
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightIdx >= 0 && listRef.current) {
+      const items = listRef.current.querySelectorAll("[data-font-item]");
+      items[highlightIdx]?.scrollIntoView({ block: "nearest" });
+    }
+  }, [highlightIdx]);
+
   return (
-    <div className="relative" ref={ref}>
+    <div ref={ref}>
       <PropRow label={label}>
         <button
+          ref={buttonRef}
           onClick={() => setIsOpen(!isOpen)}
           className="flex-1 h-8 px-3 rounded-lg flex items-center justify-between transition-fast"
           style={{
@@ -471,12 +605,19 @@ const FontSelector = ({ label, value, onChange, fonts }) => {
             color: "var(--sidebar-text)",
           }}
         >
-          <span className="text-12 truncate" style={{ fontFamily: value }}>
+          <span
+            className="text-12 truncate"
+            style={{ fontFamily: `"${value}", sans-serif` }}
+          >
             {value}
           </span>
           <ChevronDown
             size={12}
-            style={{ color: "var(--sidebar-text-muted)" }}
+            style={{
+              color: "var(--sidebar-text-muted)",
+              transform: isOpen ? "rotate(180deg)" : "none",
+              transition: "transform 0.15s ease",
+            }}
           />
         </button>
       </PropRow>
@@ -484,46 +625,145 @@ const FontSelector = ({ label, value, onChange, fonts }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="absolute left-0 right-0 top-full mt-1 py-1 rounded-lg z-50 max-h-48 overflow-y-auto scrollbar-dark"
+            ref={dropdownRef}
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="rounded-lg flex flex-col"
             style={{
+              position: "fixed",
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              width: dropdownPos.width,
+              zIndex: 9999,
               background: "var(--sidebar-bg-elevated)",
               border: "1px solid var(--sidebar-border)",
-              boxShadow: "var(--shadow-xl)",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)",
+              maxHeight: "min(420px, 60vh)",
             }}
+            onKeyDown={handleKeyDown}
           >
-            {fonts.map((font) => (
-              <button
-                key={font}
-                onClick={() => {
-                  onChange(font);
-                  setIsOpen(false);
-                }}
-                className="w-full px-3 py-2 flex items-center gap-2 text-left transition-fast"
-                style={{
-                  background: value === font ? "var(--accent-muted)" : "transparent",
-                  color: value === font ? "var(--accent)" : "var(--sidebar-text)",
-                }}
-                onMouseEnter={(e) => {
-                  if (value !== font) {
-                    e.currentTarget.style.background = "var(--sidebar-bg-hover)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background =
-                    value === font ? "var(--accent-muted)" : "transparent";
-                }}
-              >
-                <span className="text-11" style={{ fontFamily: font }}>
-                  {font}
-                </span>
-                {value === font && (
-                  <Check size={12} style={{ marginLeft: "auto" }} />
-                )}
-              </button>
-            ))}
+            {/* Category pills */}
+            <div
+              className="px-2.5 pt-2.5 pb-1.5"
+              style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+            >
+              <div className="flex gap-1 pb-0.5">
+                {CATEGORY_FILTERS.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => {
+                      setCategory(cat.value);
+                      setHighlightIdx(-1);
+                    }}
+                    className="px-2 py-0.5 rounded-md text-11 transition-fast"
+                    style={{
+                      background:
+                        category === cat.value
+                          ? "var(--accent)"
+                          : "transparent",
+                      color:
+                        category === cat.value
+                          ? "#fff"
+                          : "var(--sidebar-text-muted)",
+                      fontWeight: category === cat.value ? 600 : 400,
+                    }}
+                    onMouseOver={(e) => {
+                      if (category !== cat.value)
+                        e.currentTarget.style.background = "var(--sidebar-bg-hover)";
+                    }}
+                    onMouseOut={(e) => {
+                      if (category !== cat.value)
+                        e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Font list */}
+            <div
+              ref={listRef}
+              className="flex-1 overflow-y-auto scrollbar-dark py-1"
+              style={{ minHeight: 0 }}
+            >
+              {filteredFonts.length === 0 ? (
+                <div
+                  className="px-3 py-6 text-center text-12"
+                  style={{ color: "var(--sidebar-text-muted)" }}
+                >
+                  No fonts in this category
+                </div>
+              ) : (
+                filteredFonts.map((font, idx) => (
+                  <React.Fragment key={font.family}>
+                    {idx === 0 && font.curated && (
+                      <div
+                        className="px-3 pt-1.5 pb-1 text-10 font-semibold uppercase tracking-wider flex items-center gap-1.5"
+                        style={{ color: "var(--sidebar-text-muted)" }}
+                      >
+                        <Star size={8} style={{ opacity: 0.5 }} />
+                        Curated
+                      </div>
+                    )}
+                    {idx === firstNonCuratedIdx && firstNonCuratedIdx > 0 && (
+                      <>
+                        <div
+                          className="mx-3 my-1"
+                          style={{
+                            borderTop: "1px solid var(--sidebar-border)",
+                          }}
+                        />
+                        <div
+                          className="px-3 pt-0.5 pb-1 text-10 font-semibold uppercase tracking-wider"
+                          style={{ color: "var(--sidebar-text-muted)" }}
+                        >
+                          More fonts
+                        </div>
+                      </>
+                    )}
+                    <div
+                      data-font-item
+                      {...(value === font.family ? { "data-selected": true } : {})}
+                      style={{
+                        background:
+                          highlightIdx === idx
+                            ? "var(--sidebar-bg-hover)"
+                            : undefined,
+                      }}
+                    >
+                      <FontItem
+                        font={font}
+                        isSelected={value === font.family}
+                        onSelect={() => {
+                          onChange(font.family);
+                          setIsOpen(false);
+                        }}
+                        onHover={() => handleFontHover(font.family)}
+                      />
+                    </div>
+                  </React.Fragment>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div
+              className="px-3 py-1.5 flex items-center justify-between text-10"
+              style={{
+                borderTop: "1px solid var(--sidebar-border)",
+                color: "var(--sidebar-text-muted)",
+              }}
+            >
+              <span>{filteredFonts.length} fonts</span>
+              <span className="flex gap-2">
+                <span><kbd className="kbd">↑↓</kbd> navigate</span>
+                <span><kbd className="kbd">↵</kbd> select</span>
+              </span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1460,11 +1700,37 @@ const LayoutSelector = () => {
   );
 };
 
+const CanvasBgPicker = () => {
+  const canvasBg = useLayoutStore((s) => s.canvasBg);
+  const setCanvasBg = useLayoutStore((s) => s.setCanvasBg);
+
+  return (
+    <div className="pt-2 border-t" style={{ borderColor: "var(--sidebar-border-subtle)" }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-10 font-semibold uppercase tracking-widest" style={{ color: "var(--sidebar-text-muted)" }}>Canvas Background</span>
+        {canvasBg && (
+          <button
+            type="button"
+            className="text-10 font-medium px-1.5 py-0.5 rounded hover:opacity-80 transition-fast"
+            style={{ color: "var(--sidebar-text-muted)" }}
+            onClick={() => setCanvasBg(null)}
+          >
+            Reset
+          </button>
+        )}
+      </div>
+      <ColorRoleSlot
+        label={canvasBg ? "Custom" : "Default"}
+        color={canvasBg || (document.documentElement.classList.contains("dark") ? "#0D0D0D" : "#F5F5F5")}
+        onChange={(hex) => setCanvasBg(hex)}
+      />
+    </div>
+  );
+};
+
 // ============================================
 // GLOBAL CONTROLS
 // ============================================
-
-const FONT_OPTIONS = GOOGLE_FONTS.map((font) => font.family);
 
 const PRESET_OPTIONS = [
   { key: "default", name: "General Brand" },
@@ -1531,6 +1797,7 @@ const GlobalControls = React.memo(() => {
       {/* Layout */}
       <Section title="Layout" defaultOpen>
         <LayoutSelector />
+        <CanvasBgPicker />
       </Section>
 
       {/* Industry Themes */}
@@ -1562,14 +1829,12 @@ const GlobalControls = React.memo(() => {
           label="Headline"
           value={brand.typography.primary}
           onChange={(font) => handleChange("typography", "primary", font, true)}
-          fonts={FONT_OPTIONS}
         />
 
         <FontSelector
           label="Body"
           value={brand.typography.secondary}
           onChange={(font) => handleChange("typography", "secondary", font, true)}
-          fonts={FONT_OPTIONS}
         />
 
         <PropRow label="Spacing">
@@ -1610,6 +1875,56 @@ const GlobalControls = React.memo(() => {
           step={1}
           unit="px"
         />
+      </Section>
+
+      {/* Colors */}
+      <Section title="Colors" badge={getContrastRatio(brand.colors.text, brand.colors.bg) >= 4.5 ? "AA" : null}>
+        <div className="space-y-0.5">
+          <span className="text-10 font-semibold uppercase tracking-widest block pb-1" style={{ color: "var(--sidebar-text-muted)" }}>Core</span>
+          <ColorRoleSlot label="Primary" color={brand.colors.primary} onChange={(hex) => handleChange("colors", "primary", hex, true)} contrastWith={brand.colors.bg} />
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-10 font-semibold uppercase tracking-widest block pb-1" style={{ color: "var(--sidebar-text-muted)" }}>Neutral</span>
+          <ColorRoleSlot label="Background" color={brand.colors.bg} onChange={(hex) => handleChange("colors", "bg", hex, true)} />
+          <ColorRoleSlot label="Text" color={brand.colors.text} onChange={(hex) => handleChange("colors", "text", hex, true)} contrastWith={brand.colors.bg} />
+          <ColorRoleSlot label="Surface" color={brand.colors.surface || brand.colors.bg} onChange={(hex) => handleChange("colors", "surface", hex, true)} />
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-10 font-semibold uppercase tracking-widest block pb-1" style={{ color: "var(--sidebar-text-muted)" }}>Accent</span>
+          <ColorRoleSlot label="Accent" color={brand.colors.accent || brand.colors.primary} onChange={(hex) => handleChange("colors", "accent", hex, true)} />
+        </div>
+      </Section>
+
+      {/* Buttons */}
+      <Section title="Buttons" defaultOpen={false}>
+        <Slider
+          label="Radius"
+          value={brand.ui?.buttonRadius ?? 10}
+          onChange={(val) => handleChange("ui", "buttonRadius", Math.round(val), false)}
+          onBlur={() => handleChange("ui", "buttonRadius", brand.ui?.buttonRadius ?? 10, true)}
+          min={0}
+          max={24}
+          step={1}
+          unit="px"
+        />
+        <PropRow label="Style">
+          <SegmentedControl
+            options={[
+              { value: "filled", label: "Filled" },
+              { value: "outline", label: "Outline" },
+              { value: "soft", label: "Soft" },
+            ]}
+            value={brand.ui?.buttonStyle ?? "filled"}
+            onChange={(val) => handleChange("ui", "buttonStyle", val, true)}
+          />
+        </PropRow>
+        <div className="space-y-0.5">
+          <ColorRoleSlot
+            label="Button Color"
+            color={brand.ui?.buttonColor || brand.colors.primary}
+            onChange={(hex) => handleChange("ui", "buttonColor", hex, true)}
+          />
+        </div>
       </Section>
 
       {/* Logo */}
@@ -1687,7 +2002,7 @@ const GlobalControls = React.memo(() => {
             <div
               className="rounded-md flex items-center justify-center"
               style={{
-                backgroundColor: brand.colors.bg,
+                backgroundColor: brand.colors.surfaces?.[1] || brand.colors.bg,
                 padding: `${brand.logo.padding}px`,
               }}
             >
@@ -1703,10 +2018,10 @@ const GlobalControls = React.memo(() => {
                 fontFamily: brand.typography.primary,
                 fontSize: `${brand.logo.size}px`,
                 padding: `${brand.logo.padding}px`,
-                backgroundColor: brand.colors.bg,
+                backgroundColor: brand.colors.surfaces?.[1] || brand.colors.bg,
                 color: brand.colors.primary,
-                letterSpacing: "0.15em",
-                fontWeight: "800",
+                letterSpacing: "0.04em",
+                fontWeight: parseInt(brand.typography.weightHeadline) || 700,
                 borderRadius: "var(--radius-sm)",
               }}
             >
@@ -1729,6 +2044,8 @@ const TileControls = ({ tile, placementId }) => {
   const updateTile = useBrandStore((s) => s.updateTile);
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
+  const brand = useBrandStore((s) => s.brand);
+  const updateBrand = useBrandStore((s) => s.updateBrand);
   const surfaces = useBrandStore((s) => s.brand.colors.surfaces);
   const bg = useBrandStore((s) => s.brand.colors.bg);
   const tileSurfaceIndex = useBrandStore((s) =>
@@ -1740,6 +2057,7 @@ const TileControls = ({ tile, placementId }) => {
   );
   const setPlacementContent = useBrandStore((s) => s.setPlacementContent);
   const imageInputRef = useRef(null);
+  const placementImageInputRef = useRef(null);
 
   // Get current surface index for this placement
   const currentSurfaceIndex = tileSurfaceIndex;
@@ -1761,7 +2079,23 @@ const TileControls = ({ tile, placementId }) => {
   };
 
   const placementKind = getPlacementKind(placementId);
+  const isIdentityPlacement = placementKind === 'identity';
   const isSocialPlacement = placementKind === 'social';
+
+  const handleLogoChange = (key, value, isCommit = false) => {
+    updateBrand({ logo: { ...brand.logo, [key]: value } }, isCommit);
+  };
+  const handleLogoUploadInTile = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (result) handleLogoChange("image", result, true);
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
   const handlePlacementChange = (key, value, isCommit = false) => {
     setPlacementContent(placementId, { [key]: value }, isCommit);
   };
@@ -1782,6 +2116,19 @@ const TileControls = ({ tile, placementId }) => {
       const result = typeof reader.result === "string" ? reader.result : "";
       if (result) {
         updateTile(tile.id, { image: result }, true);
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
+  const handlePlacementImageUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (result) {
+        setPlacementContent(placementId, { image: result }, true);
       }
     };
     reader.readAsDataURL(file);
@@ -1835,7 +2182,7 @@ const TileControls = ({ tile, placementId }) => {
 
       {/* Tile type - only show if tile exists */}
       {tile && (
-        <Section title="Type" defaultOpen={false}>
+        <Section title="Type" defaultOpen={true}>
           <div className="grid grid-cols-4 gap-1.5">
             {tileTypes.map((type) => {
               const TypeIcon = type.icon;
@@ -1938,6 +2285,69 @@ const TileControls = ({ tile, placementId }) => {
         </div>
       </Section>
 
+      {/* Identity Logo controls */}
+      {isIdentityPlacement && (
+        <Section title="Logo" defaultOpen={true}>
+          <PropRow label="Image">
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/svg+xml,image/png"
+                className="hidden"
+                onChange={handleLogoUploadInTile}
+                id="tile-logo-upload-input"
+              />
+              <button
+                type="button"
+                className="btn-figma btn-figma-ghost"
+                onClick={() => document.getElementById("tile-logo-upload-input")?.click()}
+              >
+                Upload SVG/PNG
+              </button>
+              {brand.logo.image && (
+                <button
+                  type="button"
+                  className="btn-figma btn-figma-ghost"
+                  onClick={() => handleLogoChange("image", null, true)}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </PropRow>
+
+          <PropRow label="Text">
+            <Input
+              value={brand.logo.text}
+              onChange={(e) => handleLogoChange("text", e.target.value, true)}
+              placeholder="BRAND"
+            />
+          </PropRow>
+
+          <Slider
+            label="Size"
+            value={brand.logo.size}
+            onChange={(val) => handleLogoChange("size", Math.round(val), false)}
+            onBlur={() => handleLogoChange("size", brand.logo.size, true)}
+            min={16}
+            max={36}
+            step={1}
+            unit="px"
+          />
+
+          <Slider
+            label="Padding"
+            value={brand.logo.padding}
+            onChange={(val) => handleLogoChange("padding", Math.round(val), false)}
+            onBlur={() => handleLogoChange("padding", brand.logo.padding, true)}
+            min={8}
+            max={28}
+            step={1}
+            unit="px"
+          />
+        </Section>
+      )}
+
       {/* Social Post */}
       {isSocialPlacement && (
         <Section title="Social" defaultOpen={true}>
@@ -2008,6 +2418,20 @@ const TileControls = ({ tile, placementId }) => {
               onBlur={() => handlePlacementCommit("image", "")}
               placeholder="https://images.unsplash.com/..."
             />
+            <input
+              ref={placementImageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePlacementImageUpload}
+            />
+            <button
+              type="button"
+              className="btn-figma btn-figma-ghost mt-2 w-full justify-center"
+              onClick={() => placementImageInputRef.current?.click()}
+            >
+              Upload Image
+            </button>
             {placementContent.image && (
               <div
                 className="mt-2 h-20 rounded-md overflow-hidden"
@@ -2175,37 +2599,37 @@ const TileControls = ({ tile, placementId }) => {
           </div>
         )}
 
-        {tile.content.headerTitle !== undefined && (
-          <PropRow label="Header">
-            <Input
-              value={tile.content.headerTitle}
-              onChange={(e) => handleChange("headerTitle", e.target.value)}
-              onBlur={() => handleCommit("headerTitle")}
-              placeholder="Header..."
-            />
-          </PropRow>
-        )}
-
         {tile.content.buttonLabel !== undefined && (
-          <PropRow label="Button">
+          <PropRow label="Primary">
             <Input
               value={tile.content.buttonLabel}
               onChange={(e) => handleChange("buttonLabel", e.target.value)}
               onBlur={() => handleCommit("buttonLabel")}
-              placeholder="Submit"
+              placeholder="Get Started"
+            />
+          </PropRow>
+        )}
+
+        {tile.content.headerTitle !== undefined && (
+          <PropRow label="Secondary">
+            <Input
+              value={tile.content.headerTitle}
+              onChange={(e) => handleChange("headerTitle", e.target.value)}
+              onBlur={() => handleCommit("headerTitle")}
+              placeholder="Learn More"
             />
           </PropRow>
         )}
 
         {tile.content.inputPlaceholder !== undefined && (
-          <PropRow label="Placeholder">
+          <PropRow label="Tertiary">
             <Input
               value={tile.content.inputPlaceholder}
               onChange={(e) =>
                 handleChange("inputPlaceholder", e.target.value)
               }
               onBlur={() => handleCommit("inputPlaceholder")}
-              placeholder="Search..."
+              placeholder="View Details"
             />
           </PropRow>
         )}

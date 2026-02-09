@@ -54,9 +54,9 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
     image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=500",
   },
   "ui-preview": {
-    headerTitle: "UI",
-    buttonLabel: "Submit",
-    inputPlaceholder: "Search...",
+    headerTitle: "Learn More",
+    buttonLabel: "Get Started",
+    inputPlaceholder: "View Details",
   },
   image: {
     image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000",

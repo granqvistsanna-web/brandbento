@@ -90,7 +90,7 @@ export function HeroTile({ placementId }: HeroTileProps) {
             fontWeight: parseInt(typography.weightHeadline) || 700,
             fontSize: `clamp(${clampFontSize(typeScale.step2)}px, 4vw, ${clampFontSize(typeScale.step3)}px)`,
             letterSpacing: isFoodDrink ? '0.06em' : spacing,
-            color: '#F7F4EF',
+            color: '#F8F6F1',
             textTransform: isFoodDrink ? 'uppercase' : 'none',
             textWrap: 'balance',
           }}
@@ -105,10 +105,10 @@ export function HeroTile({ placementId }: HeroTileProps) {
               fontFamily: bodyFont,
               fontWeight: parseInt(typography.weightBody) || 400,
               fontSize: isFoodDrink
-                ? `clamp(${clampFontSize(typeScale.stepMinus1)}px, 1.6vw, ${clampFontSize(typeScale.step1)}px)`
-                : `clamp(${clampFontSize(typeScale.stepMinus1)}px, 2vw, ${clampFontSize(typeScale.step1)}px)`,
+                ? `clamp(${clampFontSize(typeScale.stepMinus2)}px, 1.4vw, ${clampFontSize(typeScale.stepMinus1)}px)`
+                : `clamp(${clampFontSize(typeScale.stepMinus2)}px, 1.6vw, ${clampFontSize(typeScale.base)}px)`,
               letterSpacing: isFoodDrink ? '0.04em' : spacing,
-              color: 'rgba(247, 244, 239, 0.72)',
+              color: 'rgba(248, 246, 241, 0.68)',
               textTransform: isFoodDrink ? 'uppercase' : 'none',
             }}
           >

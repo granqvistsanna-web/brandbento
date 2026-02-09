@@ -23,6 +23,9 @@
   --canvas-border: #E5E5E5;
   --canvas-text: #1A1A1A;
   --canvas-text-secondary: #666666;
+  --tile-label-bg: rgba(255, 255, 255, 0.8);
+  --tile-label-text: rgba(24, 24, 24, 0.9);
+  --tile-label-border: rgba(0, 0, 0, 0.12);
 
   /* Accent Colors (Figma Blue) */
   --accent: #0D99FF;
@@ -120,6 +123,9 @@
   --canvas-border: #262626;
   --canvas-text: #FAFAFA;
   --canvas-text-secondary: #A0A0A0;
+  --tile-label-bg: rgba(18, 18, 18, 0.78);
+  --tile-label-text: rgba(248, 248, 248, 0.92);
+  --tile-label-border: rgba(255, 255, 255, 0.16);
 
   /* Accent Colors (slightly brighter for dark mode) */
   --accent: #0D99FF;
