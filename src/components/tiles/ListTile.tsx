@@ -90,7 +90,7 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
     tileSurfaceIndex,
     surfaces,
     bg,
-    defaultIndex: variant === 'split' ? 1 : 2,
+    defaultIndex: 1,
   });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
   const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
@@ -216,42 +216,44 @@ function StandaloneLayout({
         {subcopy}
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col">
-        {items.slice(0, 4).map((item, index) => (
-          <div key={`${item}-${index}`} className="min-h-0" style={{ flex: '1 1 0' }}>
-            {index === 0 && (
+      <div className="flex-1 min-h-0 flex flex-col justify-center">
+        <div>
+          {items.slice(0, 4).map((item, index) => (
+            <div key={`${item}-${index}`}>
+              {index === 0 && (
+                <div className="h-px w-full" style={{ backgroundColor: `color-mix(in srgb, ${adaptiveText} 15%, transparent)` }} />
+              )}
+              <div
+                className="flex items-center justify-between gap-2"
+                style={{ padding: `clamp(8px, 3%, 16px) 0` }}
+              >
+                <span
+                  className="uppercase truncate"
+                  style={{
+                    color: adaptiveText,
+                    fontFamily: headlineFont,
+                    letterSpacing: '0.08em',
+                    fontSize: `${clampFontSize(typeScale.step1)}px`,
+                  }}
+                >
+                  {item}
+                </span>
+                <span
+                  className="uppercase tracking-wider shrink-0"
+                  style={{
+                    color: adaptiveText,
+                    opacity: 0.45,
+                    fontFamily: bodyFont,
+                    fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
+                  }}
+                >
+                  {actionLabel}
+                </span>
+              </div>
               <div className="h-px w-full" style={{ backgroundColor: `color-mix(in srgb, ${adaptiveText} 15%, transparent)` }} />
-            )}
-            <div
-              className="flex items-center justify-between gap-2 h-full"
-              style={{ padding: 'clamp(4px, 2%, 12px) 0' }}
-            >
-              <span
-                className="uppercase truncate"
-                style={{
-                  color: adaptiveText,
-                  fontFamily: headlineFont,
-                  letterSpacing: '0.08em',
-                  fontSize: `${clampFontSize(typeScale.step1)}px`,
-                }}
-              >
-                {item}
-              </span>
-              <span
-                className="uppercase tracking-wider shrink-0"
-                style={{
-                  color: adaptiveText,
-                  opacity: 0.45,
-                  fontFamily: bodyFont,
-                  fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
-                }}
-              >
-                {actionLabel}
-              </span>
             </div>
-            <div className="h-px w-full" style={{ backgroundColor: `color-mix(in srgb, ${adaptiveText} 15%, transparent)` }} />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {isFocused && anchorRect && (

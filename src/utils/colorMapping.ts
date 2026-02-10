@@ -199,16 +199,18 @@ const areTooSimilar = (a: ColorAnalysis, b: ColorAnalysis): boolean => {
  *
  * Returns up to 8 surfaces ordered by visual intensity:
  * 1. **Neutral** (default) — low saturation, close to bg lightness → visual rest
- * 2. **Tinted** — colored but not dominant, one per hue group (60° buckets)
- * 3. **Accent** — saturated colors for bold/featured tiles
- * 4. **Contrast** — opposite lightness (dark on light bg, light on dark bg)
+ * 2. **Muted** — very lightly tinted, feels neutral but with a hint of palette hue
+ * 3. **Tinted** — colored but not dominant, one per hue group (60° buckets)
+ * 4. **Accent** — saturated color for one bold/featured tile
+ * 5. **Contrast** — opposite lightness (dark on light bg, light on dark bg)
  *
+ * Most surfaces (indices 0–3) are neutral or muted so the default board
+ * feels restrained. Strong colors live at higher indices for intentional use.
  * Each tile picks a surface by index via `tileSurfaces[placementId]`.
- * This prevents all-colored layouts where every tile competes for attention.
  *
  * @param colors - All palette colors as HSL analysis objects
  * @param bgColor - The chosen background color (excluded from surface candidates)
- * @returns Array of hex strings, ordered neutral → tinted → accent → contrast
+ * @returns Array of hex strings, ordered neutral → muted → tinted → accent → contrast
  */
 const extractSurfaceColors = (
   colors: ColorAnalysis[],
@@ -226,7 +228,9 @@ const extractSurfaceColors = (
     }
   };
 
-  // 1. NEUTRAL SURFACE FIRST — provides breathing room as default surface
+  // ── 1. NEUTRALS (target: 2–3 slots) ──────────────────────────────
+  // Low saturation, close to bg. These are the default for most tiles
+  // and provide the breathing room that makes a moodboard feel curated.
   const neutralCandidates = colors.filter(c => {
     if (c.hex === bgColor.hex) return false;
 
@@ -240,8 +244,7 @@ const extractSurfaceColors = (
 
   // Sort neutrals by "ideal distance" from bg: 5–20% lightness difference
   // is the sweet spot — enough to distinguish the surface, not so much it
-  // looks like a different section. Score 0 = in range, otherwise penalize
-  // by distance from the ideal midpoint of 12%.
+  // looks like a different section.
   const sortedNeutrals = [...neutralCandidates].sort((a, b) => {
     const aDiff = Math.abs(a.l - bgColor.l);
     const bDiff = Math.abs(b.l - bgColor.l);
@@ -250,49 +253,90 @@ const extractSurfaceColors = (
     return aScore - bScore;
   });
 
-  // Add neutrals first
+  // Add up to 2 natural neutrals from the palette
   for (let i = 0; i < Math.min(2, sortedNeutrals.length); i++) {
     addSurface(sortedNeutrals[i].hex);
   }
 
-  // If no natural neutral found, derive one from the bg color
-  if (surfaces.length === 0) {
-    addSurface(deriveNeutralSurface(bgColor, isLightMode));
+  // Always ensure at least 2 neutrals — derive from bg when palette lacks them.
+  // This guarantees the first few surface indices are always restrained.
+  for (let attempt = 0; surfaces.length < 2 && attempt < 4; attempt++) {
+    const offset = surfaces.length === 0 ? 0 : 1;
+    const s = Math.min(bgColor.s, 6);
+    const shift = 4 + offset * 5 + attempt * 3; // widen gap on retries
+    const l = isLightMode
+      ? Math.min(bgColor.l - shift, 95)
+      : Math.max(bgColor.l + shift, 12);
+    addSurface(hslToHex(bgColor.h, s, Math.max(5, Math.min(95, l))));
   }
 
-  // 2. TINTED SURFACES - colored surfaces for variety on secondary tiles
+  // ── 2. MUTED TINTS (target: 1–2 slots) ───────────────────────────
+  // Very low saturation (5–25%) — feels neutral but with a whisper of
+  // palette hue. These fill slots 2–3 so most tiles stay calm.
+  const mutedCandidates = colors.filter(c => {
+    if (c.hex === bgColor.hex) return false;
+    if (seen.has(c.hex)) return false;
+
+    if (isLightMode) {
+      return c.s >= 5 && c.s <= 25 && c.l >= 65 && c.l <= 95;
+    } else {
+      return c.s >= 5 && c.s <= 25 && c.l >= 8 && c.l <= 35;
+    }
+  });
+
+  const sortedMuted = [...mutedCandidates].sort((a, b) => a.s - b.s); // least saturated first
+  for (let i = 0; i < Math.min(2, sortedMuted.length); i++) {
+    addSurface(sortedMuted[i].hex);
+  }
+
+  // If no natural muted tints exist, derive one from bg with a hint of
+  // the primary hue so the board still has subtle variety.
+  if (mutedCandidates.length === 0 && surfaces.length < 4) {
+    const primaryHue = colors.find(c =>
+      c.hex !== bgColor.hex && c.s >= 30
+    )?.h ?? bgColor.h;
+    const s = 12; // Just enough to notice
+    const l = isLightMode
+      ? Math.max(bgColor.l - 8, 70)
+      : Math.min(bgColor.l + 8, 30);
+    addSurface(hslToHex(primaryHue, s, l));
+  }
+
+  // ── 3. TINTED SURFACES (target: 1–2 slots) ───────────────────────
+  // Moderate saturation — colored but not dominant. One per hue bucket.
   const tintedCandidates = colors.filter(c => {
     if (c.hex === bgColor.hex) return false;
     if (seen.has(c.hex)) return false;
 
     if (isLightMode) {
-      return c.l >= 60 && c.l <= 95 && c.s >= 5;
+      return c.l >= 60 && c.l <= 95 && c.s > 25;
     } else {
-      return c.l >= 8 && c.l <= 40 && c.s >= 5;
+      return c.l >= 8 && c.l <= 40 && c.s > 25;
     }
   });
 
-  // Sort tinted candidates preferring moderate saturation (20–50%).
-  // The scoring mirrors values around 50: both 20 and 80 → score 20.
-  // This avoids both too-faint and too-intense surface backgrounds.
+  // Prefer moderate saturation (25–50%). Penalize very high saturation.
   const sortedTinted = [...tintedCandidates].sort((a, b) => {
     const aSatScore = a.s > 50 ? 100 - a.s : a.s;
     const bSatScore = b.s > 50 ? 100 - b.s : b.s;
     return bSatScore - aSatScore;
   });
 
-  // Add tinted surfaces, limited to one per 60° hue bucket to ensure
-  // visual diversity (6 buckets: red, yellow, green, cyan, blue, magenta).
+  // Limited to one per 60° hue bucket, max 2 total (down from unlimited)
   const hueGroups = new Set<number>();
+  let tintedAdded = 0;
   for (const color of sortedTinted) {
+    if (tintedAdded >= 2) break;
     const hueGroup = Math.round(color.h / 60) * 60;
     if (!hueGroups.has(hueGroup)) {
       addSurface(color.hex);
       hueGroups.add(hueGroup);
+      tintedAdded++;
     }
   }
 
-  // 3. ACCENT SURFACES - saturated colors for bold tiles
+  // ── 4. ACCENT SURFACE (target: 1 slot) ───────────────────────────
+  // One saturated color for a bold, intentional pop. Not multiple.
   const accentCandidates = colors.filter(c => {
     if (c.hex === bgColor.hex) return false;
     if (seen.has(c.hex)) return false;
@@ -304,11 +348,14 @@ const extractSurfaceColors = (
     }
   });
 
-  for (let i = 0; i < Math.min(2, accentCandidates.length); i++) {
-    addSurface(accentCandidates[i].hex);
+  // Pick the most saturated candidate — with only 1 slot, make it count.
+  const sortedAccent = [...accentCandidates].sort((a, b) => b.s - a.s);
+  if (sortedAccent.length > 0) {
+    addSurface(sortedAccent[0].hex);
   }
 
-  // 4. CONTRAST SURFACES - dark in light mode, light in dark mode
+  // ── 5. CONTRAST SURFACE (target: 1 slot) ─────────────────────────
+  // Dark in light mode, light in dark mode. One is enough.
   const contrastCandidates = colors.filter(c => {
     if (c.hex === bgColor.hex) return false;
     if (seen.has(c.hex)) return false;
@@ -321,8 +368,8 @@ const extractSurfaceColors = (
   });
 
   const sortedContrast = [...contrastCandidates].sort((a, b) => b.s - a.s);
-  for (let i = 0; i < Math.min(2, sortedContrast.length); i++) {
-    addSurface(sortedContrast[i].hex);
+  if (sortedContrast.length > 0) {
+    addSurface(sortedContrast[0].hex);
   }
 
   // Fallback
@@ -451,6 +498,14 @@ export const mapPaletteToBrand = (colors: string[], options?: { style?: string }
     // Put the neutral first, keep the old surface later in the list
     if (!surfaces.includes(neutral)) {
       surfaces.unshift(neutral);
+    }
+  }
+
+  // === ENSURE PRIMARY & ACCENT ARE AVAILABLE AS SURFACES ===
+  // Designers should be able to use their brand colors as tile backgrounds.
+  for (const brandColor of [primary.hex, accent.hex]) {
+    if (!surfaces.includes(brandColor) && brandColor !== bg.hex) {
+      surfaces.push(brandColor);
     }
   }
 

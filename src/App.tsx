@@ -22,7 +22,6 @@ import {
   Share2,
   Shuffle,
   Maximize2,
-  HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import "./index.css";
@@ -387,9 +386,15 @@ const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => vo
         try {
           const data = JSON.parse(ev.target?.result as string);
           if (data.brand) {
-            const store = useBrandStore.getState();
-            store.setBrand(data.brand);
-            if (data.tiles) store.setTiles(data.tiles);
+            const { brand, tiles, tileSurfaces, placementContent, history } = useBrandStore.getState();
+            useBrandStore.setState({
+              brand: data.brand,
+              ...(data.tiles ? { tiles: data.tiles } : {}),
+              history: {
+                past: [...history.past, { brand, tiles, tileSurfaces, placementContent }],
+                future: [],
+              },
+            });
             toast.success("Moodboard loaded!");
           } else {
             toast.error("Invalid moodboard file");
@@ -606,7 +611,7 @@ function AppContent() {
 
             <ZoomControl zoom={zoom} onZoomChange={setZoom} />
 
-            <ToolbarButton icon={Maximize2} label="Fit to Screen" shortcut="1" />
+            <ToolbarButton icon={Maximize2} label="Fit to Screen" shortcut="1" onClick={() => setZoom(100)} />
           </div>
 
           {/* Right: Actions */}
@@ -624,9 +629,6 @@ function AppContent() {
 
             <ExportMenu canvasRef={canvasRef} />
 
-            <ToolbarDivider />
-
-            <ToolbarButton icon={HelpCircle} label="Help" shortcut="?" />
           </div>
         </header>
       )}

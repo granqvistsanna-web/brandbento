@@ -96,19 +96,234 @@ import { getContrastRatio } from "../utils/colorMapping";
 import { GOOGLE_FONTS, GOOGLE_FONTS_MAP, CURATED_FONTS } from "../data/googleFontsMetadata";
 import { loadFontWithFallback } from "../services/googleFonts";
 import ImageDropZone from "./ImageDropZone";
-import {
-  Kbd,
-  Badge,
-  Tooltip,
-  IconButton,
-  Section,
-  PropRow,
-  Input,
-  TextArea,
-  NumberInput,
-  Slider,
-  SegmentedControl,
-} from "./ui";
+
+// ============================================
+// MICRO-COMPONENTS
+// ============================================
+
+const Badge = ({ children, variant = "muted" }) => (
+  <span className={`badge badge-${variant}`}>{children}</span>
+);
+
+const Tooltip = ({ children, content, position = "right" }) => {
+  const [show, setShow] = useState(false);
+
+  const positions = {
+    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
+    right: "left-full top-1/2 -translate-y-1/2 ml-2",
+    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
+    left: "right-full top-1/2 -translate-y-1/2 mr-2",
+  };
+
+  return (
+    <div
+      className="relative inline-flex"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      <AnimatePresence>
+        {show && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.1 }}
+            className={`absolute ${positions[position]} tooltip z-50`}
+          >
+            {content}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ============================================
+// FORM CONTROLS
+// ============================================
+
+const PropRow = ({ label, children, hint }) => (
+  <div className="flex items-center gap-3 min-h-[32px]">
+    <span className="text-11 min-w-[72px] flex-shrink-0" style={{ color: "var(--sidebar-text-muted)" }}>{label}</span>
+    <div className="flex-1 flex items-center gap-1">{children}</div>
+    {hint && (
+      <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+        {hint}
+      </span>
+    )}
+  </div>
+);
+
+const Input = ({ value, onChange, placeholder, type = "text", mono, ...props }) => (
+  <input
+    type={type}
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    className="input-figma flex-1"
+    style={mono ? { fontFamily: "var(--font-mono)" } : undefined}
+    {...props}
+  />
+);
+
+const TextArea = ({ value, onChange, placeholder, rows = 3, ...props }) => (
+  <textarea
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    rows={rows}
+    className="input-figma w-full resize-none"
+    style={{ height: "auto", padding: "8px 10px" }}
+    {...props}
+  />
+);
+
+const Slider = ({ value, onChange, onBlur, min, max, step = 1, label, unit = "" }) => {
+  const percentage = max === min ? 0 : ((value - min) / (max - min)) * 100;
+
+  return (
+    <div className="space-y-2 py-1">
+      <div className="flex items-center justify-between">
+        <span className="text-11" style={{ color: "var(--sidebar-text-muted)" }}>
+          {label}
+        </span>
+        <span
+          className="text-11 font-mono"
+          style={{ color: "var(--sidebar-text-secondary)" }}
+        >
+          {typeof value === "number" ? value.toFixed(step < 1 ? 2 : 0) : value}
+          {unit}
+        </span>
+      </div>
+      <div className="relative h-5 flex items-center">
+        <div
+          className="absolute h-[3px] rounded-full w-full"
+          style={{ background: "var(--sidebar-bg-active)" }}
+        />
+        <div
+          className="absolute h-[3px] rounded-full"
+          style={{
+            width: `${percentage}%`,
+            background: "var(--accent)",
+          }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          onMouseUp={onBlur}
+          onTouchEnd={onBlur}
+          className="absolute w-full h-5 opacity-0 cursor-pointer"
+        />
+        <div
+          className="absolute w-3.5 h-3.5 rounded-full border-2 pointer-events-none"
+          style={{
+            left: `calc(${percentage}% - 7px)`,
+            background: "var(--sidebar-bg)",
+            borderColor: "var(--accent)",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const SegmentedControl = ({ options, value, onChange }) => (
+  <div
+    className="flex flex-1 rounded-lg overflow-hidden"
+    style={{
+      background: "var(--sidebar-bg-hover)",
+      padding: "3px",
+      gap: "2px",
+    }}
+  >
+    {options.map((opt) => (
+      <button
+        key={opt.value}
+        onClick={() => onChange(opt.value)}
+        className="flex-1 h-7 text-11 font-medium transition-fast rounded-md"
+        style={{
+          background:
+            value === opt.value ? "var(--sidebar-bg)" : "transparent",
+          color:
+            value === opt.value
+              ? "var(--sidebar-text)"
+              : "var(--sidebar-text-muted)",
+          boxShadow:
+            value === opt.value ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+        }}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ============================================
+// COLLAPSIBLE SECTION
+// ============================================
+
+const Section = ({
+  title,
+  children,
+  badge,
+  defaultOpen = true,
+  noPadding = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div
+      className="group"
+      style={{
+        borderBottom: "1px solid var(--sidebar-border-subtle)",
+      }}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center gap-2 px-4 py-3 transition-colors hover:bg-[var(--sidebar-bg-hover)]"
+        style={{ background: "transparent", border: "none", cursor: "pointer" }}
+      >
+        <motion.div
+          animate={{ rotate: isOpen ? 90 : 0 }}
+          transition={{ duration: 0.15 }}
+          style={{ color: "var(--sidebar-text-muted)" }}
+        >
+          <ChevronRight size={10} />
+        </motion.div>
+
+        <span
+          className="flex-1 text-left text-12 font-medium select-none tracking-wide"
+          style={{ color: "var(--sidebar-text)" }}
+        >
+          {title}
+        </span>
+
+        {badge && <div>{badge}</div>}
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <div className={noPadding ? "" : "px-4 pb-4 space-y-3"}>
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // ============================================
 // FONT SELECTOR - SEARCHABLE DROPDOWN WITH CATEGORIES
@@ -248,7 +463,8 @@ const FontSelector = ({ label, value, onChange }) => {
   const handleFontHover = useCallback((family) => {
     if (!loadedPreviewRef.current.has(family)) {
       loadedPreviewRef.current.add(family);
-      loadFontWithFallback(family, ["400"]);
+      const meta = GOOGLE_FONTS_MAP.get(family);
+      loadFontWithFallback(family, ["400"], 3000, meta?.source || "google");
     }
   }, []);
 
@@ -472,53 +688,6 @@ const FontSelector = ({ label, value, onChange }) => {
 // COLOR ROLE GROUP - Groups colors by category
 // ============================================
 
-const COLOR_USAGE = {
-  primary: {
-    label: "Core Brand Color",
-    uses: ["Logo", "Hero sections", "Primary CTAs", "Headlines"],
-  },
-  bg: {
-    label: "Background",
-    uses: ["Page backgrounds", "Large surfaces"],
-  },
-  text: {
-    label: "Body Text",
-    uses: ["Body copy", "Headings", "Labels"],
-  },
-  surface: {
-    label: "Surface",
-    uses: ["Cards", "Panels", "Modals"],
-  },
-  accent: {
-    label: "Accent",
-    uses: ["Highlights", "Badges", "Secondary CTAs"],
-  },
-};
-
-const UsagePreview = ({ colorKey }) => {
-  const usage = COLOR_USAGE[colorKey];
-  if (!usage) return null;
-
-  return (
-    <div
-      className="flex flex-wrap gap-1 mt-2 mb-1"
-      style={{ marginLeft: "var(--space-1)" }}
-    >
-      {usage.uses.map((use, i) => (
-        <span
-          key={i}
-          className="text-10 px-2 py-1 rounded"
-          style={{
-            background: "var(--sidebar-bg-active)",
-            color: "var(--sidebar-text-muted)",
-          }}
-        >
-          {use}
-        </span>
-      ))}
-    </div>
-  );
-};
 
 // ============================================
 // PALETTE CARD - Shows color swatches for a palette
@@ -1879,8 +2048,8 @@ const TileControls = ({ tile, placementId }) => {
         </Section>
       )}
 
-      {/* Surface Color */}
-      <Section title="Surface" defaultOpen={true}>
+      {/* Surface Color — hidden for full-image-bg tiles where surface is invisible */}
+      {!['hero', 'overlay', 'image'].includes(currentTileType) && <Section title="Surface" defaultOpen={true}>
         <div className="flex flex-wrap gap-2">
           {/* Auto option */}
           <button
@@ -1952,7 +2121,7 @@ const TileControls = ({ tile, placementId }) => {
             );
           })}
         </div>
-      </Section>
+      </Section>}
 
       {/* Identity Logo controls */}
       {isIdentityPlacement && (
@@ -2493,12 +2662,12 @@ const ControlPanel = () => {
             }}
           >
             <div className="flex items-center gap-1.5" style={{ opacity: 0.7 }}>
-              <Kbd>⌘Z</Kbd>
+              <span className="kbd">⌘Z</span>
               <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>Undo</span>
             </div>
             <div className="w-px h-3" style={{ background: "var(--sidebar-border-subtle)" }} />
             <div className="flex items-center gap-1.5" style={{ opacity: 0.7 }}>
-              <Kbd>⌘\</Kbd>
+              <span className="kbd">⌘\</span>
               <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>Toggle</span>
             </div>
           </div>

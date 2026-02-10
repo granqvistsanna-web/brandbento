@@ -90,10 +90,10 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
 
   const headline = isOverlay
     ? (content.headline || overlayCopy.headline)
-    : (content.headline || 'Brand stories, made bold.');
+    : (content.headline || 'Your brand, on its best day.');
   const subcopy = isOverlay
     ? (content.body || overlayCopy.body)
-    : (content.subcopy || 'Design a cohesive world in minutes.');
+    : (content.subcopy || 'Build a visual world that feels unmistakably you.');
   const label = isOverlay
     ? (content.label || content.subcopy || overlayCopy.label)
     : undefined;
@@ -329,14 +329,14 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
             value={headline}
             onChange={(v) => handleTextChange('headline', v)}
             onCommit={(v) => handleTextCommit('headline', v)}
-            placeholder="Brand stories, made bold."
+            placeholder="Your brand, on its best day."
           />
           <ToolbarTextInput
             label="Subcopy"
             value={subcopy}
             onChange={(v) => handleTextChange('subcopy', v)}
             onCommit={(v) => handleTextCommit('subcopy', v)}
-            placeholder="Design a cohesive world in minutes."
+            placeholder="Build a visual world that feels unmistakably you."
           />
         </FloatingToolbar>
       )}

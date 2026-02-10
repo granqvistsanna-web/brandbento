@@ -130,7 +130,7 @@ export const CustomModePanel = memo(() => {
       </div>
 
       {/* Color role editor */}
-      <div className="space-y-0.5 pb-2">
+      <div className="space-y-1 pb-2">
         {COLOR_ROLES.map((role, i) => (
           <motion.div
             key={role.key}

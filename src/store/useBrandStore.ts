@@ -192,6 +192,10 @@ export interface TileContent {
   socialPostCount?: number;
   /** Per-post content for multi-post social tiles */
   socialPosts?: Array<{ caption?: string; likes?: string; image?: string }>;
+  /** Social card visual style: full (all chrome), clean (no icons), minimal (image + caption only) */
+  socialStyle?: 'full' | 'clean' | 'minimal';
+  /** Social card background mode: white (default) or surface (matches tile surface) */
+  socialCardBg?: 'white' | 'surface';
   /** When true, shuffle will not change this tile's image */
   imageLocked?: boolean;
   /** Pattern variant for pattern tiles */
@@ -595,9 +599,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "hero-1",
         type: "hero",
         content: {
-          headline: "Build the future with AI",
-          subcopy: "Cutting-edge technology for modern businesses",
-          cta: "Start Building",
+          headline: "Software that gets out of your way",
+          subcopy: "Less setup. More shipping. You know the drill.",
+          cta: "Try It Free",
           image: "/images/visualelectric-1740659731603.png",
         },
         colSpan: 2,
@@ -608,7 +612,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "social",
         content: {
           image: "/images/20250622_2054_Candid Office Problem-Solving_simple_compose_01jycfrc6pfhrttzd3xpgeb5d2.png",
-          overlayText: "Innovation",
+          overlayText: "Building",
         },
         colSpan: 1,
         rowSpan: 3,
@@ -617,8 +621,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "editorial-1",
         type: "editorial",
         content: {
-          headline: "Innovation first",
-          body: "We believe technology should empower everyone.",
+          headline: "Tools, not slideware",
+          body: "We build things people actually use. Then we make them better.",
         },
         colSpan: 1,
         rowSpan: 2,
@@ -629,7 +633,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         content: {
           headerTitle: "Dashboard",
           buttonLabel: "Deploy",
-          inputPlaceholder: "Enter API key...",
+          inputPlaceholder: "Paste your key...",
         },
         colSpan: 2,
         rowSpan: 1,
@@ -672,7 +676,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "social",
         content: {
           image: "/images/visualelectric-1751979354132.png",
-          overlayText: "Spring 2026",
+          overlayText: "New Season",
         },
         colSpan: 2,
         rowSpan: 2,
@@ -688,7 +692,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "product-1",
         type: "product",
         content: {
-          label: "Signature Piece",
+          label: "The Signature",
           price: "$2,400",
           image: "/images/visualelectric-1751999916329.png",
         },
@@ -699,8 +703,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "editorial-1",
         type: "editorial",
         content: {
-          headline: "Heritage meets modernity",
-          body: "Each piece tells a story of craftsmanship.",
+          headline: "Less is the whole point",
+          body: "The best pieces don\u2019t announce themselves. You just reach for them every morning.",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -709,9 +713,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "hero-1",
         type: "split-hero",
         content: {
-          headline: "Defining Style",
-          body: "A fusion of creativity and craftsmanship. We bring timeless pieces that elevate everyday fashion.",
-          cta: "Read More",
+          headline: "Made to Last",
+          body: "Not trend-proof. Trend-irrelevant. For the people who stopped chasing and started choosing.",
+          cta: "Explore",
           image: "/images/visualelectric-1751915506477.png",
         },
         colSpan: 2,
@@ -721,9 +725,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "utility-1",
         type: "split-list",
         content: {
-          headline: "Fashion\nParadigm",
-          overlayText: "Textiles Production",
-          items: ["Automated Fabric Cutting", "Eco-Friendly Dyeing", "Supply Chain Optimization"],
+          headline: "Craft\n& Care",
+          overlayText: "How It\u2019s Made",
+          items: ["Small-Batch Production", "Natural Dyes Only", "Transparent Sourcing"],
           image: "/images/visualelectric-1751999926710.png",
         },
         colSpan: 1,
@@ -766,9 +770,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "hero-1",
         type: "hero",
         content: {
-          headline: "We craft digital experiences",
-          subcopy: "Bold ideas. Beautiful execution.",
-          cta: "View Work",
+          headline: "We make things people actually remember",
+          subcopy: "Big ideas. Small egos. Zero mood boards with the word \u2018synergy.\u2019",
+          cta: "See Work",
           image: "/images/20250622_2048_Candid Office Consultation_simple_compose_01jycfdk73fj1az74wv8n0rgwt.png",
         },
         colSpan: 3,
@@ -785,8 +789,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "social-1",
         type: "overlay",
         content: {
-          headline: "The Creative Process",
-          body: "Behind every great project is a story of obsession, revision, and breakthrough.",
+          headline: "The Messy Middle",
+          body: "Every portfolio shows the finish line. We\u2019re more interested in the all-nighter that got us there.",
           label: "Case Study",
           image: "/images/visualelectric-1750703676698.png",
         },
@@ -797,9 +801,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "utility-1",
         type: "split-list",
         content: {
-          headline: "Creative\nProcess",
+          headline: "How We\nWork",
           overlayText: "Disciplines",
-          items: ["Brand Strategy", "Motion Design", "Art Direction"],
+          items: ["Brand Strategy", "Motion & Film", "Art Direction"],
           image: "/images/20250622_2058_Candid Office Moment_simple_compose_01jycg0pyvf54ar73h2bxc7yh1.png",
         },
         colSpan: 1,
@@ -809,8 +813,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "editorial-1",
         type: "editorial",
         content: {
-          headline: "Design is thinking made visual",
-          body: "We push pixels and break boundaries to create work that matters.",
+          headline: "Good work won\u2019t shut up",
+          body: "We make the kind of projects that keep you up at night\u2014in a good way.",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -867,8 +871,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "hero-1",
         type: "hero",
         content: {
-          headline: "We stand for food freedom",
-          subcopy: "Enjoy the foods you love, regardless of dietary lifestyle.",
+          headline: "Food worth sitting down for",
+          subcopy: "Seasonal plates, honest ingredients, and absolutely zero foam.",
           image: "/images/visualelectric-1751999916329.png",
         },
         colSpan: 2,
@@ -879,7 +883,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "social",
         content: {
           image: "/images/visualelectric-1751999926710.png",
-          overlayText: "Fresh + Bright",
+          overlayText: "In Season",
         },
         colSpan: 1,
         rowSpan: 2,
@@ -888,9 +892,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "editorial-1",
         type: "product",
         content: {
-          label: "Organic Acai Bowl",
+          label: "Acai Bowl",
           subcopy: "Breakfast",
-          body: "Vegan",
+          body: "Plant-based",
           price: "$12.99",
           image: "/images/visualelectric-1751979354132.png",
         },
@@ -902,9 +906,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "menu",
         content: {
           headline: "Menu",
-          subcopy: "Look what are we currently serving:",
-          items: ["Breakfast", "Wines", "Brunch"],
-          buttonLabel: "See PDF",
+          subcopy: "What\u2019s on the table right now",
+          items: ["Breakfast", "Small Plates", "Brunch"],
+          buttonLabel: "Full Menu",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -912,7 +916,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
       {
         id: "logo-1",
         type: "logo",
-        content: { label: "Food & Drink" },
+        content: { label: "Kitchen & Bar" },
         colSpan: 1,
         rowSpan: 1,
       },
@@ -920,8 +924,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "utility-1",
         type: "utility",
         content: {
-          headline: "Now Serving",
-          items: ["Breakfast", "Vegan", "Seasonal Specials"],
+          headline: "On Right Now",
+          items: ["Breakfast", "Plant-Based", "Seasonal Specials"],
         },
         colSpan: 1,
         rowSpan: 1,
@@ -964,7 +968,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "social",
         content: {
           image: "/images/visualelectric-1760212068804.png",
-          overlayText: "Mindfulness",
+          overlayText: "Breathe",
         },
         colSpan: 2,
         rowSpan: 2,
@@ -980,9 +984,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "hero-1",
         type: "hero",
         content: {
-          headline: "Your wellness journey",
-          subcopy: "Natural, sustainable, transformative",
-          cta: "Begin Today",
+          headline: "Feel like yourself again",
+          subcopy: "Simple routines, real ingredients, no guru required.",
+          cta: "Start Here",
           image: "/images/visualelectric-1753860123700.png",
         },
         colSpan: 1,
@@ -992,8 +996,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "editorial-1",
         type: "editorial",
         content: {
-          headline: "Holistic healing",
-          body: "Treating the whole person—mind, body, and spirit.",
+          headline: "Wellness, minus the woo",
+          body: "Science-backed, plant-powered, and surprisingly easy to stick with.",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -1002,7 +1006,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "utility-1",
         type: "utility",
         content: {
-          headline: "Benefits",
+          headline: "The Good Stuff",
           items: ["100% Natural", "Certified Organic", "Carbon Neutral"],
         },
         colSpan: 1,
@@ -1012,8 +1016,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "product-1",
         type: "split-hero",
         content: {
-          headline: "Restore Balance",
-          body: "Holistic practices rooted in science, designed to bring you back to center.",
+          headline: "Back to Basics",
+          body: "Ancient practices meet modern research. Your body already knows what to do\u2014we just help it remember.",
           cta: "Learn More",
           image: "/images/visualelectric-1753860116187.png",
         },
@@ -1024,8 +1028,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "ui-preview-1",
         type: "overlay",
         content: {
-          headline: "Mind & Body",
-          body: "A journey to wellness starts with a single breath.",
+          headline: "Start Where You Are",
+          body: "You don\u2019t need a retreat. You need five minutes and a little intention.",
           label: "Philosophy",
           image: "/images/visualelectric-1753860134138.png",
         },
@@ -1069,9 +1073,9 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "hero-1",
         type: "hero",
         content: {
-          headline: "Designer & Developer",
-          subcopy: "Building digital products with precision",
-          cta: "Contact",
+          headline: "I design things people use",
+          subcopy: "Clean interfaces, clear thinking, zero unnecessary meetings.",
+          cta: "Say Hello",
           image: "/images/visualelectric-1740667024491.png",
         },
         colSpan: 2,
@@ -1098,8 +1102,8 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "editorial-1",
         type: "editorial",
         content: {
-          headline: "About",
-          body: "10+ years crafting interfaces that people love to use. Currently based in SF.",
+          headline: "The Short Version",
+          body: "10+ years making interfaces people actually enjoy. Based in SF, online everywhere.",
         },
         colSpan: 2,
         rowSpan: 1,
@@ -1108,7 +1112,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "utility-1",
         type: "utility",
         content: {
-          headline: "Skills",
+          headline: "Fluent In",
           items: ["React", "TypeScript", "Figma"],
         },
         colSpan: 1,
@@ -1118,7 +1122,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         id: "product-1",
         type: "product",
         content: {
-          label: "Latest",
+          label: "Latest Work",
           price: "2026",
           image: "/images/_sagr_tight_macro_still_life_tortoiseshell_glasses_blank_conf_fd90e9cb-0e01-43ed-9b69-4cc88f03a4df_0.png",
         },
@@ -1326,6 +1330,16 @@ const defaultTileContent: Record<string, TileContent> = {
   utility: { headline: "Features", items: ["Item 1", "Item 2", "Item 3"] },
   menu: { headline: "Menu", items: ["Breakfast", "Brunch", "Seasonal"] },
   logo: { label: "Brand" },
+  overlay: {
+    headline: "The Winter Collection",
+    body: "Garments and products so essential that they merge into the wholeness of our lives.",
+    label: "About Us",
+    image: "/images/visualelectric-1751915506477.png",
+  },
+  social: {
+    image: "/images/visualelectric-1750703676698.png",
+    overlayText: "Atmosphere",
+  },
 };
 
 const defaultSocialContent: TileContent = {

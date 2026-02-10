@@ -45,6 +45,10 @@ interface TileContent {
   socialAspect?: string;
   /** Array of social post data for multi-card social tiles (1–3 cards) */
   socialPosts?: Array<{ caption?: string; likes?: string; image?: string }>;
+  /** Social card visual style: full (all chrome), clean (no icons), minimal (image + caption only) */
+  socialStyle?: 'full' | 'clean' | 'minimal';
+  /** Social card background mode: white (default) or surface (matches tile surface) */
+  socialCardBg?: 'white' | 'surface';
   /** Visual pattern variant identifier — reserved for pattern tile */
   patternVariant?: string;
   /** Pattern zoom level (multiplier, default 1) — reserved for pattern tile */
@@ -71,27 +75,27 @@ interface Tile {
  */
 export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
   hero: {
-    headline: "New Hero",
-    subcopy: "Hero subcopy",
-    cta: "Click here",
+    headline: "Tell your story here",
+    subcopy: "The best brands start with a single sentence.",
+    cta: "Let\u2019s Go",
   },
   editorial: {
-    headline: "New Editorial",
-    body: "Editorial body text",
+    headline: "Say something worth reading",
+    body: "Your audience is smart. Talk to them like it.",
   },
   product: {
-    label: "Product",
+    label: "The Essential",
     price: "$99",
     image: "/images/_sagr_tight_macro_still_life_tortoiseshell_glasses_blank_conf_fd90e9cb-0e01-43ed-9b69-4cc88f03a4df_0.png",
   },
   "ui-preview": {
-    headerTitle: "Learn More",
+    headerTitle: "Overview",
     buttonLabel: "Get Started",
-    inputPlaceholder: "View Details",
+    inputPlaceholder: "Search...",
   },
   image: {
     image: "/images/visualelectric-1740667020762.png",
-    overlayText: "Image",
+    overlayText: "Mood",
   },
   utility: {},
   menu: {
@@ -104,29 +108,33 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
   icons: {},
   "logo-symbol": {},
   swatch: {},
+  social: {
+    image: "/images/visualelectric-1750703676698.png",
+    overlayText: "Vibes",
+  },
   "split-hero": {
-    headline: "Defining Style",
-    body: "A fusion of creativity and craftsmanship. We bring timeless pieces that elevate everyday design.",
-    cta: "Read More",
+    headline: "Start With Why Not",
+    body: "The best brand systems begin with a question nobody thought to ask. Then they answer it beautifully.",
+    cta: "See How",
     image: "/images/20250622_2048_Candid Office Consultation_simple_compose_01jycfdk73fj1az74wv8n0rgwt.png",
   },
   overlay: {
-    headline: "The Winter Collection",
-    body: "Garments and products so essential that they merge into the wholeness of our lives.",
-    label: "About Us",
+    headline: "Less, But Better",
+    body: "The things worth keeping are the ones that feel like they were always there.",
+    label: "The Edit",
     image: "/images/visualelectric-1751915506477.png",
   },
   "split-list": {
-    headline: "Design\nParadigm",
-    overlayText: "Core Services",
+    headline: "What\nWe Do",
+    overlayText: "Our Craft",
     items: ["Brand Identity Systems", "Digital Experience Design", "Creative Direction"],
     image: "/images/visualelectric-1740667228398.png",
   },
   pattern: {},
   stats: {
     headline: "12M+",
-    label: "Active Users",
-    body: "Growing 23% year over year",
+    label: "Happy Humans",
+    body: "And counting, every single day",
   },
   "app-screen": {},
 };
@@ -155,8 +163,8 @@ export const INITIAL_TILES: Tile[] = [
     id: "hero-1",
     type: "hero",
     content: {
-      headline: "The future of brand storytelling",
-      subcopy: "Create cohesive brand worlds in minutes, not weeks.",
+      headline: "Your brand, on its best day",
+      subcopy: "Build a visual world that feels unmistakably you.",
       cta: "Get Started",
       image: "/images/visualelectric-1740667024491.png",
     },
@@ -177,8 +185,8 @@ export const INITIAL_TILES: Tile[] = [
     id: "editorial-1",
     type: "editorial",
     content: {
-      headline: "Design with intention",
-      body: "Every element in our system is designed to work together, ensuring your brand stays consistent across all touchpoints.",
+      headline: "Design on purpose",
+      body: "When every piece knows its role, your brand stops explaining itself and starts being remembered.",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -187,7 +195,7 @@ export const INITIAL_TILES: Tile[] = [
     id: "product-1",
     type: "product",
     content: {
-      label: "Core Module",
+      label: "The Original",
       price: "$299",
       image: "/images/_sagr_tight_macro_still_life_tortoiseshell_glasses_blank_conf_fd90e9cb-0e01-43ed-9b69-4cc88f03a4df_0.png",
     },
@@ -243,8 +251,8 @@ export const INITIAL_TILES: Tile[] = [
     id: "slot-b",
     type: "editorial",
     content: {
-      headline: "Design with intention",
-      body: "Every element in our system is designed to work together, ensuring your brand stays consistent across all touchpoints.",
+      headline: "Design on purpose",
+      body: "When every piece knows its role, your brand stops explaining itself and starts being remembered.",
     },
     colSpan: 1,
     rowSpan: 1,

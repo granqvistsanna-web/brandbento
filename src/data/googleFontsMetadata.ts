@@ -3,11 +3,14 @@
  * Curated subset of popular fonts + designer-picked collection
  */
 
+export type FontSource = 'google' | 'fontshare';
+
 export interface GoogleFontMeta {
   family: string;
   category: 'sans-serif' | 'serif' | 'display' | 'handwriting' | 'monospace';
   variants: string[];
   curated?: boolean;
+  source?: FontSource;
 }
 
 // Full font list across categories
@@ -119,6 +122,50 @@ export const GOOGLE_FONTS: GoogleFontMeta[] = [
   { family: 'Caveat', category: 'handwriting', variants: ['400', '500', '600', '700'] },
   { family: 'Satisfy', category: 'handwriting', variants: ['400'] },
   { family: 'Great Vibes', category: 'handwriting', variants: ['400'] },
+
+  // ── Fontshare — Sans-serif ────────────────────────────────
+  { family: 'Satoshi', category: 'sans-serif', variants: ['300', '400', '500', '700', '900'], source: 'fontshare', curated: true },
+  { family: 'General Sans', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Switzer', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '600', '700', '800', '900'], source: 'fontshare', curated: true },
+  { family: 'Cabinet Grotesk', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '700', '800', '900'], source: 'fontshare', curated: true },
+  { family: 'Clash Grotesk', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Supreme', category: 'sans-serif', variants: ['100', '200', '300', '400', '500', '700', '800'], source: 'fontshare', curated: true },
+  { family: 'Synonym', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Plein', category: 'sans-serif', variants: ['300', '400', '500', '700', '900'], source: 'fontshare', curated: true },
+  { family: 'Ranade', category: 'sans-serif', variants: ['100', '300', '400', '500', '700'], source: 'fontshare', curated: true },
+  { family: 'Chillax', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Alpino', category: 'sans-serif', variants: ['100', '300', '400', '500', '700', '900'], source: 'fontshare', curated: true },
+  { family: 'Author', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Pilcrow Rounded', category: 'sans-serif', variants: ['400', '500', '600', '700', '900'], source: 'fontshare', curated: true },
+  { family: 'Bespoke Sans', category: 'sans-serif', variants: ['300', '400', '500', '700', '800'], source: 'fontshare', curated: true },
+  { family: 'Amulya', category: 'sans-serif', variants: ['300', '400', '500', '700'], source: 'fontshare' },
+  { family: 'Roundo', category: 'sans-serif', variants: ['200', '300', '400', '500', '600', '700'], source: 'fontshare' },
+
+  // ── Fontshare — Serif ─────────────────────────────────────
+  { family: 'Gambetta', category: 'serif', variants: ['300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Zodiak', category: 'serif', variants: ['100', '300', '400', '700', '800', '900'], source: 'fontshare', curated: true },
+  { family: 'Sentient', category: 'serif', variants: ['200', '300', '400', '500', '700'], source: 'fontshare', curated: true },
+  { family: 'Erode', category: 'serif', variants: ['300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Bonny', category: 'serif', variants: ['100', '300', '400', '500', '700'], source: 'fontshare', curated: true },
+  { family: 'Boska', category: 'serif', variants: ['200', '300', '400', '500', '700', '900'], source: 'fontshare', curated: true },
+  { family: 'Melodrama', category: 'serif', variants: ['300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Bespoke Serif', category: 'serif', variants: ['300', '400', '500', '700', '800'], source: 'fontshare', curated: true },
+  { family: 'Recia', category: 'serif', variants: ['300', '400', '500', '600', '700'], source: 'fontshare' },
+  { family: 'Telma', category: 'serif', variants: ['300', '400', '500', '700', '900'], source: 'fontshare' },
+  { family: 'Rowan', category: 'serif', variants: ['300', '400', '500', '600', '700'], source: 'fontshare' },
+  { family: 'Quilon', category: 'serif', variants: ['400', '500', '600', '700'], source: 'fontshare' },
+
+  // ── Fontshare — Display ───────────────────────────────────
+  { family: 'Clash Display', category: 'display', variants: ['200', '300', '400', '500', '600', '700'], source: 'fontshare', curated: true },
+  { family: 'Tanker', category: 'display', variants: ['400'], source: 'fontshare', curated: true },
+  { family: 'Panchang', category: 'display', variants: ['200', '300', '400', '500', '600', '700', '800'], source: 'fontshare', curated: true },
+  { family: 'Gambarino', category: 'display', variants: ['400'], source: 'fontshare', curated: true },
+  { family: 'Technor', category: 'display', variants: ['200', '300', '400', '500', '600', '700', '900'], source: 'fontshare', curated: true },
+  { family: 'Nippo', category: 'display', variants: ['200', '300', '400', '500', '700'], source: 'fontshare', curated: true },
+  { family: 'Stardom', category: 'display', variants: ['400'], source: 'fontshare' },
+  { family: 'Kola', category: 'display', variants: ['400'], source: 'fontshare' },
+  { family: 'Array', category: 'display', variants: ['400', '600', '700'], source: 'fontshare' },
+  { family: 'Excon', category: 'display', variants: ['100', '300', '400', '500', '700', '900'], source: 'fontshare' },
 ];
 
 // O(1) lookup by family name

@@ -79,7 +79,7 @@ export const PLACEMENT_TILE_TYPE_BY_ID = {
   product: 'product',
   a: 'logo',
   b: 'editorial',
-  c: 'stats',
+  c: 'ui-preview',
   d: 'social',
   e: 'swatch',
   f: 'utility',

@@ -95,11 +95,11 @@ export const LogoSymbolTile = memo(function LogoSymbolTile({ placementId }: Logo
           <img
             src={logoImage}
             alt="Brand symbol"
-            className="max-w-full max-h-full object-contain"
+            className="object-contain"
             style={{
               filter: 'drop-shadow(var(--shadow-lg))',
-              maxWidth: '65%',
-              maxHeight: '65%',
+              maxWidth: `${20 + ((logoSize - 12) / 68) * 75}%`,
+              maxHeight: `${20 + ((logoSize - 12) / 68) * 75}%`,
             }}
           />
         ) : (

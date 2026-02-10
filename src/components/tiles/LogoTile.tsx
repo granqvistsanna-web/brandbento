@@ -116,8 +116,12 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
           <img
             src={logoImage}
             alt={showWordmark ? logoText : 'Brand logo'}
-            className="max-w-full max-h-full object-contain"
-            style={{ filter: 'drop-shadow(var(--shadow-lg))' }}
+            className="object-contain"
+            style={{
+              filter: 'drop-shadow(var(--shadow-lg))',
+              maxWidth: `${20 + ((logoSize - 12) / 68) * 75}%`,
+              maxHeight: `${20 + ((logoSize - 12) / 68) * 75}%`,
+            }}
           />
         ) : (
           <span

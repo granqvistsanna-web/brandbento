@@ -64,7 +64,7 @@ export const ColorRoleSlot = memo(({ label, color, onChange, contrastWith }: Col
     <div className="relative">
       <motion.button
         onClick={() => setIsEditing(!isEditing)}
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors"
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-colors"
         style={{
           background: isEditing ? 'var(--sidebar-bg-active)' : 'transparent',
         }}

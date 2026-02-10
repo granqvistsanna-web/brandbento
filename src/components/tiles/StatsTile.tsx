@@ -30,11 +30,11 @@ import {
 /* ─── Shuffle presets ─── */
 
 const STAT_PRESETS = [
-  { headline: '12M+', label: 'Active Users', body: 'Growing 23% year over year' },
-  { headline: 'Est. 2019', label: 'Founded', body: 'Stockholm, Sweden' },
-  { headline: '$4.2B', label: 'Revenue', body: 'FY 2025 annual report' },
-  { headline: '99.9%', label: 'Uptime', body: 'Enterprise reliability guarantee' },
-  { headline: '340+', label: 'Clients Worldwide', body: 'Across 40 countries' },
+  { headline: '12M+', label: 'Happy Humans', body: 'And counting, every single day' },
+  { headline: 'Est. 2019', label: 'Founded', body: 'Started in a coffee shop. Stayed for the wifi.' },
+  { headline: '$4.2B', label: 'Revenue', body: 'Not bad for a team that still argues about fonts' },
+  { headline: '99.9%', label: 'Uptime', body: 'The 0.1% was a really long lunch' },
+  { headline: '340+', label: 'Clients Worldwide', body: 'Six continents and one very loyal penguin' },
 ];
 
 /* ─── Types ─── */
@@ -88,7 +88,7 @@ export function StatsTile({ placementId }: StatsTileProps) {
   );
 
   /* ─── Surface + text color ─── */
-  const { bg, text, surfaces, primary } = colors;
+  const { bg, text, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 0 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
 
@@ -100,8 +100,8 @@ export function StatsTile({ placementId }: StatsTileProps) {
   /* ─── Content (with defaults) ─── */
   const tileContent = tile?.content || {};
   const statValue = tileContent.headline || '12M+';
-  const statLabel = tileContent.label || 'Active Users';
-  const detail = tileContent.body || 'Growing 23% year over year';
+  const statLabel = tileContent.label || 'Happy Humans';
+  const detail = tileContent.body || 'And counting, every single day';
 
   /* ─── Toolbar ─── */
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
@@ -179,7 +179,27 @@ export function StatsTile({ placementId }: StatsTileProps) {
     </FloatingToolbar>
   );
 
-  /* ─── Landscape: side-by-side with accent bar ─── */
+  /* ─── Corner index — anchors the empty upper space ─── */
+  const cornerIndex = (
+    <span
+      className="absolute select-none"
+      style={{
+        top: 'clamp(16px, 6%, 28px)',
+        right: 'clamp(16px, 6%, 28px)',
+        fontFamily: bodyFont,
+        fontWeight: parseInt(typography.weightBody) || 400,
+        fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 11)}px`,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase' as const,
+        color: adaptiveText,
+        opacity: 0.25,
+      }}
+    >
+      {'\u2014'}
+    </span>
+  );
+
+  /* ─── Landscape: side-by-side ─── */
   if (shape === 'landscape') {
     return (
       <div
@@ -190,29 +210,21 @@ export function StatsTile({ placementId }: StatsTileProps) {
           padding: 'clamp(20px, 8%, 40px)',
         }}
       >
-        {/* Vertical accent bar */}
+        {/* Stat number */}
+        <span style={{ ...statStyle, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          {statValue}
+        </span>
+
+        {/* Label + detail — separated from stat by generous gap */}
         <div
+          className="flex flex-col"
           style={{
-            width: 3,
-            height: 32,
-            backgroundColor: primary,
-            borderRadius: 1.5,
-            flexShrink: 0,
-            marginRight: `clamp(14px, 4%, 28px)`,
+            gap: `${clampFontSize(typeScale.base * 0.3, 3, 8)}px`,
+            marginLeft: 'clamp(16px, 5%, 40px)',
           }}
-        />
-
-        <div className="flex items-center gap-[clamp(16px,6%,48px)] w-full">
-          {/* Left: massive stat number */}
-          <span style={{ ...statStyle, flexShrink: 0, whiteSpace: 'nowrap' }}>
-            {statValue}
-          </span>
-
-          {/* Right: label + detail stacked */}
-          <div className="flex flex-col" style={{ gap: `${clampFontSize(typeScale.base * 0.3, 3, 8)}px` }}>
-            <span style={labelStyle}>{statLabel}</span>
-            <span style={detailStyle}>{detail}</span>
-          </div>
+        >
+          <span style={labelStyle}>{statLabel}</span>
+          <span style={detailStyle}>{detail}</span>
         </div>
 
         {toolbar}
@@ -231,44 +243,30 @@ export function StatsTile({ placementId }: StatsTileProps) {
         paddingBottom: 'clamp(28px, 12%, 56px)',
       }}
     >
-      {/* Accent bar — editorial signal */}
-      <div
-        style={{
-          width: 28,
-          height: 3,
-          backgroundColor: primary,
-          borderRadius: 1.5,
-          marginBottom: `${clampFontSize(typeScale.base * 1, 12, 24)}px`,
-        }}
-      />
+      {cornerIndex}
 
       {/* Label */}
       <span style={labelStyle}>{statLabel}</span>
 
-      {/* Stat number — the star */}
+      {/* Stat number — the star. Generous top gap to separate from label. */}
       <span
         style={{
           ...statStyle,
-          marginTop: `${clampFontSize(typeScale.base * 0.4, 4, 10)}px`,
+          marginTop: `${clampFontSize(typeScale.base * 0.5, 5, 12)}px`,
         }}
       >
         {statValue}
       </span>
 
-      {/* Thin rule — editorial separator */}
-      <div
+      {/* Detail line — generous pause after the number */}
+      <span
         style={{
-          width: 20,
-          height: 1,
-          backgroundColor: adaptiveText,
-          opacity: 0.12,
-          marginTop: `${clampFontSize(typeScale.base * 0.8, 8, 20)}px`,
-          marginBottom: `${clampFontSize(typeScale.base * 0.4, 4, 10)}px`,
+          ...detailStyle,
+          marginTop: `${clampFontSize(typeScale.base * 1, 10, 24)}px`,
         }}
-      />
-
-      {/* Detail line */}
-      <span style={detailStyle}>{detail}</span>
+      >
+        {detail}
+      </span>
 
       {toolbar}
     </div>

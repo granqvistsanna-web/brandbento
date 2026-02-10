@@ -14,6 +14,8 @@
  * @module services/googleFonts
  */
 
+import type { FontSource } from '@/data/googleFontsMetadata';
+
 /**
  * Cache of loaded fonts to avoid duplicate network requests.
  * Key format: "FontFamily:400,700"
@@ -21,22 +23,48 @@
 const loadedFonts = new Set<string>();
 
 /**
- * Builds a Google Fonts CSS API v2 URL.
+ * Builds a Fontshare CSS API URL.
  *
- * @param family - Font family name (e.g., "Inter", "Playfair Display")
+ * @param family - Font family name (e.g., "Satoshi", "General Sans")
  * @param weights - Array of font weights to load (default: ['400'])
  * @param display - font-display strategy (default: 'swap')
- * @returns Complete Google Fonts CSS URL
- *
- * @example
- * const url = buildFontURL('Inter', ['400', '700']);
- * // https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap
+ * @returns Complete Fontshare CSS URL
  */
-export function buildFontURL(
+function buildFontshareURL(
   family: string,
   weights: string[] = ['400'],
   display: 'swap' | 'block' | 'auto' = 'swap'
 ): string {
+  const slug = family.toLowerCase().replace(/ /g, '-');
+  const weightSpec = weights.sort((a, b) => parseInt(a) - parseInt(b)).join(',');
+  return `https://api.fontshare.com/v2/css?f[]=${slug}@${weightSpec}&display=${display}`;
+}
+
+/**
+ * Builds a font CSS URL for the given source.
+ *
+ * @param family - Font family name (e.g., "Inter", "Satoshi")
+ * @param weights - Array of font weights to load (default: ['400'])
+ * @param display - font-display strategy (default: 'swap')
+ * @param source - Font source: 'google' or 'fontshare' (default: 'google')
+ * @returns Complete CSS URL for loading the font
+ *
+ * @example
+ * buildFontURL('Inter', ['400', '700']);
+ * // https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap
+ *
+ * buildFontURL('Satoshi', ['400', '700'], 'swap', 'fontshare');
+ * // https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap
+ */
+export function buildFontURL(
+  family: string,
+  weights: string[] = ['400'],
+  display: 'swap' | 'block' | 'auto' = 'swap',
+  source: FontSource = 'google'
+): string {
+  if (source === 'fontshare') {
+    return buildFontshareURL(family, weights, display);
+  }
   const encodedFamily = family.replace(/ /g, '+');
   const weightSpec = weights.sort((a, b) => parseInt(a) - parseInt(b)).join(';');
   return `https://fonts.googleapis.com/css2?family=${encodedFamily}:wght@${weightSpec}&display=${display}`;
@@ -57,7 +85,7 @@ export function buildFontURL(
  * await loadFont('Inter', ['400', '500', '700']);
  * // Font is now ready to use in CSS
  */
-export function loadFont(family: string, weights: string[] = ['400']): Promise<void> {
+export function loadFont(family: string, weights: string[] = ['400'], source: FontSource = 'google'): Promise<void> {
   return new Promise((resolve, reject) => {
     // Build cache key
     const cacheKey = `${family}:${weights.join(',')}`;
@@ -68,7 +96,7 @@ export function loadFont(family: string, weights: string[] = ['400']): Promise<v
       return;
     }
 
-    const url = buildFontURL(family, weights);
+    const url = buildFontURL(family, weights, 'swap', source);
 
     // Check if link already exists in DOM
     const existing = document.querySelector(`link[href="${url}"]`);
@@ -119,11 +147,12 @@ export function loadFont(family: string, weights: string[] = ['400']): Promise<v
 export async function loadFontWithFallback(
   family: string,
   weights: string[] = ['400'],
-  timeout = 3000
+  timeout = 3000,
+  source: FontSource = 'google'
 ): Promise<{ loaded: boolean; error?: string }> {
   try {
     await Promise.race([
-      loadFont(family, weights),
+      loadFont(family, weights, source),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Font load timeout')), timeout)
       )

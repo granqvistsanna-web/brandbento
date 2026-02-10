@@ -67,11 +67,12 @@ export function useGoogleFonts(
     setLoading(true);
     setError(null);
 
-    // Find font metadata to get available weights
+    // Find font metadata to get available weights and source
     const fontMeta = GOOGLE_FONTS_MAP.get(fontFamily);
     const weightsToLoad = weights || (fontMeta?.variants.filter(v => !v.includes('italic')) || ['400']);
+    const source = fontMeta?.source || 'google';
 
-    const result = await loadFontWithFallback(fontFamily, weightsToLoad);
+    const result = await loadFontWithFallback(fontFamily, weightsToLoad, 3000, source);
 
     if (requestId !== requestRef.current) {
       return false;

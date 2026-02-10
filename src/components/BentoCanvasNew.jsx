@@ -20,7 +20,7 @@
  * - editorial/b → EditorialTile (typography showcase)
  * - social/d → SocialPostTile (social media mockup)
  * - buttons/c → InterfaceTile (UI components)
- * - colors/f → ColorTile (color palette)
+ * - colors/f → SwatchTile (color palette)
  *
  * @component
  * @example

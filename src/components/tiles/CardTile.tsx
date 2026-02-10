@@ -52,7 +52,7 @@ export function CardTile({ placementId }: CardTileProps) {
     tileSurfaceIndex,
     surfaces,
     bg,
-    defaultIndex: 2,
+    defaultIndex: 1,
   });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
   const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));

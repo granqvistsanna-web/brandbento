@@ -10,8 +10,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
-import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { getFontCategory } from '@/utils/typography';
+/** Instagram-like system font stack — always used for card chrome regardless of brand fonts */
+const SOCIAL_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 import { hexToHSL } from '@/utils/colorMapping';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
@@ -30,12 +30,12 @@ import {
  *  The gap count is one less than card count (N cards have N-1 gaps). */
 const CARD_W = 320;
 const CARD_H = 420;
-const CARD_GAP = 12;
+const CARD_GAP = 20;
 
 /** Fallback captions/likes for posts without explicit content */
 const FALLBACK_CAPTIONS = [
-  'Less noise, more signal. Building brands that breathe.',
-  'Thoughtful systems for the next chapter.',
+  'Good things take time. Great things take a really good brief.',
+  'Making the kind of work we\u2019d actually want in our own feed.',
 ];
 const FALLBACK_LIKES = ['843 likes', '2,017 likes'];
 
@@ -45,11 +45,10 @@ interface SocialPostTileProps {
 }
 
 export function SocialPostTile({ placementId }: SocialPostTileProps) {
-  const { colors, logoText, typography } = useBrandStore(
+  const { colors, logoText } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       logoText: state.brand.logo.text,
-      typography: state.brand.typography,
     }))
   );
   const setPlacementContent = useBrandStore((s) => s.setPlacementContent);
@@ -72,7 +71,7 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
   const handle = placementContent?.socialHandle || logoText?.toLowerCase() || 'brand';
   const caption =
     placementContent?.socialCaption ||
-    'Defining the new standard for calm, focused brand systems.';
+    'Your brand called. It wants to look this good everywhere.';
   const likesRaw = placementContent?.socialLikes || '1,204 likes';
   const likes = likesRaw.toLowerCase().includes('like') ? likesRaw : `${likesRaw} likes`;
   const socialPosts = placementContent?.socialPosts;
@@ -80,23 +79,26 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
     ? Math.min(3, Math.max(1, socialPosts.length))
     : Math.min(3, Math.max(1, placementContent?.socialPostCount || 1));
 
-  const { fontFamily: uiFontStack } = useGoogleFonts(
-    typography.ui,
-    getFontCategory(typography.ui)
-  );
+  const socialStyle = placementContent?.socialStyle || tile?.content?.socialStyle || 'full';
+  const socialCardBg = placementContent?.socialCardBg || tile?.content?.socialCardBg || 'white';
+  const isMinimal = socialStyle === 'minimal';
+  const showCaption = socialStyle === 'full';
+
   const surfaceBg = resolveSurfaceColor({
     placementId,
     tileSurfaceIndex,
     surfaces,
     bg,
-    defaultIndex: 3,
+    defaultIndex: 1,
   });
 
   const surfaceL = hexToHSL(surfaceBg).l;
   const isLight = surfaceL > 55;
 
   // Card colors
-  const cardBg = isLight ? '#FFFFFF' : `color-mix(in srgb, ${surfaceBg} 80%, #FFFFFF)`;
+  const cardBg = socialCardBg === 'surface'
+    ? surfaceBg
+    : isLight ? '#FFFFFF' : `color-mix(in srgb, ${surfaceBg} 80%, #FFFFFF)`;
   const cardBorder = isLight
     ? `color-mix(in srgb, ${textColor} 10%, transparent)`
     : `color-mix(in srgb, ${textColor} 8%, transparent)`;
@@ -172,8 +174,10 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
   const handleContentChange = useCallback((key: string, value: string | number, isCommit = false) => {
     if (placementId) {
       setPlacementContent(placementId, { [key]: value }, isCommit);
+    } else if (tile?.id) {
+      updateTile(tile.id, { [key]: value }, isCommit);
     }
-  }, [placementId, setPlacementContent]);
+  }, [placementId, setPlacementContent, tile?.id, updateTile]);
 
   const renderCard = (index: number) => {
     const post = socialPosts?.[index];
@@ -194,45 +198,52 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
           borderRadius: 12,
           border: `1px solid ${cardBorder}`,
           boxShadow: 'var(--shadow-md)',
-          fontFamily: uiFontStack,
+          fontFamily: SOCIAL_FONT,
         }}
       >
         {/* ─── Header ─── */}
-        <div
-          className="flex items-center justify-between shrink-0"
-          style={{ padding: '10px 12px' }}
-        >
-          <div className="flex items-center" style={{ gap: 8 }}>
-            <div
-              className="rounded-full flex items-center justify-center shrink-0"
-              style={{
-                width: 26,
-                height: 26,
-                background: `linear-gradient(135deg, ${primary}20, ${primary}35)`,
-                border: `1.5px solid ${primary}30`,
-                color: primary,
-                fontSize: 10,
-                fontWeight: 700,
-              }}
-            >
-              {initial}
-            </div>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: cardText,
-                lineHeight: 1.2,
-              }}
-            >
-              {handle}
-            </span>
+        {isMinimal ? (
+          <div className="flex items-center shrink-0" style={{ padding: '10px 12px', gap: 8 }}>
+            <div className="rounded-full shrink-0" style={{ width: 24, height: 24, background: `color-mix(in srgb, ${textColor} 10%, transparent)` }} />
+            <div className="rounded" style={{ width: 64, height: 8, background: `color-mix(in srgb, ${textColor} 8%, transparent)`, borderRadius: 4 }} />
           </div>
-          <MoreHorizontal
-            style={{ width: 15, height: 15, color: cardTextMuted }}
-            strokeWidth={1.5}
-          />
-        </div>
+        ) : (
+          <div
+            className="flex items-center justify-between shrink-0"
+            style={{ padding: '10px 12px' }}
+          >
+            <div className="flex items-center" style={{ gap: 8 }}>
+              <div
+                className="rounded-full flex items-center justify-center shrink-0"
+                style={{
+                  width: 26,
+                  height: 26,
+                  background: `linear-gradient(135deg, ${primary}20, ${primary}35)`,
+                  border: `1.5px solid ${primary}30`,
+                  color: primary,
+                  fontSize: 10,
+                  fontWeight: 700,
+                }}
+              >
+                {initial}
+              </div>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: cardText,
+                  lineHeight: 1.2,
+                }}
+              >
+                {handle}
+              </span>
+            </div>
+            <MoreHorizontal
+              style={{ width: 15, height: 15, color: cardTextMuted }}
+              strokeWidth={1.5}
+            />
+          </div>
+        )}
 
         {/* ─── Image ─── */}
         <div
@@ -257,43 +268,64 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
 
         {/* ─── Actions + caption ─── */}
         <div className="shrink-0" style={{ padding: '9px 12px' }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-            <div className="flex items-center" style={{ gap: 12 }}>
-              {[Heart, MessageCircle, Send].map((Icon, i) => (
-                <Icon
-                  key={i}
+          {isMinimal ? (
+            <>
+              {/* Skeleton icon row */}
+              <div className="flex items-center" style={{ gap: 8, marginBottom: 8 }}>
+                {[14, 14, 14].map((s, i) => (
+                  <div key={i} className="rounded" style={{ width: s, height: s, borderRadius: 3, background: `color-mix(in srgb, ${textColor} 8%, transparent)` }} />
+                ))}
+              </div>
+              {/* Skeleton text lines */}
+              <div className="rounded" style={{ width: '40%', height: 7, borderRadius: 3, background: `color-mix(in srgb, ${textColor} 10%, transparent)`, marginBottom: 6 }} />
+              <div className="rounded" style={{ width: '85%', height: 7, borderRadius: 3, background: `color-mix(in srgb, ${textColor} 7%, transparent)`, marginBottom: 4 }} />
+              <div className="rounded" style={{ width: '55%', height: 7, borderRadius: 3, background: `color-mix(in srgb, ${textColor} 7%, transparent)` }} />
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between" style={{ marginBottom: showCaption ? 6 : 0 }}>
+                <div className="flex items-center" style={{ gap: 12 }}>
+                  {[Heart, MessageCircle, Send].map((Icon, i) => (
+                    <Icon
+                      key={i}
+                      strokeWidth={1.5}
+                      style={{ width: 16, height: 16, color: iconColor, display: 'block' }}
+                    />
+                  ))}
+                </div>
+                <Bookmark
                   strokeWidth={1.5}
                   style={{ width: 16, height: 16, color: iconColor, display: 'block' }}
                 />
-              ))}
-            </div>
-            <Bookmark
-              strokeWidth={1.5}
-              style={{ width: 16, height: 16, color: iconColor, display: 'block' }}
-            />
-          </div>
+              </div>
 
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: cardText,
-              lineHeight: 1.3,
-              marginBottom: 2,
-            }}
-          >
-            {cardLikes}
-          </p>
+              {showCaption && (
+                <>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: cardText,
+                      lineHeight: 1.3,
+                      marginBottom: 2,
+                    }}
+                  >
+                    {cardLikes}
+                  </p>
 
-          <p
-            className="line-clamp-2"
-            style={{ fontSize: 11, color: cardTextMuted, lineHeight: 1.4 }}
-          >
-            <span style={{ fontWeight: 600, color: cardText, marginRight: 4 }}>
-              {handle}
-            </span>
-            {cardCaption}
-          </p>
+                  <p
+                    className="line-clamp-2"
+                    style={{ fontSize: 11, color: cardTextMuted, lineHeight: 1.4 }}
+                  >
+                    <span style={{ fontWeight: 600, color: cardText, marginRight: 4 }}>
+                      {handle}
+                    </span>
+                    {cardCaption}
+                  </p>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
     );
@@ -367,11 +399,28 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
               { value: '3', label: '3' },
             ]}
             value={String(postCount)}
-            onChange={(v) => {
-              if (placementId) {
-                setPlacementContent(placementId, { socialPostCount: parseInt(v) }, true);
-              }
-            }}
+            onChange={(v) => handleContentChange('socialPostCount', parseInt(v), true)}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Appearance</ToolbarLabel>
+          <ToolbarSegmented
+            label="Style"
+            options={[
+              { value: 'full', label: 'Full' },
+              { value: 'clean', label: 'No Caption' },
+              { value: 'minimal', label: 'Minimal' },
+            ]}
+            value={socialStyle}
+            onChange={(v) => handleContentChange('socialStyle', v, true)}
+          />
+          <ToolbarSegmented
+            label="Card BG"
+            options={[
+              { value: 'white', label: 'White' },
+              { value: 'surface', label: 'Surface' },
+            ]}
+            value={socialCardBg}
+            onChange={(v) => handleContentChange('socialCardBg', v, true)}
           />
         </FloatingToolbar>
       )}
