@@ -1,11 +1,20 @@
+/**
+ * Palette Style Filter
+ *
+ * Horizontal row of pill-shaped toggle buttons for filtering
+ * palettes by visual style. Clicking an active pill deselects it (shows all).
+ */
 import { memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { STYLE_ORDER, STYLE_LABELS, type PaletteStyle } from '@/utils/paletteStyleClassifier';
 
 interface PaletteStyleFilterProps {
+  /** Currently selected style, or null for "show all" */
   activeStyle: PaletteStyle | null;
+  /** Called with new style or null to clear filter */
   onStyleChange: (style: PaletteStyle | null) => void;
+  /** Number of palettes per style (shown as count badge) */
   styleCounts?: Record<PaletteStyle, number>;
 }
 
@@ -16,14 +25,7 @@ export const PaletteStyleFilter = memo(({
 }: PaletteStyleFilterProps) => {
   return (
     <div className="px-3 py-2">
-      <div className="flex flex-wrap items-center gap-1.5 pb-0.5">
-        <span
-          className="text-[10px] font-semibold uppercase tracking-[0.08em] shrink-0 mr-0.5"
-          style={{ color: 'var(--sidebar-text-muted)' }}
-        >
-          Style:
-        </span>
-
+      <div className="flex flex-wrap items-center gap-1">
         {STYLE_ORDER.map((style) => {
           const isActive = activeStyle === style;
           const count = styleCounts?.[style] ?? 0;
@@ -32,7 +34,7 @@ export const PaletteStyleFilter = memo(({
             <motion.button
               key={style}
               onClick={() => onStyleChange(isActive ? null : style)}
-              className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors"
+              className="shrink-0 flex items-center gap-1 px-2 py-[3px] rounded-full text-[11px] font-medium transition-colors"
               style={{
                 background: isActive ? 'var(--sidebar-bg-active)' : 'transparent',
                 border: `1px solid ${isActive ? 'var(--sidebar-text-muted)' : 'var(--sidebar-border)'}`,
@@ -58,10 +60,10 @@ export const PaletteStyleFilter = memo(({
                   </motion.span>
                 )}
               </AnimatePresence>
-              <span className="uppercase tracking-[0.04em]">{STYLE_LABELS[style]}</span>
+              <span>{STYLE_LABELS[style]}</span>
               {count > 0 && (
                 <span
-                  className="text-[9px] opacity-40"
+                  className="text-[9px] opacity-30 tabular-nums"
                 >
                   {count}
                 </span>

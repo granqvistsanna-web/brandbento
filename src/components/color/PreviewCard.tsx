@@ -1,10 +1,20 @@
+/**
+ * Preview Card
+ *
+ * Mini UI preview showing how a color role looks as a card background
+ * with adaptive text, label chip, and button. Used in CustomModePanel
+ * to give live feedback on color choices. Three variants map to
+ * primary, surface, and accent backgrounds.
+ */
 import { memo } from 'react';
 import { hexToHSL } from '@/utils/colorMapping';
-import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
+import { COLOR_DEFAULTS, LIGHTNESS_THRESHOLD } from '@/utils/colorDefaults';
 import type { Colors } from '@/store/useBrandStore';
 
 interface PreviewCardProps {
+  /** Current brand colors from the store */
   colors: Colors;
+  /** Which color role to use as the card background */
   variant: 'primary' | 'surface' | 'accent';
 }
 
@@ -17,7 +27,7 @@ export const PreviewCard = memo(({ colors, variant }: PreviewCardProps) => {
 
   const bg = bgMap[variant];
   const { l } = hexToHSL(bg);
-  const isLight = l > 55;
+  const isLight = l > LIGHTNESS_THRESHOLD;
 
   const textColor = isLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.SURFACE;
   const mutedText = isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
@@ -26,7 +36,7 @@ export const PreviewCard = memo(({ colors, variant }: PreviewCardProps) => {
   const btnBg = variant === 'surface' ? colors.primary : colors.bg;
   const btnText = (() => {
     const { l: btnL } = hexToHSL(btnBg);
-    return btnL > 55 ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.SURFACE;
+    return btnL > LIGHTNESS_THRESHOLD ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.SURFACE;
   })();
 
   const labelBg = isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)';

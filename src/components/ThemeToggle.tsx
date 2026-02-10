@@ -21,7 +21,8 @@ import { Sun, Moon, Monitor, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../hooks/useTheme';
 
-const TRANSITION_FAST = { duration: 0.1, ease: [0.4, 0, 0.2, 1] };
+const EASE_CURVE: [number, number, number, number] = [0.4, 0, 0.2, 1];
+const TRANSITION_FAST = { duration: 0.1, ease: EASE_CURVE };
 
 /** Available theme options with their display configuration */
 const themeOptions = [

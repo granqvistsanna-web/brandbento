@@ -1,18 +1,26 @@
+/**
+ * Palette Grid
+ *
+ * Flat scrollable list of palettes grouped by style (pastel, neon, etc.).
+ * Each group has a sticky header that pins while scrolling.
+ * Responds to PaletteStyleFilter selection to narrow to one category.
+ */
 import { memo, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PaletteRow } from './PaletteRow';
 import {
-  getStyledPalettes,
   getStyleGroups,
   STYLE_ORDER,
   STYLE_LABELS,
   type PaletteStyle,
-  type StyledPalette,
 } from '@/utils/paletteStyleClassifier';
 
 interface PaletteGridProps {
+  /** Currently active style filter, or null for all styles */
   activeStyle: PaletteStyle | null;
+  /** ID of the currently applied palette (for highlight) */
   selectedPaletteId: string | null;
+  /** Called when user clicks a palette row */
   onSelectPalette: (id: string) => void;
 }
 
@@ -39,11 +47,7 @@ export const PaletteGrid = memo(({
   return (
     <div
       ref={scrollRef}
-      className="overflow-y-auto flex-1 min-h-0"
-      style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'var(--sidebar-border) transparent',
-      }}
+      className="overflow-y-auto flex-1 min-h-0 custom-scrollbar"
     >
       <AnimatePresence mode="popLayout">
         {visibleStyles.map((style) => (
@@ -54,8 +58,11 @@ export const PaletteGrid = memo(({
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
           >
-            {/* Style section header */}
-            <div className="px-3 pt-3 pb-1 flex items-center gap-2">
+            {/* Sticky group header */}
+            <div
+              className="sticky top-0 px-3 pt-3 pb-1 flex items-center gap-2"
+              style={{ background: 'var(--sidebar-bg)', zIndex: 'var(--z-panel)' }}
+            >
               <span
                 className="text-[10px] font-semibold uppercase tracking-[0.1em]"
                 style={{ color: 'var(--sidebar-text-muted)' }}
@@ -74,21 +81,15 @@ export const PaletteGrid = memo(({
               </span>
             </div>
 
-            {/* Palette rows */}
+            {/* All palettes in this group */}
             <div className="px-1 pb-1 space-y-0.5">
-              {groups[style].map((palette, index) => (
-                <motion.div
+              {groups[style].map((palette) => (
+                <PaletteRow
                   key={palette.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: Math.min(index * 0.02, 0.3) }}
-                >
-                  <PaletteRow
-                    palette={palette}
-                    isSelected={selectedPaletteId === palette.id}
-                    onSelect={onSelectPalette}
-                  />
-                </motion.div>
+                  palette={palette}
+                  isSelected={selectedPaletteId === palette.id}
+                  onSelect={onSelectPalette}
+                />
               ))}
             </div>
           </motion.div>

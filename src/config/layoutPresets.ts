@@ -1,14 +1,33 @@
+/**
+ * Layout Presets (Legacy — span-based)
+ *
+ * Original grid system where each tile declares its own colSpan/rowSpan
+ * per breakpoint and CSS Grid auto-places them. Still used by: balanced,
+ * heroLeft, heroCenter, stacked, geos, spread.
+ *
+ * @deprecated for new layouts — use bentoLayouts.ts instead.
+ *
+ * The newer `bentoLayouts.ts` defines explicit cell placements (column/row
+ * start + span) giving pixel-precise control over tile positions. New presets
+ * (e.g. minimal, duo, mosaic) should be added there, not here.
+ *
+ * Summary of which system each preset uses:
+ * - This file (span-based):   balanced, heroLeft, heroCenter, stacked, geos, spread
+ * - bentoLayouts.ts (explicit): minimal, duo, mosaic, and any future presets
+ *
+ * BREAKPOINTS is shared between both files and remains here as the source of truth.
+ */
 import type { LayoutPreset, LayoutPresetName } from '../types/layout';
 
-// Breakpoint definitions (px values)
+/** Breakpoint thresholds in px — shared with bentoLayouts.ts */
 export const BREAKPOINTS = {
   mobile: 0,
   tablet: 768,
   desktop: 1024,
 } as const;
 
-// Layout preset configurations
-export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
+/** Legacy layout preset configurations (span-based). Newer presets like minimal/duo/mosaic use bentoLayouts.ts. */
+export const LAYOUT_PRESETS: Partial<Record<LayoutPresetName, LayoutPreset>> = {
   balanced: {
     name: 'balanced',
     columns: {
@@ -30,7 +49,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
       dense: 200,
     },
     // 3x3 = 9 cells on desktop/tablet
-    // Tiles: hero(1x2=2) + image(2x1=2) + logo(1x1=1) + editorial(1x2=2) + ui-preview(1x2=2) = 9 ✓
+    // Tiles: hero(1x2=2) + social(2x1=2) + logo(1x1=1) + editorial(1x2=2) + ui-preview(1x2=2) = 9 ✓
     tileSpans: {
       hero: {
         mobile: { colSpan: 2, rowSpan: 2 },
@@ -57,7 +76,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
         tablet: { colSpan: 1, rowSpan: 1 },
         desktop: { colSpan: 1, rowSpan: 1 },
       },
-      image: {
+      social: {
         mobile: { colSpan: 2, rowSpan: 1 },
         tablet: { colSpan: 2, rowSpan: 1 },
         desktop: { colSpan: 2, rowSpan: 1 },
@@ -132,7 +151,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
         tablet: { colSpan: 1, rowSpan: 1 },
         desktop: { colSpan: 1, rowSpan: 1 },
       },
-      image: {
+      social: {
         mobile: { colSpan: 2, rowSpan: 1 },
         tablet: { colSpan: 2, rowSpan: 1 },
         desktop: { colSpan: 2, rowSpan: 1 },
@@ -207,7 +226,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
         tablet: { colSpan: 1, rowSpan: 1 },
         desktop: { colSpan: 1, rowSpan: 1 },
       },
-      image: {
+      social: {
         mobile: { colSpan: 2, rowSpan: 1 },
         tablet: { colSpan: 1, rowSpan: 2 },
         desktop: { colSpan: 1, rowSpan: 2 },
@@ -282,7 +301,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
         tablet: { colSpan: 1, rowSpan: 1 },
         desktop: { colSpan: 1, rowSpan: 1 },
       },
-      image: {
+      social: {
         mobile: { colSpan: 2, rowSpan: 1 },
         tablet: { colSpan: 3, rowSpan: 1 },
         desktop: { colSpan: 3, rowSpan: 1 },
@@ -333,7 +352,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
     // Grid layout matching the Geos reference design exactly
     // Desktop: 3 cols x 3 rows = 9 cells
     // Layout:
-    // | Hero (1×2) | Image (2×1)              |
+    // | Hero (1×2) | Social (2×1)             |
     // | Buttons    | Landscape  | Editorial (1×2) |
     // | Logo       | Logo Light | (continues)     |
     tileSpans: {
@@ -362,7 +381,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
         tablet: { colSpan: 1, rowSpan: 1 },
         desktop: { colSpan: 1, rowSpan: 1 },
       },
-      image: {
+      social: {
         mobile: { colSpan: 2, rowSpan: 1 },
         tablet: { colSpan: 2, rowSpan: 1 },
         desktop: { colSpan: 2, rowSpan: 1 },
@@ -400,8 +419,8 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
     },
   },
 
-  foodDrink: {
-    name: 'foodDrink',
+  spread: {
+    name: 'spread',
     columns: {
       mobile: 2,
       tablet: 3,
@@ -426,7 +445,7 @@ export const LAYOUT_PRESETS: Record<LayoutPresetName, LayoutPreset> = {
         tablet: { colSpan: 2, rowSpan: 2 },
         desktop: { colSpan: 2, rowSpan: 2 },
       },
-      image: {
+      social: {
         mobile: { colSpan: 2, rowSpan: 1 },
         tablet: { colSpan: 1, rowSpan: 2 },
         desktop: { colSpan: 2, rowSpan: 1 },

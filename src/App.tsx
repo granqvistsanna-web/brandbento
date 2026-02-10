@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useViewportHeight } from "./hooks/useViewportHeight";
 // @ts-expect-error - legacy component
@@ -10,6 +10,7 @@ import { useTheme } from "./hooks/useTheme";
 import { ReadOnlyProvider } from './components/ReadOnlyProvider';
 import { useReadOnly } from './hooks/useReadOnly';
 import { ThemeToggle } from "./components/ThemeToggle";
+import { DevToolsPanel } from "./components/DevToolsPanel";
 import toast, { Toaster } from 'react-hot-toast';
 import { generateShareUrl, copyToClipboard } from './utils/sharing';
 import { exportToPng } from './utils/export';
@@ -19,15 +20,16 @@ import {
   RotateCw,
   Download,
   Share2,
-  Layers,
+  Shuffle,
   Maximize2,
   HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import "./index.css";
 
-const TRANSITION_FAST = { duration: 0.1, ease: [0.4, 0, 0.2, 1] };
-const TRANSITION_BASE = { duration: 0.15, ease: [0.4, 0, 0.2, 1] };
+const EASE_CURVE: [number, number, number, number] = [0.4, 0, 0.2, 1];
+const TRANSITION_FAST = { duration: 0.1, ease: EASE_CURVE };
+const TRANSITION_BASE = { duration: 0.15, ease: EASE_CURVE };
 
 // Figma-style toolbar button
 const ToolbarButton = ({
@@ -333,9 +335,10 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement |
 };
 
 // File menu dropdown
-const FileMenu = ({ onReset }: { onReset: () => void }) => {
+const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const brand = useBrandStore((s) => s.brand);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -346,6 +349,59 @@ const FileMenu = ({ onReset }: { onReset: () => void }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleExportFile = (format: "css" | "json") => {
+    const content = format === "css" ? exportAsCSS(brand) : exportAsJSON(brand);
+    const filename = `brand-tokens.${format}`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSave = () => {
+    const state = useBrandStore.getState();
+    const data = JSON.stringify({ brand: state.brand, tiles: state.tiles }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "moodboard.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Moodboard saved!");
+  };
+
+  const handleOpen = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target?.result as string);
+          if (data.brand) {
+            const store = useBrandStore.getState();
+            store.setBrand(data.brand);
+            if (data.tiles) store.setTiles(data.tiles);
+            toast.success("Moodboard loaded!");
+          } else {
+            toast.error("Invalid moodboard file");
+          }
+        } catch {
+          toast.error("Failed to parse file");
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
 
   return (
     <div className="relative" ref={menuRef}>
@@ -382,14 +438,14 @@ const FileMenu = ({ onReset }: { onReset: () => void }) => {
             }}
           >
             {[
-              { label: "New Moodboard", shortcut: "N", action: () => { } },
-              { label: "Open...", shortcut: "O", action: () => { } },
+              { label: "New Moodboard", shortcut: "N", action: onReset },
+              { label: "Open...", shortcut: "O", action: handleOpen },
               { divider: true },
-              { label: "Save", shortcut: "S", action: () => { } },
-              { label: "Export as CSS", action: () => { } },
-              { label: "Export as JSON", action: () => { } },
+              { label: "Save", shortcut: "S", action: handleSave },
+              { label: "Export as CSS", action: () => handleExportFile("css") },
+              { label: "Export as JSON", action: () => handleExportFile("json") },
               { divider: true },
-              { label: "Share...", action: () => { } },
+              { label: "Share...", action: onShare },
               { label: "Reset to Defaults", action: onReset },
             ].map((item, i) =>
               item.divider ? (
@@ -436,14 +492,28 @@ function AppContent() {
   const isReadOnly = useReadOnly();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
+  const [showDevTools, setShowDevTools] = useState(false);
 
-  const { undo, redo, history, loadRandomTemplate, resetToDefaults } =
+  const toggleDevTools = useCallback(() => setShowDevTools((v) => !v), []);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'd') {
+        e.preventDefault();
+        toggleDevTools();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [toggleDevTools]);
+
+  const { undo, redo, history, shuffleBrand, resetToDefaults } =
     useBrandStore(
       useShallow((s) => ({
         undo: s.undo,
         redo: s.redo,
         history: s.history,
-        loadRandomTemplate: s.loadRandomTemplate,
+        shuffleBrand: s.shuffleBrand,
         resetToDefaults: s.resetToDefaults,
       }))
     );
@@ -502,45 +572,7 @@ function AppContent() {
 
             <ToolbarDivider />
 
-            <FileMenu onReset={handleReset} />
-
-            <motion.button
-              className="flex items-center rounded-md transition-fast"
-              style={{ color: "var(--sidebar-text-secondary)" }}
-              whileHover={{ background: "var(--sidebar-bg-hover)" }}
-              transition={TRANSITION_FAST}
-            >
-              <span
-                className="text-11 font-medium"
-                style={{
-                  padding: "var(--space-2) var(--space-3)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "var(--space-1)",
-                }}
-              >
-                Edit
-              </span>
-            </motion.button>
-
-            <motion.button
-              className="flex items-center rounded-md transition-fast"
-              style={{ color: "var(--sidebar-text-secondary)" }}
-              whileHover={{ background: "var(--sidebar-bg-hover)" }}
-              transition={TRANSITION_FAST}
-            >
-              <span
-                className="text-11 font-medium"
-                style={{
-                  padding: "var(--space-2) var(--space-3)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "var(--space-1)",
-                }}
-              >
-                View
-              </span>
-            </motion.button>
+            <FileMenu onReset={handleReset} onShare={handleShare} />
           </div>
 
           {/* Center: Tool buttons */}
@@ -565,9 +597,9 @@ function AppContent() {
             <ThemeToggle />
 
             <ToolbarButton
-              icon={Layers}
-              label="Shuffle Template"
-              onClick={loadRandomTemplate}
+              icon={Shuffle}
+              label="Shuffle Style"
+              onClick={shuffleBrand}
             />
 
             <ToolbarDivider />
@@ -711,6 +743,8 @@ function AppContent() {
           }}
         />
       )}
+
+      {showDevTools && <DevToolsPanel onClose={() => setShowDevTools(false)} />}
     </div>
   );
 }

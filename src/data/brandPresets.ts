@@ -40,11 +40,18 @@ interface Imagery {
   overlay: number;
 }
 
+interface UISettings {
+  buttonRadius: number;
+  buttonStyle: 'filled' | 'outline' | 'soft';
+  buttonColor: string | null;
+}
+
 interface Brand {
   typography: Typography;
   colors: Colors;
   logo: Logo;
   imagery: Imagery;
+  ui: UISettings;
 }
 
 /**
@@ -77,7 +84,7 @@ export const DEFAULT_BRAND: Brand = {
     size: 24,
   },
   imagery: {
-    url: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000&auto=format&fit=crop",
+    url: "/images/visualelectric-1740667024491.png",
     style: "default",
     overlay: 0,
   },
@@ -210,7 +217,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
     ui: DEFAULT_BRAND.ui,
   },
 
-  foodDrink: {
+  spread: {
     typography: {
       primary: "Oswald",
       secondary: "Montserrat",
@@ -236,7 +243,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       size: 22,
     },
     imagery: {
-      url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop",
+      url: "/images/visualelectric-1751999916329.png",
       style: "default",
       overlay: 0,
     },

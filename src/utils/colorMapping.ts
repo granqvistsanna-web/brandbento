@@ -10,7 +10,7 @@
  * - Full palette access for creative flexibility
  */
 
-import { COLOR_DEFAULTS } from './colorDefaults';
+import { COLOR_DEFAULTS, LIGHTNESS_THRESHOLD } from './colorDefaults';
 
 export interface ColorAnalysis {
   hex: string;
@@ -59,7 +59,9 @@ const parseHex = (hex: string): { r: number; g: number; b: number } | null => {
 };
 
 /**
- * Convert hex color to HSL values
+ * Convert a hex color string to HSL values.
+ * @param hex - CSS hex color (3 or 6 digit, with or without `#`)
+ * @returns `h` (0-360), `s` (0-100), `l` (0-100). Returns `{0,0,0}` for invalid input.
  */
 export const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
   const rgb = parseHex(hex);
@@ -97,7 +99,9 @@ export const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
 };
 
 /**
- * Analyze all colors in a palette
+ * Parse and analyze an array of hex color strings into HSL objects.
+ * Filters out invalid hex values.
+ * @param colors - Array of CSS hex color strings
  */
 export const analyzeColors = (colors: string[]): ColorAnalysis[] => {
   return colors
@@ -135,7 +139,7 @@ const isNeutral = (color: ColorAnalysis): boolean => {
  * Get best neutral text color based on background lightness
  */
 const getNeutralText = (bgLightness: number, paletteColors: ColorAnalysis[]): string => {
-  if (bgLightness > 50) {
+  if (bgLightness > LIGHTNESS_THRESHOLD) {
     // Light background needs dark text
     const neutralDark = paletteColors.find(c => isNeutral(c) && c.l < 25);
     if (neutralDark) return neutralDark.hex;
@@ -149,18 +153,68 @@ const getNeutralText = (bgLightness: number, paletteColors: ColorAnalysis[]): st
 };
 
 /**
- * Extract multiple surface colors from palette for moodboard variety
+ * Derive a neutral surface from a reference color.
  *
- * Strategy for showcasing identity:
- * 1. Include tinted/colored surfaces (not just neutrals)
- * 2. Prioritize palette colors that create visual interest
- * 3. Mix neutral and colored surfaces for balance
+ * Keeps a hint of the palette's hue warmth while dropping saturation
+ * to near-neutral (s <= 6). This creates a surface that feels cohesive
+ * with the palette without adding visual weight.
+ *
+ * @param ref - Reference color (usually the bg) whose hue provides warmth
+ * @param isLightMode - Whether the brand is in light mode (bg lightness > threshold)
+ * @returns Hex string for a near-neutral surface shifted slightly from bg lightness
+ */
+const deriveNeutralSurface = (
+  ref: ColorAnalysis,
+  isLightMode: boolean,
+): string => {
+  // Cap saturation at 6% — just enough hue warmth to feel intentional,
+  // not enough to read as "colored"
+  const s = Math.min(ref.s, 6);
+  const l = isLightMode
+    ? Math.min(ref.l + 3, 95) // Slightly lighter than bg in light mode
+    : Math.max(ref.l - 5, 12); // Slightly darker shade in dark mode
+  return hslToHex(ref.h, s, l);
+};
+
+/**
+ * Check if two colors are visually too similar to coexist as
+ * surface + accent (would look like the same color at a glance).
+ *
+ * Uses three criteria (all must be true):
+ * - Hue difference < 40° (accounts for hue wheel wrapping via min of both arcs)
+ * - Lightness difference < 20 points
+ * - Both colors have saturation > 15% (neutrals are never "too similar" to chromatic)
+ *
+ * Used by `mapPaletteToBrand` to swap out duplicate-feeling surfaces.
+ */
+const areTooSimilar = (a: ColorAnalysis, b: ColorAnalysis): boolean => {
+  // Shortest arc on the 360° hue wheel
+  const hueDiff = Math.min(Math.abs(a.h - b.h), 360 - Math.abs(a.h - b.h));
+  const lightDiff = Math.abs(a.l - b.l);
+  return hueDiff < 40 && lightDiff < 20 && a.s > 15 && b.s > 15;
+};
+
+/**
+ * Extract multiple surface colors from palette for moodboard variety.
+ *
+ * Returns up to 8 surfaces ordered by visual intensity:
+ * 1. **Neutral** (default) — low saturation, close to bg lightness → visual rest
+ * 2. **Tinted** — colored but not dominant, one per hue group (60° buckets)
+ * 3. **Accent** — saturated colors for bold/featured tiles
+ * 4. **Contrast** — opposite lightness (dark on light bg, light on dark bg)
+ *
+ * Each tile picks a surface by index via `tileSurfaces[placementId]`.
+ * This prevents all-colored layouts where every tile competes for attention.
+ *
+ * @param colors - All palette colors as HSL analysis objects
+ * @param bgColor - The chosen background color (excluded from surface candidates)
+ * @returns Array of hex strings, ordered neutral → tinted → accent → contrast
  */
 const extractSurfaceColors = (
   colors: ColorAnalysis[],
   bgColor: ColorAnalysis,
 ): string[] => {
-  const isLightMode = bgColor.l > 50;
+  const isLightMode = bgColor.l > LIGHTNESS_THRESHOLD;
   const surfaces: string[] = [];
   const seen = new Set<string>();
 
@@ -172,41 +226,9 @@ const extractSurfaceColors = (
     }
   };
 
-  // 1. TINTED SURFACES - colored surfaces that showcase palette identity
-  const tintedCandidates = colors.filter(c => {
-    if (c.hex === bgColor.hex) return false;
-
-    if (isLightMode) {
-      // Light mode: pastel/tinted surfaces (60-95% lightness, some saturation)
-      return c.l >= 60 && c.l <= 95 && c.s >= 5;
-    } else {
-      // Dark mode: deep tinted surfaces (8-40% lightness, some saturation)
-      return c.l >= 8 && c.l <= 40 && c.s >= 5;
-    }
-  });
-
-  // Sort tinted by saturation (most colorful first) then by hue diversity
-  const sortedTinted = tintedCandidates.sort((a, b) => {
-    // Prefer moderate saturation (not too washed out, not too intense)
-    const aSatScore = a.s > 50 ? 100 - a.s : a.s;
-    const bSatScore = b.s > 50 ? 100 - b.s : b.s;
-    return bSatScore - aSatScore;
-  });
-
-  // Add tinted surfaces with hue diversity
-  const hueGroups = new Set<number>();
-  for (const color of sortedTinted) {
-    const hueGroup = Math.round(color.h / 60) * 60; // 6 hue groups
-    if (!hueGroups.has(hueGroup)) {
-      addSurface(color.hex);
-      hueGroups.add(hueGroup);
-    }
-  }
-
-  // 2. NEUTRAL SURFACES - for balance and contrast
+  // 1. NEUTRAL SURFACE FIRST — provides breathing room as default surface
   const neutralCandidates = colors.filter(c => {
     if (c.hex === bgColor.hex) return false;
-    if (seen.has(c.hex)) return false;
 
     const isNeutralish = c.s < 15;
     if (isLightMode) {
@@ -216,16 +238,58 @@ const extractSurfaceColors = (
     }
   });
 
-  // Sort neutrals by lightness variety
-  const sortedNeutrals = neutralCandidates.sort((a, b) => {
-    const aLightDiff = Math.abs(a.l - bgColor.l);
-    const bLightDiff = Math.abs(b.l - bgColor.l);
-    return bLightDiff - aLightDiff;
+  // Sort neutrals by "ideal distance" from bg: 5–20% lightness difference
+  // is the sweet spot — enough to distinguish the surface, not so much it
+  // looks like a different section. Score 0 = in range, otherwise penalize
+  // by distance from the ideal midpoint of 12%.
+  const sortedNeutrals = [...neutralCandidates].sort((a, b) => {
+    const aDiff = Math.abs(a.l - bgColor.l);
+    const bDiff = Math.abs(b.l - bgColor.l);
+    const aScore = aDiff >= 5 && aDiff <= 20 ? 0 : Math.abs(aDiff - 12);
+    const bScore = bDiff >= 5 && bDiff <= 20 ? 0 : Math.abs(bDiff - 12);
+    return aScore - bScore;
   });
 
-  // Add 2-3 neutrals for balance
-  for (let i = 0; i < Math.min(3, sortedNeutrals.length); i++) {
+  // Add neutrals first
+  for (let i = 0; i < Math.min(2, sortedNeutrals.length); i++) {
     addSurface(sortedNeutrals[i].hex);
+  }
+
+  // If no natural neutral found, derive one from the bg color
+  if (surfaces.length === 0) {
+    addSurface(deriveNeutralSurface(bgColor, isLightMode));
+  }
+
+  // 2. TINTED SURFACES - colored surfaces for variety on secondary tiles
+  const tintedCandidates = colors.filter(c => {
+    if (c.hex === bgColor.hex) return false;
+    if (seen.has(c.hex)) return false;
+
+    if (isLightMode) {
+      return c.l >= 60 && c.l <= 95 && c.s >= 5;
+    } else {
+      return c.l >= 8 && c.l <= 40 && c.s >= 5;
+    }
+  });
+
+  // Sort tinted candidates preferring moderate saturation (20–50%).
+  // The scoring mirrors values around 50: both 20 and 80 → score 20.
+  // This avoids both too-faint and too-intense surface backgrounds.
+  const sortedTinted = [...tintedCandidates].sort((a, b) => {
+    const aSatScore = a.s > 50 ? 100 - a.s : a.s;
+    const bSatScore = b.s > 50 ? 100 - b.s : b.s;
+    return bSatScore - aSatScore;
+  });
+
+  // Add tinted surfaces, limited to one per 60° hue bucket to ensure
+  // visual diversity (6 buckets: red, yellow, green, cyan, blue, magenta).
+  const hueGroups = new Set<number>();
+  for (const color of sortedTinted) {
+    const hueGroup = Math.round(color.h / 60) * 60;
+    if (!hueGroups.has(hueGroup)) {
+      addSurface(color.hex);
+      hueGroups.add(hueGroup);
+    }
   }
 
   // 3. ACCENT SURFACES - saturated colors for bold tiles
@@ -233,7 +297,6 @@ const extractSurfaceColors = (
     if (c.hex === bgColor.hex) return false;
     if (seen.has(c.hex)) return false;
 
-    // Medium saturation, usable lightness
     if (isLightMode) {
       return c.s >= 30 && c.l >= 45 && c.l <= 85;
     } else {
@@ -241,12 +304,28 @@ const extractSurfaceColors = (
     }
   });
 
-  // Add a couple accent surfaces
   for (let i = 0; i < Math.min(2, accentCandidates.length); i++) {
     addSurface(accentCandidates[i].hex);
   }
 
-  // Fallback if nothing found
+  // 4. CONTRAST SURFACES - dark in light mode, light in dark mode
+  const contrastCandidates = colors.filter(c => {
+    if (c.hex === bgColor.hex) return false;
+    if (seen.has(c.hex)) return false;
+
+    if (isLightMode) {
+      return c.l >= 10 && c.l <= 40;
+    } else {
+      return c.l >= 70 && c.l <= 95;
+    }
+  });
+
+  const sortedContrast = [...contrastCandidates].sort((a, b) => b.s - a.s);
+  for (let i = 0; i < Math.min(2, sortedContrast.length); i++) {
+    addSurface(sortedContrast[i].hex);
+  }
+
+  // Fallback
   if (surfaces.length === 0) {
     addSurface(bgColor.hex);
   }
@@ -255,7 +334,18 @@ const extractSurfaceColors = (
 };
 
 /**
- * Calculate "vibrancy" score for primary/accent selection
+ * Calculate "vibrancy" score for primary/accent color selection.
+ *
+ * Combines three factors into a 0–1 score:
+ * - **Saturation** (0–1): higher saturation = more vibrant.
+ * - **Lightness gate**: near-white (> 85) or near-black (< 15) score 0
+ *   because they can't carry brand identity.
+ * - **Ideal lightness proximity**: colors near L=50 score highest
+ *   (most visually prominent). The `0.5 + 0.5 * proximity` term
+ *   ensures even off-center colors still contribute (floor at 0.5).
+ *
+ * @param color - HSL color analysis
+ * @returns Score from 0 (unusable) to ~1 (ideal brand color)
  */
 const getVibrancyScore = (color: ColorAnalysis): number => {
   const lightnessScore = color.l > 85 || color.l < 15 ? 0 : 1;
@@ -266,17 +356,21 @@ const getVibrancyScore = (color: ColorAnalysis): number => {
 };
 
 /**
- * Smart map palette colors to brand roles
+ * Map an array of palette hex colors to brand roles using HSL analysis.
  *
  * Strategy:
- * 1. Background: Lightest color (high lightness, low saturation preferred)
+ * 1. Background: Style-aware (dark/neon use darkest; others use lightest)
  * 2. Text: NEUTRAL color (ensures readability - no colored text for body copy)
  * 3. Primary: Most vibrant/saturated color with medium lightness
  * 4. Accent: Second most vibrant color, or contrasting hue
  * 5. Surface: Default surface slightly different from bg
  * 6. Surfaces: MULTIPLE options for moodboard variety
+ *
+ * @param colors - Raw hex color strings from a palette
+ * @param options - Optional config: `style` adjusts bg selection for dark/neon palettes
+ * @returns Unmapped roles — run through `enforceContrast()` before use
  */
-export const mapPaletteToBrand = (colors: string[]): BrandColorMapping => {
+export const mapPaletteToBrand = (colors: string[], options?: { style?: string }): BrandColorMapping => {
   const analyzed = analyzeColors(colors);
 
   if (analyzed.length === 0) {
@@ -295,10 +389,26 @@ export const mapPaletteToBrand = (colors: string[]): BrandColorMapping => {
   const byVibrancy = [...analyzed].sort((a, b) => getVibrancyScore(b) - getVibrancyScore(a));
 
   // === BACKGROUND ===
-  const bgCandidates = byLightness.filter(c => c.l >= 85);
-  const bg = bgCandidates.length > 0
-    ? bgCandidates.sort((a, b) => a.s - b.s)[0]
-    : byLightness[0];
+  const style = options?.style;
+  let bg: ColorAnalysis;
+
+  if (style === 'dark') {
+    // Dark palettes: pick darkest color with low saturation as bg
+    const darkCandidates = [...analyzed].sort((a, b) => a.l - b.l);
+    const darkNeutral = darkCandidates.find(c => c.l <= 25 && c.s < 20);
+    bg = darkNeutral || darkCandidates[0];
+  } else if (style === 'neon') {
+    // Neon palettes: use a very dark bg to let neon colors pop
+    const darkCandidates = [...analyzed].sort((a, b) => a.l - b.l);
+    const darkest = darkCandidates.find(c => c.l <= 20);
+    bg = darkest || darkCandidates[0];
+  } else {
+    // Default (light, pastel, warm, cold, minimal, vintage): lightest color
+    const bgCandidates = byLightness.filter(c => c.l >= 85);
+    bg = bgCandidates.length > 0
+      ? bgCandidates.sort((a, b) => a.s - b.s)[0]
+      : byLightness[0];
+  }
 
   // === TEXT (Neutral) ===
   const textHex = getNeutralText(bg.l, analyzed);
@@ -329,7 +439,20 @@ export const mapPaletteToBrand = (colors: string[]): BrandColorMapping => {
 
   // === SURFACES (Multiple for moodboard) ===
   const surfaces = extractSurfaceColors(analyzed, bg);
-  const surface = surfaces[0] || bg.hex;
+  let surface = surfaces[0] || bg.hex;
+
+  // === DIVERSITY CHECK ===
+  // If surface and accent ended up too similar, replace surface with a neutral
+  const surfaceAnalysis: ColorAnalysis = { hex: surface, ...hexToHSL(surface) };
+  if (areTooSimilar(surfaceAnalysis, accent)) {
+    const isLightMode = bg.l > LIGHTNESS_THRESHOLD;
+    const neutral = deriveNeutralSurface(bg, isLightMode);
+    surface = neutral;
+    // Put the neutral first, keep the old surface later in the list
+    if (!surfaces.includes(neutral)) {
+      surfaces.unshift(neutral);
+    }
+  }
 
   return {
     bg: bg.hex,
@@ -343,9 +466,15 @@ export const mapPaletteToBrand = (colors: string[]): BrandColorMapping => {
 };
 
 /**
- * Get contrast ratio between two colors (WCAG formula)
+ * WCAG 2.1 contrast ratio between two hex colors.
+ * Result ranges from 1 (identical) to 21 (black/white).
+ * @returns Ratio value (>= 4.5 passes AA normal text, >= 3 passes AA large text)
  */
 export const getContrastRatio = (color1: string, color2: string): number => {
+  // sRGB → linear luminance per WCAG 2.1 §1.4.3.
+  // The 0.03928 threshold and 2.4 gamma are from the sRGB transfer function.
+  // Weights 0.2126/0.7152/0.0722 are the ITU-R BT.709 luminance coefficients
+  // (human eyes are most sensitive to green, least to blue).
   const getLuminance = (hex: string): number => {
     const rgb = parseHex(hex);
     if (!rgb) return 0;
@@ -366,7 +495,9 @@ export const getContrastRatio = (color1: string, color2: string): number => {
 };
 
 /**
- * Check if a mapping has good contrast (WCAG AA = 4.5:1)
+ * Validate a color mapping against WCAG AA contrast requirements.
+ * @param mapping - The brand color mapping to validate
+ * @returns Contrast ratios for text/bg and primary/bg, plus overall AA pass/fail
  */
 export const validateMapping = (mapping: BrandColorMapping): {
   textBgContrast: number;
@@ -385,21 +516,31 @@ export const validateMapping = (mapping: BrandColorMapping): {
 
 /**
  * Adjust a hex color's lightness to meet a minimum contrast ratio against a reference color.
- * Tries darkening first for light backgrounds, lightening first for dark backgrounds.
+ *
+ * Strategy: shift lightness in 5-point increments (up to ±40) in the
+ * "natural" direction first (darker for light bg, lighter for dark bg),
+ * then try the opposite direction at each step. This preserves the
+ * original hue and saturation as much as possible.
+ *
+ * Falls back to pure black or white if 40 steps aren't enough.
+ *
+ * @param hex - Color to adjust
+ * @param againstHex - Background color to measure contrast against
+ * @param minRatio - Target WCAG contrast ratio (e.g. 4.5 for AA normal text)
  */
 const adjustForContrast = (hex: string, againstHex: string, minRatio: number): string => {
   const hsl = hexToHSL(hex);
   const againstHsl = hexToHSL(againstHex);
-  const isLightBg = againstHsl.l > 50;
+  const isLightBg = againstHsl.l > LIGHTNESS_THRESHOLD;
 
-  // Try adjusting lightness in steps
+  // Walk lightness in 5-point steps; 9 iterations covers the full usable range
   for (let step = 0; step <= 40; step += 5) {
     const darkerL = Math.max(0, hsl.l - step);
     const lighterL = Math.min(100, hsl.l + step);
 
     // For light backgrounds, try darker first; for dark backgrounds, try lighter first
     const candidateL = isLightBg ? darkerL : lighterL;
-    const candidateHex = hslToHexLocal(hsl.h, hsl.s, candidateL);
+    const candidateHex = hslToHex(hsl.h, hsl.s, candidateL);
 
     if (getContrastRatio(candidateHex, againstHex) >= minRatio) {
       return candidateHex;
@@ -407,7 +548,7 @@ const adjustForContrast = (hex: string, againstHex: string, minRatio: number): s
 
     // Try the other direction
     const altL = isLightBg ? lighterL : darkerL;
-    const altHex = hslToHexLocal(hsl.h, hsl.s, altL);
+    const altHex = hslToHex(hsl.h, hsl.s, altL);
 
     if (getContrastRatio(altHex, againstHex) >= minRatio) {
       return altHex;
@@ -419,9 +560,13 @@ const adjustForContrast = (hex: string, againstHex: string, minRatio: number): s
 };
 
 /**
- * Convert HSL values to hex string (local helper)
+ * Convert HSL values to a 6-digit uppercase hex string.
+ * @param h - Hue (0-360)
+ * @param s - Saturation (0-100)
+ * @param l - Lightness (0-100)
+ * @returns Hex color string, e.g. `#FF6B35`
  */
-const hslToHexLocal = (h: number, s: number, l: number): string => {
+export const hslToHex = (h: number, s: number, l: number): string => {
   const sNorm = s / 100;
   const lNorm = l / 100;
   const a = sNorm * Math.min(lNorm, 1 - lNorm);
@@ -434,9 +579,12 @@ const hslToHexLocal = (h: number, s: number, l: number): string => {
 };
 
 /**
- * Enforce WCAG AA contrast requirements on a color mapping.
- * Adjusts text, primary, and accent colors to ensure readability.
- * Filters surfaces that would cause contrast issues.
+ * Enforce WCAG AA contrast on a color mapping.
+ * Adjusts text (4.5:1), primary (3:1), accent (2.5:1) against bg.
+ * Surfaces are kept as-is — tiles use getAdaptiveTextColor() for contrast safety.
+ *
+ * @param mapping - Raw mapping from `mapPaletteToBrand()`
+ * @returns New mapping with contrast-safe colors
  */
 export const enforceContrast = (mapping: BrandColorMapping): BrandColorMapping => {
   const result = { ...mapping };
@@ -459,16 +607,9 @@ export const enforceContrast = (mapping: BrandColorMapping): BrandColorMapping =
     result.accent = adjustForContrast(result.accent, result.bg, 2.5);
   }
 
-  // 4. Ensure text is readable on each surface — remove surfaces where it isn't
+  // Keep all surfaces (tiles use getAdaptiveTextColor for contrast safety).
+  // Just ensure the first surface is set.
   if (result.surfaces.length > 0) {
-    const readableSurfaces = result.surfaces.filter(surface => {
-      return getContrastRatio(result.text, surface) >= 3;
-    });
-
-    // Keep at least one surface (bg fallback)
-    result.surfaces = readableSurfaces.length > 0
-      ? readableSurfaces
-      : [result.bg];
     result.surface = result.surfaces[0];
   }
 

@@ -6,19 +6,29 @@
 
 import type { BreakpointName } from '../types/layout';
 
+/** Position and size of a single tile in the CSS Grid. */
 export interface CellPlacement {
+  /** Placement ID — maps to a tile via placements.ts */
   id: string;
+  /** 1-based grid column start */
   colStart: number;
+  /** 1-based grid row start */
   rowStart: number;
+  /** Number of columns this tile spans */
   colSpan: number;
+  /** Number of rows this tile spans */
   rowSpan: number;
 }
 
+/** Grid configuration for a single breakpoint within a layout preset. */
 export interface BentoLayoutConfig {
+  /** Total grid columns */
   columns: number;
+  /** Total grid rows */
   rows: number;
+  /** Gap between cells in px */
   gap: number;
-  /** Explicit placements – must exactly cover all cells, no gaps */
+  /** Explicit placements — must exactly cover all cells, no gaps or overlaps */
   placements: CellPlacement[];
 }
 
@@ -30,7 +40,8 @@ export type LayoutPresetName =
   | 'stacked'
   | 'minimal'
   | 'duo'
-  | 'foodDrink';
+  | 'spread'
+  | 'mosaic';
 
 /** Breakpoints (px) – layout only changes at these thresholds for stability */
 export const BENTO_BREAKPOINTS = {
@@ -95,7 +106,7 @@ export const BENTO_LAYOUTS: Record<
       gap: 10,
       placements: [
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
-        { id: 'image', colStart: 1, rowStart: 3, colSpan: 2, rowSpan: 1 },
+        { id: 'social', colStart: 1, rowStart: 3, colSpan: 2, rowSpan: 1 },
         { id: 'buttons', colStart: 1, rowStart: 4, colSpan: 2, rowSpan: 1 },
         { id: 'editorial', colStart: 1, rowStart: 5, colSpan: 2, rowSpan: 1 },
         { id: 'logo', colStart: 1, rowStart: 6, colSpan: 1, rowSpan: 1 },
@@ -108,7 +119,7 @@ export const BENTO_LAYOUTS: Record<
       gap: 10,
       placements: [
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
-        { id: 'image', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'social', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
         { id: 'buttons', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
         { id: 'editorial', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 2 },
         { id: 'logo', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
@@ -121,7 +132,7 @@ export const BENTO_LAYOUTS: Record<
       gap: 12,
       placements: [
         { id: 'hero', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
-        { id: 'image', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'social', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
         { id: 'buttons', colStart: 1, rowStart: 3, colSpan: 1, rowSpan: 1 },
         { id: 'editorial', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 2 },
         { id: 'logo', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
@@ -130,13 +141,13 @@ export const BENTO_LAYOUTS: Record<
     },
   },
 
-  foodDrink: {
+  spread: {
     mobile: {
       columns: 2,
       rows: 6,
       gap: 10,
       placements: [
-        { id: 'image', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'social', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
         { id: 'logo', colStart: 1, rowStart: 2, colSpan: 2, rowSpan: 1 },
         { id: 'hero', colStart: 1, rowStart: 3, colSpan: 2, rowSpan: 2 },
         { id: 'buttons', colStart: 1, rowStart: 5, colSpan: 2, rowSpan: 1 },
@@ -149,7 +160,7 @@ export const BENTO_LAYOUTS: Record<
       rows: 4,
       gap: 12,
       placements: [
-        { id: 'image', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'social', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
         { id: 'logo', colStart: 3, rowStart: 1, colSpan: 1, rowSpan: 1 },
         { id: 'hero', colStart: 1, rowStart: 2, colSpan: 2, rowSpan: 2 },
         { id: 'buttons', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 2 },
@@ -162,7 +173,7 @@ export const BENTO_LAYOUTS: Record<
       rows: 3,
       gap: 14,
       placements: [
-        { id: 'image', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'social', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 1 },
         { id: 'logo', colStart: 3, rowStart: 1, colSpan: 2, rowSpan: 1 },
         { id: 'hero', colStart: 1, rowStart: 2, colSpan: 2, rowSpan: 2 },
         { id: 'buttons', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 2 },
@@ -366,6 +377,44 @@ export const BENTO_LAYOUTS: Record<
         { id: 'a', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
         { id: 'b', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 1 },
         { id: 'c', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+  },
+
+  // Mosaic: 4-column asymmetric layout with varied tile proportions
+  mosaic: {
+    mobile: {
+      columns: 2,
+      rows: 4,
+      gap: 12,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 2, rowSpan: 2 },
+        { id: 'a', colStart: 1, rowStart: 3, colSpan: 2, rowSpan: 1 },
+        { id: 'b', colStart: 1, rowStart: 4, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 2, rowStart: 4, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+    tablet: {
+      columns: 3,
+      rows: 2,
+      gap: 14,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
+        { id: 'a', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'b', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 3, rowStart: 2, colSpan: 1, rowSpan: 1 },
+      ],
+    },
+    desktop: {
+      columns: 4,
+      rows: 2,
+      gap: 14,
+      placements: [
+        { id: 'hero', colStart: 1, rowStart: 1, colSpan: 1, rowSpan: 2 },
+        { id: 'a', colStart: 2, rowStart: 1, colSpan: 2, rowSpan: 1 },
+        { id: 'b', colStart: 4, rowStart: 1, colSpan: 1, rowSpan: 1 },
+        { id: 'c', colStart: 2, rowStart: 2, colSpan: 1, rowSpan: 1 },
+        { id: 'd', colStart: 3, rowStart: 2, colSpan: 2, rowSpan: 1 },
       ],
     },
   },

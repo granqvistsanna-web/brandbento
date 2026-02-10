@@ -38,8 +38,8 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { getPaletteById } from "../data/colorPalettes";
-import { mapPaletteToBrand, enforceContrast } from "../utils/colorMapping";
+import { getPaletteById, getAllPalettes } from "../data/colorPalettes";
+import { mapPaletteToBrand, enforceContrast, hexToHSL, hslToHex } from "../utils/colorMapping";
 import { DEFAULT_BRAND, BRAND_PRESETS } from "../data/brandPresets";
 import { INITIAL_TILES } from "../data/tileDefaults";
 import { getPlacementTileId, getPlacementTileType } from "../config/placements";
@@ -188,6 +188,22 @@ export interface TileContent {
   socialSponsored?: string;
   /** Social post aspect ratio */
   socialAspect?: string;
+  /** Number of social posts to display (1-3) */
+  socialPostCount?: number;
+  /** Per-post content for multi-post social tiles */
+  socialPosts?: Array<{ caption?: string; likes?: string; image?: string }>;
+  /** When true, shuffle will not change this tile's image */
+  imageLocked?: boolean;
+  /** Pattern variant for pattern tiles */
+  patternVariant?: string;
+  /** Pattern zoom level (multiplier, default 1) */
+  patternScale?: number;
+  /** Custom uploaded image used as repeating pattern */
+  patternImage?: string;
+  /** Whether the custom pattern image is locked from shuffle */
+  patternImageLocked?: boolean;
+  /** App screen variant for app-screen tiles */
+  screenVariant?: string;
 }
 
 /**
@@ -247,12 +263,28 @@ const createDefaultBrand = (): Brand => ({
   ui: { ...DEFAULT_BRAND.ui },
 });
 
+/** Guard: checks if a value is a valid image source (data URI, blob, or HTTP URL).
+ *  Filters out stale or corrupt image paths during persistence merges. */
 const isValidImageSrc = (src: unknown): src is string => {
   if (typeof src !== 'string' || !src) return false;
   return src.startsWith('data:image/') || src.startsWith('blob:') ||
     src.startsWith('https://') || src.startsWith('http://');
 };
 
+/**
+ * Merge a partial brand from localStorage (or a preset) onto a fresh default.
+ *
+ * Handles missing/partial data gracefully:
+ * - Each top-level section (typography, colors, logo, imagery, ui) is shallow-merged
+ *   independently, so a persisted state missing e.g. `ui` still gets defaults.
+ * - Arrays (`surfaces`, `paletteColors`) are replaced wholesale (not merged) since
+ *   array positions are meaningful.
+ * - Logo images are validated via `isValidImageSrc` to discard stale blob/data URIs
+ *   from previous sessions.
+ *
+ * @param source - Partial brand from persistence or preset (null/undefined = use defaults)
+ * @returns Complete Brand object with all fields guaranteed
+ */
 const mergeBrand = (source?: Partial<Brand> | null): Brand => {
   const base = createDefaultBrand();
 
@@ -301,6 +333,18 @@ const shallowEqualArray = (a?: unknown[], b?: unknown[]): boolean => {
   return true;
 };
 
+/**
+ * Detect whether a partial brand update actually changes any values.
+ *
+ * Performance optimization: prevents pushing no-op entries to the undo
+ * history when `updateBrand` is called with values identical to current state.
+ * Compares each nested section (typography, logo, imagery, colors) key-by-key.
+ * Arrays (surfaces, paletteColors) use shallow element comparison.
+ *
+ * @param brand - Current full brand state
+ * @param newBrand - Incoming partial update
+ * @returns true if at least one value differs
+ */
 const hasBrandChanges = (brand: Brand, newBrand: Partial<Brand>): boolean => {
   if (!newBrand || Object.keys(newBrand).length === 0) return false;
 
@@ -350,6 +394,8 @@ const hasBrandChanges = (brand: Brand, newBrand: Partial<Brand>): boolean => {
   });
 };
 
+/** Same as `hasBrandChanges` but for tile content — prevents no-op history entries
+ *  when `updateTile` is called with identical values. */
 const hasTileContentChanges = (
   content: TileContent,
   newContent: Partial<TileContent>
@@ -437,6 +483,8 @@ export interface BrandStore {
 
   /** Loads a random starter template (clears history) */
   loadRandomTemplate: () => void;
+  /** Shuffles color palette + typography randomly (keeps layout) */
+  shuffleBrand: () => void;
   /** Loads a named brand preset (typography + colors only) */
   loadPreset: (presetName: string) => void;
   /** Applies a color palette, mapping to semantic roles */
@@ -550,16 +598,16 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
           headline: "Build the future with AI",
           subcopy: "Cutting-edge technology for modern businesses",
           cta: "Start Building",
-          image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1740659731603.png",
         },
         colSpan: 2,
         rowSpan: 2,
       },
       {
-        id: "image-1",
-        type: "image",
+        id: "social-1",
+        type: "social",
         content: {
-          image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/20250622_2054_Candid Office Problem-Solving_simple_compose_01jycfrc6pfhrttzd3xpgeb5d2.png",
           overlayText: "Innovation",
         },
         colSpan: 1,
@@ -620,10 +668,10 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
     },
     tiles: [
       {
-        id: "image-1",
-        type: "image",
+        id: "social-1",
+        type: "social",
         content: {
-          image: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1751979354132.png",
           overlayText: "Spring 2026",
         },
         colSpan: 2,
@@ -642,7 +690,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         content: {
           label: "Signature Piece",
           price: "$2,400",
-          image: "https://images.unsplash.com/photo-1591561954555-607968c989ab?q=80&w=500&auto=format&fit=crop",
+          image: "/images/visualelectric-1751999916329.png",
         },
         colSpan: 1,
         rowSpan: 2,
@@ -658,25 +706,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         rowSpan: 1,
       },
       {
-        id: "split-hero-1",
+        id: "hero-1",
         type: "split-hero",
         content: {
           headline: "Defining Style",
           body: "A fusion of creativity and craftsmanship. We bring timeless pieces that elevate everyday fashion.",
           cta: "Read More",
-          image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1751915506477.png",
         },
         colSpan: 2,
         rowSpan: 1,
       },
       {
-        id: "split-list-1",
+        id: "utility-1",
         type: "split-list",
         content: {
           headline: "Fashion\nParadigm",
           overlayText: "Textiles Production",
           items: ["Automated Fabric Cutting", "Eco-Friendly Dyeing", "Supply Chain Optimization"],
-          image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1751999926710.png",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -721,7 +769,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
           headline: "We craft digital experiences",
           subcopy: "Bold ideas. Beautiful execution.",
           cta: "View Work",
-          image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/20250622_2048_Candid Office Consultation_simple_compose_01jycfdk73fj1az74wv8n0rgwt.png",
         },
         colSpan: 3,
         rowSpan: 1,
@@ -734,25 +782,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         rowSpan: 1,
       },
       {
-        id: "overlay-1",
+        id: "social-1",
         type: "overlay",
         content: {
           headline: "The Creative Process",
           body: "Behind every great project is a story of obsession, revision, and breakthrough.",
           label: "Case Study",
-          image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1750703676698.png",
         },
         colSpan: 2,
         rowSpan: 2,
       },
       {
-        id: "split-list-1",
+        id: "utility-1",
         type: "split-list",
         content: {
           headline: "Creative\nProcess",
           overlayText: "Disciplines",
           items: ["Brand Strategy", "Motion Design", "Art Direction"],
-          image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/20250622_2058_Candid Office Moment_simple_compose_01jycg0pyvf54ar73h2bxc7yh1.png",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -808,7 +856,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         size: 22,
       },
       imagery: {
-        url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop",
+        url: "/images/visualelectric-1751999916329.png",
         style: "default",
         overlay: 0,
       },
@@ -821,16 +869,16 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         content: {
           headline: "We stand for food freedom",
           subcopy: "Enjoy the foods you love, regardless of dietary lifestyle.",
-          image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1200&auto=format&fit=crop",
+          image: "/images/visualelectric-1751999916329.png",
         },
         colSpan: 2,
         rowSpan: 2,
       },
       {
-        id: "image-1",
-        type: "image",
+        id: "social-1",
+        type: "social",
         content: {
-          image: "https://images.unsplash.com/photo-1520201163981-8cc95007dd2a?q=80&w=1200&auto=format&fit=crop",
+          image: "/images/visualelectric-1751999926710.png",
           overlayText: "Fresh + Bright",
         },
         colSpan: 1,
@@ -844,7 +892,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
           subcopy: "Breakfast",
           body: "Vegan",
           price: "$12.99",
-          image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=800&auto=format&fit=crop",
+          image: "/images/visualelectric-1751979354132.png",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -912,10 +960,10 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
     },
     tiles: [
       {
-        id: "image-1",
-        type: "image",
+        id: "social-1",
+        type: "social",
         content: {
-          image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1760212068804.png",
           overlayText: "Mindfulness",
         },
         colSpan: 2,
@@ -935,7 +983,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
           headline: "Your wellness journey",
           subcopy: "Natural, sustainable, transformative",
           cta: "Begin Today",
-          image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1753860123700.png",
         },
         colSpan: 1,
         rowSpan: 3,
@@ -961,25 +1009,25 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         rowSpan: 1,
       },
       {
-        id: "split-hero-1",
+        id: "product-1",
         type: "split-hero",
         content: {
           headline: "Restore Balance",
           body: "Holistic practices rooted in science, designed to bring you back to center.",
           cta: "Learn More",
-          image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=500&auto=format&fit=crop",
+          image: "/images/visualelectric-1753860116187.png",
         },
         colSpan: 1,
         rowSpan: 1,
       },
       {
-        id: "overlay-1",
+        id: "ui-preview-1",
         type: "overlay",
         content: {
           headline: "Mind & Body",
           body: "A journey to wellness starts with a single breath.",
           label: "Philosophy",
-          image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1753860134138.png",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -1024,16 +1072,16 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
           headline: "Designer & Developer",
           subcopy: "Building digital products with precision",
           cta: "Contact",
-          image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1740667024491.png",
         },
         colSpan: 2,
         rowSpan: 1,
       },
       {
-        id: "image-1",
-        type: "image",
+        id: "social-1",
+        type: "social",
         content: {
-          image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop",
+          image: "/images/visualelectric-1740667020762.png",
           overlayText: "Work",
         },
         colSpan: 1,
@@ -1072,7 +1120,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         content: {
           label: "Latest",
           price: "2026",
-          image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=500&auto=format&fit=crop",
+          image: "/images/_sagr_tight_macro_still_life_tortoiseshell_glasses_blank_conf_fd90e9cb-0e01-43ed-9b69-4cc88f03a4df_0.png",
         },
         colSpan: 2,
         rowSpan: 1,
@@ -1095,111 +1143,6 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
-
-/**
- * HSL color representation.
- * Used internally for color harmony calculations.
- */
-interface HSL {
-  /** Hue (0-360 degrees) */
-  h: number;
-  /** Saturation (0-100 percent) */
-  s: number;
-  /** Lightness (0-100 percent) */
-  l: number;
-}
-
-/**
- * Converts a hex color string to HSL values.
- * Supports both 3-char (#RGB) and 6-char (#RRGGBB) hex formats.
- * @param hex - Hex color string (with or without # prefix)
- * @returns HSL object with h (0-360), s (0-100), l (0-100)
- */
-const hexToHSL = (hex: string): HSL => {
-  let rHex: string, gHex: string, bHex: string;
-
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (result) {
-    rHex = result[1];
-    gHex = result[2];
-    bHex = result[3];
-  } else {
-    const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
-    if (shorthand) {
-      rHex = shorthand[1] + shorthand[1];
-      gHex = shorthand[2] + shorthand[2];
-      bHex = shorthand[3] + shorthand[3];
-    } else {
-      return { h: 0, s: 0, l: 0 };
-    }
-  }
-
-  const r = parseInt(rHex, 16) / 255;
-  const g = parseInt(gHex, 16) / 255;
-  const b = parseInt(bHex, 16) / 255;
-
-  const max = Math.max(r, g, b),
-    min = Math.min(r, g, b);
-  let h = 0,
-    s = 0;
-  const l = (max + min) / 2;
-
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r:
-        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-        break;
-      case g:
-        h = ((b - r) / d + 2) / 6;
-        break;
-      case b:
-        h = ((r - g) / d + 4) / 6;
-        break;
-    }
-  }
-
-  return { h: h * 360, s: s * 100, l: l * 100 };
-};
-
-/**
- * Converts HSL values to a hex color string.
- * @param h - Hue (0-360 degrees)
- * @param s - Saturation (0-100 percent)
- * @param l - Lightness (0-100 percent)
- * @returns Hex color string with # prefix
- */
-const hslToHex = (h: number, s: number, l: number): string => {
-  s /= 100;
-  l /= 100;
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - c / 2;
-  let r = 0,
-    g = 0,
-    b = 0;
-
-  if (0 <= h && h < 60) {
-    r = c; g = x; b = 0;
-  } else if (60 <= h && h < 120) {
-    r = x; g = c; b = 0;
-  } else if (120 <= h && h < 180) {
-    r = 0; g = c; b = x;
-  } else if (180 <= h && h < 240) {
-    r = 0; g = x; b = c;
-  } else if (240 <= h && h < 300) {
-    r = x; g = 0; b = c;
-  } else if (300 <= h && h < 360) {
-    r = c; g = 0; b = x;
-  }
-
-  r = Math.round((r + m) * 255);
-  g = Math.round((g + m) * 255);
-  b = Math.round((b + m) * 255);
-
-  return "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
-};
 
 /**
  * Generates color harmony variations from a base color.
@@ -1369,7 +1312,7 @@ const defaultTileContent: Record<string, TileContent> = {
   product: {
     label: "Product",
     price: "$99",
-    image: "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=500",
+    image: "/images/_sagr_tight_macro_still_life_tortoiseshell_glasses_blank_conf_fd90e9cb-0e01-43ed-9b69-4cc88f03a4df_0.png",
   },
   "ui-preview": {
     headerTitle: "UI",
@@ -1377,7 +1320,7 @@ const defaultTileContent: Record<string, TileContent> = {
     inputPlaceholder: "Search...",
   },
   image: {
-    image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000",
+    image: "/images/visualelectric-1740667020762.png",
     overlayText: "Image",
   },
   utility: { headline: "Features", items: ["Item 1", "Item 2", "Item 3"] },
@@ -1397,6 +1340,27 @@ const defaultPlacementContent: Record<string, TileContent> = {
   image: { ...defaultSocialContent },
   d: { ...defaultSocialContent },
 };
+
+/** Curated font pairings for shuffle (headline / body) */
+const FONT_PAIRINGS: { primary: string; secondary: string; weight: string; spacing: Typography['letterSpacing'] }[] = [
+  { primary: "Sora", secondary: "Inter", weight: "700", spacing: "normal" },
+  { primary: "Playfair Display", secondary: "Montserrat", weight: "700", spacing: "wide" },
+  { primary: "Bricolage Grotesque", secondary: "Inter", weight: "800", spacing: "normal" },
+  { primary: "Oswald", secondary: "Montserrat", weight: "700", spacing: "wide" },
+  { primary: "Plus Jakarta Sans", secondary: "Inter", weight: "600", spacing: "normal" },
+  { primary: "Inter", secondary: "JetBrains Mono", weight: "700", spacing: "tight" },
+  { primary: "DM Serif Display", secondary: "DM Sans", weight: "400", spacing: "normal" },
+  { primary: "Space Grotesk", secondary: "Inter", weight: "700", spacing: "normal" },
+  { primary: "Fraunces", secondary: "Work Sans", weight: "700", spacing: "normal" },
+  { primary: "Outfit", secondary: "Inter", weight: "700", spacing: "normal" },
+];
+
+/** Tracks last template index to avoid consecutive duplicates on shuffle */
+let _lastTemplateIdx = -1;
+
+/** Tracks last shuffle indices to avoid repeats */
+let _lastShufflePaletteIdx = -1;
+let _lastShuffleFontIdx = -1;
 
 // ============================================
 // STORE
@@ -1473,6 +1437,85 @@ export const useBrandStore = create<BrandStore>()(
           placementContent: defaultPlacementContent,
           history: {
             past: [],
+            future: [],
+          },
+        });
+      },
+
+      shuffleBrand: () => {
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const allPalettes = getAllPalettes();
+
+        // Weight palettes by color count and hue diversity for better shuffle quality
+        const weights = allPalettes.map((p) => {
+          const colorCount = Math.min(p.colors.length, 7);
+          const colorWeight = colorCount / 7; // 0-1, more colors = better
+
+          // Hue diversity: count distinct hue buckets (60° each)
+          const hueBuckets = new Set<number>();
+          for (const hex of p.colors) {
+            const rgb = hex.replace('#', '');
+            if (rgb.length !== 6) continue;
+            const r = parseInt(rgb.slice(0, 2), 16) / 255;
+            const g = parseInt(rgb.slice(2, 4), 16) / 255;
+            const b = parseInt(rgb.slice(4, 6), 16) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            if (max === min) continue;
+            let h = 0;
+            const d = max - min;
+            if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+            else if (max === g) h = ((b - r) / d + 2) / 6;
+            else h = ((r - g) / d + 4) / 6;
+            hueBuckets.add(Math.floor(h * 6));
+          }
+          const hueWeight = Math.min(hueBuckets.size, 4) / 4; // 0-1, more hue variety = better
+
+          return 0.4 + 0.3 * colorWeight + 0.3 * hueWeight; // base 0.4 so no palette is excluded
+        });
+
+        // Weighted random selection
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+        let r = Math.random() * totalWeight;
+        let pIdx = 0;
+        for (let i = 0; i < weights.length; i++) {
+          r -= weights[i];
+          if (r <= 0) { pIdx = i; break; }
+        }
+        if (allPalettes.length > 1 && pIdx === _lastShufflePaletteIdx) {
+          pIdx = (pIdx + 1) % allPalettes.length;
+        }
+        _lastShufflePaletteIdx = pIdx;
+
+        // Pick random font pairing, avoiding repeat
+        let fIdx = Math.floor(Math.random() * FONT_PAIRINGS.length);
+        if (FONT_PAIRINGS.length > 1 && fIdx === _lastShuffleFontIdx) {
+          fIdx = (fIdx + 1) % FONT_PAIRINGS.length;
+        }
+        _lastShuffleFontIdx = fIdx;
+
+        const palette = allPalettes[pIdx];
+        const fontPairing = FONT_PAIRINGS[fIdx];
+
+        // Map palette to brand colors
+        const rawMapping = mapPaletteToBrand(palette.colors);
+        const colorMapping = enforceContrast(rawMapping);
+
+        set({
+          brand: {
+            ...brand,
+            typography: {
+              ...brand.typography,
+              primary: fontPairing.primary,
+              secondary: fontPairing.secondary,
+              ui: fontPairing.secondary,
+              weightHeadline: fontPairing.weight,
+              letterSpacing: fontPairing.spacing,
+            },
+            colors: colorMapping,
+          },
+          activePreset: "custom",
+          history: {
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: [],
           },
         });
@@ -1719,17 +1762,32 @@ export const useBrandStore = create<BrandStore>()(
     }),
     {
       name: "brand-store",
+      // Merge persisted localStorage state with fresh defaults on app load.
+      // Handles schema migrations (e.g. adding slot tiles for new layout system).
       merge: (persisted, current) => {
         const persistedState = persisted as Partial<BrandStore> | undefined;
         if (!persistedState) return current;
+
+        let tiles = Array.isArray(persistedState.tiles) && persistedState.tiles.length > 0
+          ? persistedState.tiles
+          : current.tiles;
+
+        // Ensure slot tiles exist for letter placements (migration from
+        // shared-ID era where 'a' -> 'logo-1' to unique-ID 'a' -> 'slot-a').
+        const slotIds = ['slot-a', 'slot-b', 'slot-c', 'slot-d', 'slot-e', 'slot-f'];
+        const existingIds = new Set(tiles.map((t: Tile) => t.id));
+        const missingSlots = INITIAL_TILES.filter(
+          (t) => slotIds.includes(t.id) && !existingIds.has(t.id)
+        );
+        if (missingSlots.length > 0) {
+          tiles = [...tiles, ...missingSlots];
+        }
 
         return {
           ...current,
           ...persistedState,
           brand: mergeBrand(persistedState.brand),
-          tiles: Array.isArray(persistedState.tiles) && persistedState.tiles.length > 0
-            ? persistedState.tiles
-            : current.tiles,
+          tiles,
           theme: persistedState.theme ?? current.theme,
           tileSurfaces: persistedState.tileSurfaces ?? current.tileSurfaces,
           activePreset: persistedState.activePreset ?? current.activePreset,
@@ -1739,6 +1797,11 @@ export const useBrandStore = create<BrandStore>()(
           },
         } as BrandStore;
       },
+      // Persist only serializable user data. Exclude:
+      // - focusedTileId (UI state, not user data)
+      // - fontPreview (transient hover state)
+      // - history (undo/redo is session-only)
+      // - darkModePreview (transient toggle state)
       partialize: (state) => ({
         brand: state.brand,
         tiles: state.tiles,
@@ -1758,13 +1821,19 @@ export const useBrandStore = create<BrandStore>()(
 /**
  * Selector to get the currently focused tile.
  * Use with: const focusedTile = useBrandStore(selectFocusedTile);
+ *
+ * Lookup order:
+ * 1. Map placement ID to tile ID via placements.ts (e.g., 'a' -> 'slot-a')
+ * 2. Direct tile ID match (for legacy or non-placement IDs)
+ * 3. Type-based fallback (last resort)
  */
-export const selectFocusedTile = (state: BrandStore): Tile | undefined =>
-  state.focusedTileId
-    ? state.tiles.find((t) => t.id === getPlacementTileId(state.focusedTileId))
-      ?? state.tiles.find((t) => t.type === getPlacementTileType(state.focusedTileId))
-      ?? state.tiles.find((t) => t.id === state.focusedTileId)
-    : undefined;
+export const selectFocusedTile = (state: BrandStore): Tile | undefined => {
+  if (!state.focusedTileId) return undefined;
+  const placementTileId = getPlacementTileId(state.focusedTileId ?? undefined);
+  return state.tiles.find((t) => t.id === placementTileId)
+    ?? state.tiles.find((t) => t.id === state.focusedTileId)
+    ?? state.tiles.find((t) => t.type === getPlacementTileType(state.focusedTileId ?? undefined));
+};
 
 /**
  * Selector to check if undo is available.

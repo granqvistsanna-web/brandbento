@@ -25,7 +25,7 @@
  * />
  */
 import type { ReactNode } from 'react';
-import { useLayoutStore } from '../store/useLayoutStore';
+import { useLayoutStore, CANVAS_RATIOS } from '../store/useLayoutStore';
 import { useBreakpoint } from '../hooks/useBreakpoint';
 import {
   BENTO_LAYOUTS,
@@ -55,11 +55,15 @@ export function BentoGridNew({
 }: BentoGridNewProps) {
   const preset = useLayoutStore((s) => s.preset) as LayoutPresetName;
   const density = useLayoutStore((s) => s.density);
+  const canvasRatio = useLayoutStore((s) => s.canvasRatio);
   const breakpoint = useBreakpoint();
 
   const config = BENTO_LAYOUTS[preset]?.[breakpoint] ?? BENTO_LAYOUTS.balanced.desktop;
   const gap = config.gap;
   const padding = density === 'cozy' ? 16 : 12;
+
+  const ratioEntry = CANVAS_RATIOS.find((r) => r.key === canvasRatio);
+  const aspectValue = ratioEntry?.value ?? null;
 
   return (
     <div
@@ -74,10 +78,14 @@ export function BentoGridNew({
       }}
     >
       <div
-        className="h-full w-full max-w-6xl overflow-hidden"
+        className="w-full overflow-hidden"
         style={{
           padding: `${padding}px`,
           paddingBottom: 'max(var(--safe-area-inset-bottom, 0px), 16px)',
+          maxWidth: '72rem',
+          maxHeight: aspectValue ? undefined : '54rem',
+          height: aspectValue ? undefined : '100%',
+          ...(aspectValue ? { aspectRatio: `${aspectValue}`, maxHeight: '100%' } : {}),
         }}
       >
         <div

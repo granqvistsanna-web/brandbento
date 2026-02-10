@@ -1,8 +1,10 @@
 /**
- * Product Tile Component
+ * Card Tile Component
  *
- * Simple product card with image, label, and price.
+ * Versatile card with image, title, subtitle, badge, and detail.
+ * Works for products, services, features, or any branded content.
  */
+import { useCallback } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getAdaptiveTextColor } from '@/utils/color';
@@ -11,27 +13,33 @@ import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { useTileToolbar } from '@/hooks/useTileToolbar';
+import {
+  FloatingToolbar,
+  ToolbarActions,
+  ToolbarLabel,
+  ToolbarTextInput,
+  ToolbarDivider,
+  getRandomShuffleImage,
+} from './FloatingToolbar';
 
-interface ProductTileProps {
+interface CardTileProps {
   placementId?: string;
 }
 
-export function ProductTile({ placementId }: ProductTileProps) {
+export function CardTile({ placementId }: CardTileProps) {
   const { colors, typography } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       typography: state.brand.typography,
     }))
   );
+  const updateTile = useBrandStore((s) => s.updateTile);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
-    if (placementTileId) {
-      return state.tiles.find((t) => t.id === placementTileId);
-    }
-    if (placementTileType) {
-      return state.tiles.find((t) => t.type === placementTileType);
-    }
+    if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
+    if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);
     return undefined;
   });
   const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
@@ -44,7 +52,7 @@ export function ProductTile({ placementId }: ProductTileProps) {
     tileSurfaceIndex,
     surfaces,
     bg,
-    defaultIndex: 1,
+    defaultIndex: 2,
   });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
   const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
@@ -53,21 +61,32 @@ export function ProductTile({ placementId }: ProductTileProps) {
 
   const content = tile?.content || {};
   const imageUrl = content.image;
-  const label = content.label || 'Product';
-  const category = content.subcopy || 'Breakfast';
-  const tag = content.body || 'Vegan';
-  const price = content.price || '$0.00';
+  const title = content.label || 'Title';
+  const subtitle = content.subcopy || 'Subtitle';
+  const badge = content.body || 'Badge';
+  const detail = content.price || 'Detail';
+
+  const { isFocused, containerRef, anchorRect } = useTileToolbar(placementId);
+
+  const handleChange = useCallback((key: string, value: string) => {
+    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
+  }, [updateTile, tile?.id]);
+
+  const handleCommit = useCallback((key: string, value: string) => {
+    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
+  }, [updateTile, tile?.id]);
 
   return (
     <div
-      className="w-full h-full p-4 flex gap-4 transition-colors duration-300"
-      style={{ backgroundColor: surfaceBg }}
+      ref={containerRef}
+      className="w-full h-full flex transition-colors duration-300"
+      style={{ backgroundColor: surfaceBg, padding: 'clamp(10px, 4%, 20px)', gap: 'clamp(8px, 3%, 16px)' }}
     >
-      <div className="relative w-[46%] min-w-[46%] overflow-hidden rounded-lg">
+      <div className="relative w-[44%] min-w-[36%] max-w-[50%] overflow-hidden rounded-lg">
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={label}
+            alt={title}
             className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
@@ -93,7 +112,7 @@ export function ProductTile({ placementId }: ProductTileProps) {
               lineHeight: 1.15,
             }}
           >
-            {label}
+            {title}
           </div>
           <div
             style={{
@@ -104,7 +123,7 @@ export function ProductTile({ placementId }: ProductTileProps) {
               lineHeight: 1.3,
             }}
           >
-            {category}
+            {subtitle}
           </div>
           <span
             className="self-start rounded-full"
@@ -115,12 +134,12 @@ export function ProductTile({ placementId }: ProductTileProps) {
               fontFamily: bodyFont,
               fontWeight: 600,
               fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 12)}px`,
-              padding: '2px 10px',
+              padding: 'clamp(1px, 0.5%, 3px) clamp(6px, 2%, 12px)',
               letterSpacing: '0.04em',
               textTransform: 'uppercase' as const,
             }}
           >
-            {tag}
+            {badge}
           </span>
         </div>
         <div
@@ -132,9 +151,57 @@ export function ProductTile({ placementId }: ProductTileProps) {
             fontSize: `${clampFontSize(typeScale.base)}px`,
           }}
         >
-          {price}
+          {detail}
         </div>
       </div>
+
+      {isFocused && anchorRect && (
+        <FloatingToolbar anchorRect={anchorRect}>
+          <ToolbarActions
+            onShuffle={() => {
+              if (tile?.id && !content.imageLocked) {
+                updateTile(tile.id, { image: getRandomShuffleImage(content.image) }, true);
+              }
+            }}
+            hasImage
+            imageLocked={!!content.imageLocked}
+            onToggleLock={() => {
+              if (tile?.id) updateTile(tile.id, { imageLocked: !content.imageLocked }, true);
+            }}
+            onImageUpload={(dataUrl) => {
+              if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
+            }}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Card</ToolbarLabel>
+          <ToolbarTextInput
+            label="Title"
+            value={title}
+            onChange={(v) => handleChange('label', v)}
+            onCommit={(v) => handleCommit('label', v)}
+            placeholder="Title"
+          />
+          <ToolbarTextInput
+            label="Subtitle"
+            value={subtitle}
+            onChange={(v) => handleChange('subcopy', v)}
+            onCommit={(v) => handleCommit('subcopy', v)}
+          />
+          <ToolbarTextInput
+            label="Badge"
+            value={badge}
+            onChange={(v) => handleChange('body', v)}
+            onCommit={(v) => handleCommit('body', v)}
+          />
+          <ToolbarTextInput
+            label="Detail"
+            value={detail}
+            onChange={(v) => handleChange('price', v)}
+            onCommit={(v) => handleCommit('price', v)}
+            placeholder="Detail"
+          />
+        </FloatingToolbar>
+      )}
     </div>
   );
 }

@@ -37,7 +37,7 @@ import {
   useBrandStore,
   selectFocusedTile,
 } from "../store/useBrandStore";
-import { useLayoutStore } from "../store/useLayoutStore";
+import { useLayoutStore, CANVAS_RATIOS } from "../store/useLayoutStore";
 import { BENTO_LAYOUTS } from "../config/bentoLayouts";
 import {
   PALETTE_SECTIONS,
@@ -70,6 +70,9 @@ import {
   Settings,
   Sliders,
   Hash,
+  Columns,
+  Square,
+  Rows,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -79,6 +82,11 @@ import {
   Plus,
   Info,
   Star,
+  Grid2X2,
+  Fingerprint,
+  Grid3X3,
+  TrendingUp,
+  Smartphone,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getPlacementKind, getPlacementTileType } from "../config/placements";
@@ -87,368 +95,26 @@ import { ColorRoleSlot } from "./color/ColorRoleSlot";
 import { getContrastRatio } from "../utils/colorMapping";
 import { GOOGLE_FONTS, GOOGLE_FONTS_MAP, CURATED_FONTS } from "../data/googleFontsMetadata";
 import { loadFontWithFallback } from "../services/googleFonts";
-
-// ============================================
-// FIGMA-STYLE MICRO COMPONENTS
-// ============================================
-
-/** Keyboard shortcut display badge */
-const Kbd = ({ children }) => <span className="kbd">{children}</span>;
-
-/** Status/info badge with variant styling (muted, success, warning) */
-const Badge = ({ children, variant = "muted" }) => (
-  <span className={`badge badge-${variant}`}>{children}</span>
-);
-
-/**
- * Animated tooltip with configurable positioning.
- * Shows on hover with fade-in animation.
- * @param {ReactNode} children - Trigger element
- * @param {string} content - Tooltip text content
- * @param {'top'|'right'|'bottom'|'left'} position - Tooltip placement
- */
-const Tooltip = ({ children, content, position = "right" }) => {
-  const [show, setShow] = useState(false);
-
-  const positions = {
-    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
-    right: "left-full top-1/2 -translate-y-1/2 ml-2",
-    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
-    left: "right-full top-1/2 -translate-y-1/2 mr-2",
-  };
-
-  return (
-    <div
-      className="relative inline-flex"
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      {children}
-      <AnimatePresence>
-        {show && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.1 }}
-            className={`absolute ${positions[position]} tooltip z-50`}
-          >
-            {content}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-/**
- * Icon-only button with tooltip.
- * Used for toolbar actions and compact controls.
- */
-const IconButton = ({
-  icon: Icon,
-  onClick,
-  active,
-  tooltip,
-  size = 14,
-  disabled,
-}) => (
-  <Tooltip content={tooltip} position="right">
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`icon-btn ${active ? "active" : ""}`}
-      style={{ opacity: disabled ? 0.3 : 1 }}
-    >
-      <Icon size={size} />
-    </button>
-  </Tooltip>
-);
-
-// ============================================
-// COLLAPSIBLE SECTION
-// ============================================
-
-/**
- * Collapsible section with icon header.
- * Used for organizing control panel into logical groups.
- * @param {LucideIcon} icon - Section header icon
- * @param {string} title - Section title
- * @param {boolean} defaultOpen - Initial collapsed state
- * @param {ReactNode} actions - Optional header actions
- * @param {ReactNode} children - Section content
- */
-const Section = ({
-  title,
-  icon: Icon,
-  children,
-  badge,
-  defaultOpen = true,
-  noPadding = false,
-}) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div
-      className="group"
-      style={{
-        borderBottom: "1px solid var(--sidebar-border-subtle)",
-      }}
-    >
-      {/* Section Header */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-3 transition-colors hover:bg-[var(--sidebar-bg-hover)]"
-        style={{ background: "transparent", border: "none", cursor: "pointer" }}
-      >
-        <motion.div
-          animate={{ rotate: isOpen ? 90 : 0 }}
-          transition={{ duration: 0.15 }}
-          style={{ color: "var(--sidebar-text-muted)" }}
-        >
-          <ChevronRight size={10} />
-        </motion.div>
-
-        <span
-          className="flex-1 text-left text-12 font-medium select-none tracking-wide"
-          style={{ color: "var(--sidebar-text)" }}
-        >
-          {title}
-        </span>
-
-        {badge && <div>{badge}</div>}
-      </button>
-
-      {/* Section Content */}
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <div className={noPadding ? "" : "px-4 pb-4 space-y-3"}>
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// ============================================
-// FORM CONTROLS - FIGMA STYLE
-// ============================================
-
-const PropRow = ({ label, children, hint }) => (
-  <div className="flex items-center gap-3 min-h-[32px]">
-    <span className="text-11 min-w-[72px] flex-shrink-0" style={{ color: "var(--sidebar-text-muted)" }}>{label}</span>
-    <div className="flex-1 flex items-center gap-1">{children}</div>
-    {hint && (
-      <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
-        {hint}
-      </span>
-    )}
-  </div>
-);
-
-const Input = ({ value, onChange, placeholder, type = "text", mono, ...props }) => (
-  <input
-    type={type}
-    value={value}
-    onChange={onChange}
-    placeholder={placeholder}
-    className="input-figma flex-1"
-    style={mono ? { fontFamily: "var(--font-mono)" } : undefined}
-    {...props}
-  />
-);
-
-const TextArea = ({ value, onChange, placeholder, rows = 3, ...props }) => (
-  <textarea
-    value={value}
-    onChange={onChange}
-    placeholder={placeholder}
-    rows={rows}
-    className="input-figma w-full resize-none"
-    style={{ height: "auto", padding: "8px 10px" }}
-    {...props}
-  />
-);
-
-// Compact number input with +/- buttons
-const NumberInput = ({
-  value,
-  onChange,
-  onBlur,
-  min,
-  max,
-  step = 1,
-  unit = "",
-  label,
-}) => {
-  const handleIncrement = () => {
-    const newVal = Math.min(max, value + step);
-    onChange(newVal);
-    onBlur?.();
-  };
-
-  const handleDecrement = () => {
-    const newVal = Math.max(min, value - step);
-    onChange(newVal);
-    onBlur?.();
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      {label && <span className="prop-label">{label}</span>}
-      <div
-        className="flex items-center rounded-md overflow-hidden"
-        style={{
-          background: "var(--sidebar-bg)",
-          border: "1px solid var(--sidebar-border)",
-        }}
-      >
-        <button
-          onClick={handleDecrement}
-          className="w-6 h-7 flex items-center justify-center transition-fast"
-          style={{ color: "var(--sidebar-text-secondary)" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "transparent")
-          }
-        >
-          <Minus size={12} />
-        </button>
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          onBlur={onBlur}
-          min={min}
-          max={max}
-          step={step}
-          className="w-10 h-7 text-center text-11 bg-transparent border-none font-mono"
-          style={{ color: "var(--sidebar-text)" }}
-        />
-        <button
-          onClick={handleIncrement}
-          className="w-6 h-7 flex items-center justify-center transition-fast"
-          style={{ color: "var(--sidebar-text-secondary)" }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.background = "transparent")
-          }
-        >
-          <Plus size={12} />
-        </button>
-      </div>
-      {unit && (
-        <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
-          {unit}
-        </span>
-      )}
-    </div>
-  );
-};
-
-// Slider with track fill
-const Slider = ({ value, onChange, onBlur, min, max, step = 1, label, unit = "" }) => {
-  const percentage = max === min ? 0 : ((value - min) / (max - min)) * 100;
-
-  return (
-    <div className="space-y-2 py-1">
-      <div className="flex items-center justify-between">
-        <span className="text-11" style={{ color: "var(--sidebar-text-muted)" }}>
-          {label}
-        </span>
-        <span
-          className="text-11 font-mono"
-          style={{ color: "var(--sidebar-text-secondary)" }}
-        >
-          {typeof value === "number" ? value.toFixed(step < 1 ? 2 : 0) : value}
-          {unit}
-        </span>
-      </div>
-      <div className="relative h-5 flex items-center">
-        <div
-          className="absolute h-[3px] rounded-full w-full"
-          style={{ background: "var(--sidebar-bg-active)" }}
-        />
-        <div
-          className="absolute h-[3px] rounded-full"
-          style={{
-            width: `${percentage}%`,
-            background: "var(--accent)",
-          }}
-        />
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          onMouseUp={onBlur}
-          onTouchEnd={onBlur}
-          className="absolute w-full h-5 opacity-0 cursor-pointer"
-        />
-        <div
-          className="absolute w-3.5 h-3.5 rounded-full border-2 pointer-events-none"
-          style={{
-            left: `calc(${percentage}% - 7px)`,
-            background: "var(--sidebar-bg)",
-            borderColor: "var(--accent)",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          }}
-        />
-      </div>
-    </div>
-  );
-};
-
-// Segmented control
-const SegmentedControl = ({ options, value, onChange }) => (
-  <div
-    className="flex flex-1 rounded-lg overflow-hidden"
-    style={{
-      background: "var(--sidebar-bg-hover)",
-      padding: "3px",
-      gap: "2px",
-    }}
-  >
-    {options.map((opt) => (
-      <button
-        key={opt.value}
-        onClick={() => onChange(opt.value)}
-        className="flex-1 h-7 text-11 font-medium transition-fast rounded-md"
-        style={{
-          background:
-            value === opt.value ? "var(--sidebar-bg)" : "transparent",
-          color:
-            value === opt.value
-              ? "var(--sidebar-text)"
-              : "var(--sidebar-text-muted)",
-          boxShadow:
-            value === opt.value ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
-        }}
-      >
-        {opt.label}
-      </button>
-    ))}
-  </div>
-);
+import ImageDropZone from "./ImageDropZone";
+import {
+  Kbd,
+  Badge,
+  Tooltip,
+  IconButton,
+  Section,
+  PropRow,
+  Input,
+  TextArea,
+  NumberInput,
+  Slider,
+  SegmentedControl,
+} from "./ui";
 
 // ============================================
 // FONT SELECTOR - SEARCHABLE DROPDOWN WITH CATEGORIES
 // ============================================
 
+/** Category filter options for the font dropdown — maps Google Fonts categories to short labels. */
 const CATEGORY_FILTERS = [
   { value: "all", label: "All" },
   { value: "sans-serif", label: "Sans" },
@@ -457,6 +123,14 @@ const CATEGORY_FILTERS = [
   { value: "monospace", label: "Mono" },
 ];
 
+/**
+ * Single row in the font dropdown list.
+ * @param {object} props
+ * @param {{ family: string, category: string, curated?: boolean }} props.font - Font metadata from GOOGLE_FONTS
+ * @param {boolean} props.isSelected - Whether this font is the currently active choice
+ * @param {() => void} props.onSelect - Called on click — commits the font selection
+ * @param {() => void} props.onHover - Called on mouseEnter — triggers font preview loading
+ */
 const FontItem = ({ font, isSelected, onSelect, onHover }) => (
   <button
     onClick={onSelect}
@@ -486,16 +160,31 @@ const FontItem = ({ font, isSelected, onSelect, onHover }) => (
   </button>
 );
 
+/**
+ * Searchable font dropdown with category filtering and keyboard navigation.
+ *
+ * Renders as a button that opens a portal-based dropdown list of Google Fonts,
+ * sorted with curated picks first. Supports:
+ * - Category filtering (sans-serif, serif, display, mono)
+ * - Keyboard navigation (arrow keys, Enter to select, Escape to close)
+ * - On-hover font preview loading (lazy-loads .woff2 via Google Fonts API)
+ * - Click-outside dismissal
+ *
+ * @param {object} props
+ * @param {string} props.label - Label shown above the button (e.g. "Headline Font")
+ * @param {string} props.value - Currently selected font family name
+ * @param {(family: string) => void} props.onChange - Called with the chosen font family
+ */
 const FontSelector = ({ label, value, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [category, setCategory] = useState("all");
-  const [highlightIdx, setHighlightIdx] = useState(-1);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
-  const ref = useRef(null);
-  const buttonRef = useRef(null);
-  const listRef = useRef(null);
-  const dropdownRef = useRef(null);
-  const loadedPreviewRef = useRef(new Set());
+  const [category, setCategory] = useState("all");       // Active category filter
+  const [highlightIdx, setHighlightIdx] = useState(-1);   // Keyboard-highlighted index (-1 = none)
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 }); // Portal position
+  const ref = useRef(null);              // Outer wrapper (for click-outside detection)
+  const buttonRef = useRef(null);        // Trigger button (for position calculation)
+  const listRef = useRef(null);          // Scrollable list container
+  const dropdownRef = useRef(null);      // Portal root (for click-outside detection)
+  const loadedPreviewRef = useRef(new Set()); // Tracks which fonts have been lazy-loaded
 
   // Close on click outside
   useEffect(() => {
@@ -598,15 +287,22 @@ const FontSelector = ({ label, value, onChange }) => {
         <button
           ref={buttonRef}
           onClick={() => setIsOpen(!isOpen)}
-          className="flex-1 h-8 px-3 rounded-lg flex items-center justify-between transition-fast"
+          className="flex-1 h-8 px-3 rounded-xl flex items-center gap-2 transition-fast"
           style={{
             background: isOpen ? "var(--sidebar-bg-hover)" : "transparent",
             border: `1px solid ${isOpen ? "var(--accent)" : "var(--sidebar-border)"}`,
             color: "var(--sidebar-text)",
+            boxShadow: isOpen ? "var(--sidebar-focus-ring)" : "none",
           }}
         >
           <span
-            className="text-12 truncate"
+            className="text-10 shrink-0"
+            style={{ color: "var(--sidebar-text-muted)", fontFamily: `"${value}", sans-serif` }}
+          >
+            Aa
+          </span>
+          <span
+            className="text-12 truncate flex-1 text-left"
             style={{ fontFamily: `"${value}", sans-serif` }}
           >
             {value}
@@ -617,6 +313,7 @@ const FontSelector = ({ label, value, onChange }) => {
               color: "var(--sidebar-text-muted)",
               transform: isOpen ? "rotate(180deg)" : "none",
               transition: "transform 0.15s ease",
+              flexShrink: 0,
             }}
           />
         </button>
@@ -630,7 +327,7 @@ const FontSelector = ({ label, value, onChange }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="rounded-lg flex flex-col"
+            className="rounded-xl flex flex-col"
             style={{
               position: "fixed",
               top: dropdownPos.top,
@@ -639,7 +336,7 @@ const FontSelector = ({ label, value, onChange }) => {
               zIndex: 9999,
               background: "var(--sidebar-bg-elevated)",
               border: "1px solid var(--sidebar-border)",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08)",
+              boxShadow: "var(--shadow-xl)",
               maxHeight: "min(420px, 60vh)",
             }}
             onKeyDown={handleKeyDown}
@@ -649,7 +346,7 @@ const FontSelector = ({ label, value, onChange }) => {
               className="px-2.5 pt-2.5 pb-1.5"
               style={{ borderBottom: "1px solid var(--sidebar-border)" }}
             >
-              <div className="flex gap-1 pb-0.5">
+              <div className="flex flex-wrap gap-1 pb-0.5">
                 {CATEGORY_FILTERS.map((cat) => (
                   <button
                     key={cat.value}
@@ -657,7 +354,7 @@ const FontSelector = ({ label, value, onChange }) => {
                       setCategory(cat.value);
                       setHighlightIdx(-1);
                     }}
-                    className="px-2 py-0.5 rounded-md text-11 transition-fast"
+                    className="px-2.5 py-0.5 rounded-full text-11 transition-fast"
                     style={{
                       background:
                         category === cat.value
@@ -1653,13 +1350,14 @@ const LayoutPreview = ({ preset, isActive, displaySize = 32 }) => {
 // ============================================
 
 const LAYOUT_PRESETS_CONFIG = [
-  { key: "minimal", label: "Minimal" },
-  { key: "duo", label: "Duo" },
-  { key: "balanced", label: "Classic" },
-  { key: "heroLeft", label: "Left" },
-  { key: "heroCenter", label: "Center" },
-  { key: "stacked", label: "Stack" },
-  { key: "foodDrink", label: "Food & Drink" },
+  { key: "minimal", label: "Focus" },
+  { key: "duo", label: "Trio" },
+  { key: "balanced", label: "Grid" },
+  { key: "heroLeft", label: "Panel" },
+  { key: "heroCenter", label: "Feature" },
+  { key: "stacked", label: "Banner" },
+  { key: "spread", label: "Spread" },
+  { key: "mosaic", label: "Mosaic" },
 ];
 
 const LayoutSelector = () => {
@@ -1670,26 +1368,29 @@ const LayoutSelector = () => {
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-4 gap-1">
         {LAYOUT_PRESETS_CONFIG.map((p) => {
           const isActive = preset === p.key;
           return (
             <motion.button
               key={p.key}
               onClick={() => setPreset(p.key)}
-              className="flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-lg transition-fast relative overflow-hidden"
+              className="flex flex-col items-center gap-1 py-1.5 px-0.5 rounded-lg transition-fast relative overflow-hidden"
               style={{
                 background: isActive
-                  ? "var(--sidebar-bg-hover)"
+                  ? "var(--accent-subtle)"
                   : "transparent",
                 border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border-subtle)"}`,
+                boxShadow: isActive ? "0 1px 4px var(--accent-muted)" : "none",
               }}
               whileHover={{
-                background: "var(--sidebar-bg-hover)",
+                y: -1,
+                boxShadow: "var(--shadow-float)",
+                background: isActive ? "var(--accent-subtle)" : "var(--sidebar-bg-hover)",
               }}
               whileTap={{ scale: 0.96 }}
             >
-              <LayoutPreview preset={p.key} isActive={isActive} displaySize={32} />
+              <LayoutPreview preset={p.key} isActive={isActive} displaySize={26} />
               <span
                 className="text-10 font-medium"
                 style={{
@@ -1698,6 +1399,12 @@ const LayoutSelector = () => {
               >
                 {p.label}
               </span>
+              {isActive && (
+                <div
+                  className="w-1 h-1 rounded-full"
+                  style={{ background: "var(--accent)" }}
+                />
+              )}
             </motion.button>
           );
         })}
@@ -1734,6 +1441,46 @@ const CanvasBgPicker = () => {
   );
 };
 
+const CanvasRatioPicker = () => {
+  const canvasRatio = useLayoutStore((s) => s.canvasRatio);
+  const setCanvasRatio = useLayoutStore((s) => s.setCanvasRatio);
+
+  return (
+    <div className="pt-2 border-t" style={{ borderColor: "var(--sidebar-border-subtle)" }}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-10 font-semibold uppercase tracking-widest" style={{ color: "var(--sidebar-text-muted)" }}>Canvas Ratio</span>
+        {canvasRatio !== 'auto' && (
+          <button
+            type="button"
+            className="text-10 font-medium px-1.5 py-0.5 rounded hover:opacity-80 transition-fast"
+            style={{ color: "var(--sidebar-text-muted)" }}
+            onClick={() => setCanvasRatio('auto')}
+          >
+            Reset
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-3 gap-1">
+        {CANVAS_RATIOS.map((r) => (
+          <button
+            key={r.key}
+            type="button"
+            className="px-2 py-1.5 rounded-md text-11 font-medium transition-fast text-center"
+            style={{
+              backgroundColor: canvasRatio === r.key ? "var(--sidebar-bg-hover)" : "transparent",
+              color: canvasRatio === r.key ? "var(--sidebar-text)" : "var(--sidebar-text-muted)",
+              border: `1px solid ${canvasRatio === r.key ? "var(--sidebar-border)" : "transparent"}`,
+            }}
+            onClick={() => setCanvasRatio(r.key)}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ============================================
 // GLOBAL CONTROLS
 // ============================================
@@ -1744,7 +1491,7 @@ const PRESET_OPTIONS = [
   { key: "luxuryRetail", name: "Luxury Retail" },
   { key: "communityNonprofit", name: "Community Nonprofit" },
   { key: "creativeStudio", name: "Creative Studio" },
-  { key: "foodDrink", name: "Food & Drink" },
+  { key: "spread", name: "Food & Drink" },
 ];
 
 const PRESET_BRANDS = {
@@ -1763,7 +1510,7 @@ const PRESET_BRANDS = {
   creativeStudio: {
     colors: { bg: "#FAFAFA", text: "#171717", primary: "#F97316" },
   },
-  foodDrink: {
+  spread: {
     colors: { bg: "#F7F2EA", text: "#1E1C2E", primary: "#2D2A57" },
   },
 };
@@ -1785,49 +1532,15 @@ const GlobalControls = React.memo(() => {
       isCommit
     );
   };
-  const handleLogoUpload = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      if (result) {
-        handleChange("logo", "image", result, true);
-      }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  };
+
 
   return (
     <>
       {/* Layout */}
       <Section title="Layout" defaultOpen>
         <LayoutSelector />
+        <CanvasRatioPicker />
         <CanvasBgPicker />
-      </Section>
-
-      {/* Industry Themes */}
-      <Section
-        title="Industry Themes"
-        defaultOpen={false}
-      >
-        <div className="flex flex-col gap-1">
-          {PRESET_OPTIONS.map((preset) => (
-            <PresetCard
-              key={preset.key}
-              name={preset.name}
-              brand={PRESET_BRANDS[preset.key]}
-              isActive={activePreset === preset.key}
-              onClick={() => loadPreset(preset.key)}
-            />
-          ))}
-        </div>
-      </Section>
-
-      {/* Color Palettes */}
-      <Section title="Color Palettes" defaultOpen={false} noPadding>
-        <ColorPalettePanel />
       </Section>
 
       {/* Typography */}
@@ -1884,85 +1597,68 @@ const GlobalControls = React.memo(() => {
         />
       </Section>
 
-      {/* Colors */}
+      {/* Color Palettes */}
+      <Section title="Color Palettes" defaultOpen noPadding>
+        <ColorPalettePanel />
+      </Section>
+
+      {/* Colors – compact swatch bar (editing lives in Custom tab above) */}
       <Section title="Colors" badge={getContrastRatio(brand.colors.text, brand.colors.bg) >= 4.5 ? "AA" : null}>
-        <div className="space-y-0.5">
-          <span className="text-10 font-semibold uppercase tracking-widest block pb-1" style={{ color: "var(--sidebar-text-muted)" }}>Core</span>
-          <ColorRoleSlot label="Primary" color={brand.colors.primary} onChange={(hex) => handleChange("colors", "primary", hex, true)} contrastWith={brand.colors.bg} />
-        </div>
-        <div className="space-y-0.5">
-          <span className="text-10 font-semibold uppercase tracking-widest block pb-1" style={{ color: "var(--sidebar-text-muted)" }}>Neutral</span>
-          <ColorRoleSlot label="Background" color={brand.colors.bg} onChange={(hex) => handleChange("colors", "bg", hex, true)} />
-          <ColorRoleSlot label="Text" color={brand.colors.text} onChange={(hex) => handleChange("colors", "text", hex, true)} contrastWith={brand.colors.bg} />
-          <ColorRoleSlot label="Surface" color={brand.colors.surface || brand.colors.bg} onChange={(hex) => handleChange("colors", "surface", hex, true)} />
-        </div>
-        <div className="space-y-0.5">
-          <span className="text-10 font-semibold uppercase tracking-widest block pb-1" style={{ color: "var(--sidebar-text-muted)" }}>Accent</span>
-          <ColorRoleSlot label="Accent" color={brand.colors.accent || brand.colors.primary} onChange={(hex) => handleChange("colors", "accent", hex, true)} />
+        <div className="flex items-center gap-1.5">
+          {[
+            { key: "bg", label: "BG" },
+            { key: "text", label: "Text" },
+            { key: "primary", label: "Pri" },
+            { key: "accent", label: "Acc" },
+            { key: "surface", label: "Surf" },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              title={`${label}: ${brand.colors[key] || brand.colors.bg}`}
+              className="group flex flex-col items-center gap-0.5 cursor-pointer"
+              onClick={() => {
+                // Open Color Palettes -> Custom tab to edit
+                const section = document.querySelector('[data-section="Color Palettes"]');
+                if (section && !section.dataset.open) section.querySelector('button')?.click();
+              }}
+            >
+              <div
+                className="w-7 h-7 rounded-md ring-1 ring-inset ring-white/10 transition-transform group-hover:scale-110"
+                style={{ backgroundColor: brand.colors[key] || brand.colors.bg }}
+              />
+              <span className="text-[9px] uppercase tracking-wide" style={{ color: "var(--sidebar-text-muted)" }}>{label}</span>
+            </button>
+          ))}
         </div>
       </Section>
 
-      {/* Buttons */}
-      <Section title="Buttons" defaultOpen={false}>
-        <Slider
-          label="Radius"
-          value={brand.ui?.buttonRadius ?? 10}
-          onChange={(val) => handleChange("ui", "buttonRadius", Math.round(val), false)}
-          onBlur={() => handleChange("ui", "buttonRadius", brand.ui?.buttonRadius ?? 10, true)}
-          min={0}
-          max={24}
-          step={1}
-          unit="px"
-        />
-        <PropRow label="Style">
-          <SegmentedControl
-            options={[
-              { value: "filled", label: "Filled" },
-              { value: "outline", label: "Outline" },
-              { value: "soft", label: "Soft" },
-            ]}
-            value={brand.ui?.buttonStyle ?? "filled"}
-            onChange={(val) => handleChange("ui", "buttonStyle", val, true)}
-          />
-        </PropRow>
-        <div className="space-y-0.5">
-          <ColorRoleSlot
-            label="Button Color"
-            color={brand.ui?.buttonColor || brand.colors.primary}
-            onChange={(hex) => handleChange("ui", "buttonColor", hex, true)}
-          />
+      {/* Industry Themes */}
+      <Section
+        title="Industry Themes"
+        defaultOpen={false}
+      >
+        <div className="flex flex-col gap-1">
+          {PRESET_OPTIONS.map((preset) => (
+            <PresetCard
+              key={preset.key}
+              name={preset.name}
+              brand={PRESET_BRANDS[preset.key]}
+              isActive={activePreset === preset.key}
+              onClick={() => loadPreset(preset.key)}
+            />
+          ))}
         </div>
       </Section>
 
       {/* Logo */}
       <Section title="Logo" defaultOpen={false}>
-        <PropRow label="Image">
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept="image/svg+xml,image/png"
-              className="hidden"
-              onChange={handleLogoUpload}
-              id="logo-upload-input"
-            />
-            <button
-              type="button"
-              className="btn-figma btn-figma-ghost"
-              onClick={() => document.getElementById("logo-upload-input")?.click()}
-            >
-              Upload SVG/PNG
-            </button>
-            {brand.logo.image && (
-              <button
-                type="button"
-                className="btn-figma btn-figma-ghost"
-                onClick={() => handleChange("logo", "image", null, true)}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </PropRow>
+        <ImageDropZone
+          value={brand.logo.image}
+          onChange={(v) => handleChange("logo", "image", v, true)}
+          accept="image/svg+xml,image/png"
+          label="Drop logo (SVG/PNG)"
+          compact
+        />
 
         <PropRow label="Text">
           <Input
@@ -2063,8 +1759,6 @@ const TileControls = ({ tile, placementId }) => {
     (s) => s.placementContent?.[placementId] ?? EMPTY_PLACEMENT_CONTENT
   );
   const setPlacementContent = useBrandStore((s) => s.setPlacementContent);
-  const imageInputRef = useRef(null);
-  const placementImageInputRef = useRef(null);
 
   // Get current surface index for this placement
   const currentSurfaceIndex = tileSurfaceIndex;
@@ -2092,17 +1786,6 @@ const TileControls = ({ tile, placementId }) => {
   const handleLogoChange = (key, value, isCommit = false) => {
     updateBrand({ logo: { ...brand.logo, [key]: value } }, isCommit);
   };
-  const handleLogoUploadInTile = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      if (result) handleLogoChange("image", result, true);
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  };
   const handlePlacementChange = (key, value, isCommit = false) => {
     setPlacementContent(placementId, { [key]: value }, isCommit);
   };
@@ -2114,43 +1797,23 @@ const TileControls = ({ tile, placementId }) => {
         : fallback;
     setPlacementContent(placementId, { [key]: value }, true);
   };
-  const handleImageUpload = (event) => {
-    if (!tile) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      if (result) {
-        updateTile(tile.id, { image: result }, true);
-      }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  };
-  const handlePlacementImageUpload = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      if (result) {
-        setPlacementContent(placementId, { image: result }, true);
-      }
-    };
-    reader.readAsDataURL(file);
-    event.target.value = "";
-  };
-
   const tileTypes = [
-    { value: "hero", label: "Hero", icon: Layers },
-    { value: "editorial", label: "Editorial", icon: FileText },
-    { value: "product", label: "Product", icon: Box },
-    { value: "menu", label: "Menu", icon: List },
-    { value: "ui-preview", label: "UI", icon: LayoutGrid },
-    { value: "image", label: "Image", icon: Image },
-    { value: "utility", label: "Utility", icon: Hash },
-    { value: "logo", label: "Logo", icon: Sparkles },
+    { value: "hero", label: "Hero", icon: Layers, desc: "Full-width hero with image, headline and CTA" },
+    { value: "editorial", label: "Editorial", icon: FileText, desc: "Long-form content with headline and body text" },
+    { value: "product", label: "Product", icon: Box, desc: "Product card with image, price and details" },
+    { value: "menu", label: "Menu", icon: List, desc: "Navigation menu with link items" },
+    { value: "ui-preview", label: "Interface", icon: LayoutGrid, desc: "UI component showcase with buttons and inputs" },
+    { value: "social", label: "Social Post", icon: Image, desc: "Social media post card" },
+    { value: "utility", label: "List", icon: Hash, desc: "Feature list with labeled items" },
+    { value: "logo", label: "Logo", icon: Sparkles, desc: "Brand logo with wordmark" },
+    { value: "logo-symbol", label: "Symbol", icon: Fingerprint, desc: "Logo mark without text" },
+    { value: "icons", label: "Icons", icon: Grid2X2, desc: "Brand icon grid" },
+    { value: "split-hero", label: "Split Hero", icon: Columns, desc: "Hero split into image and text halves" },
+    { value: "overlay", label: "Overlay", icon: Square, desc: "Image with text overlay" },
+    { value: "split-list", label: "Split List", icon: Rows, desc: "Split layout with list content" },
+    { value: "pattern", label: "Pattern", icon: Grid3X3, desc: "Geometric pattern from brand colors" },
+    { value: "stats", label: "Stats", icon: TrendingUp, desc: "Big number with label and detail" },
+    { value: "app-screen", label: "App Screen", icon: Smartphone, desc: "Phone mockup with branded app screen" },
   ];
 
   // Get tile type from placement ID mapping (fallback for when tile object is undefined)
@@ -2167,10 +1830,10 @@ const TileControls = ({ tile, placementId }) => {
       >
         <div className="flex-1">
           <h2
-            className="text-12 font-semibold capitalize tracking-wide"
+            className="text-12 font-semibold tracking-wide"
             style={{ color: "var(--sidebar-text)" }}
           >
-            {currentTileType.replace("-", " ")}
+            {currentType?.label || currentTileType.replace("-", " ")}
           </h2>
         </div>
         <motion.button
@@ -2190,7 +1853,7 @@ const TileControls = ({ tile, placementId }) => {
       {/* Tile type - only show if tile exists */}
       {tile && (
         <Section title="Type" defaultOpen={true}>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-2 gap-0.5">
             {tileTypes.map((type) => {
               const TypeIcon = type.icon;
               const isSelected = tile.type === type.value;
@@ -2199,17 +1862,16 @@ const TileControls = ({ tile, placementId }) => {
                 <button
                   key={type.value}
                   onClick={() => swapTileType(tile.id, type.value)}
-                  className="flex flex-col items-center gap-1.5 py-2 rounded-lg transition-fast"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-fast text-left"
                   style={{
                     background: isSelected
                       ? "var(--sidebar-bg-hover)"
                       : "transparent",
-                    border: `1px solid ${isSelected ? "var(--accent)" : "var(--sidebar-border-subtle)"}`,
-                    color: isSelected ? "var(--accent)" : "var(--sidebar-text-muted)",
+                    color: isSelected ? "var(--sidebar-text)" : "var(--sidebar-text-muted)",
                   }}
                 >
-                  <TypeIcon size={14} />
-                  <span className="text-10">{type.label}</span>
+                  <TypeIcon size={13} strokeWidth={isSelected ? 2 : 1.5} style={{ flexShrink: 0 }} />
+                  <span className="text-11 truncate">{type.label}</span>
                 </button>
               );
             })}
@@ -2295,33 +1957,13 @@ const TileControls = ({ tile, placementId }) => {
       {/* Identity Logo controls */}
       {isIdentityPlacement && (
         <Section title="Logo" defaultOpen={true}>
-          <PropRow label="Image">
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                accept="image/svg+xml,image/png"
-                className="hidden"
-                onChange={handleLogoUploadInTile}
-                id="tile-logo-upload-input"
-              />
-              <button
-                type="button"
-                className="btn-figma btn-figma-ghost"
-                onClick={() => document.getElementById("tile-logo-upload-input")?.click()}
-              >
-                Upload SVG/PNG
-              </button>
-              {brand.logo.image && (
-                <button
-                  type="button"
-                  className="btn-figma btn-figma-ghost"
-                  onClick={() => handleLogoChange("image", null, true)}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </PropRow>
+          <ImageDropZone
+            value={brand.logo.image}
+            onChange={(v) => handleLogoChange("image", v, true)}
+            accept="image/svg+xml,image/png"
+            label="Drop logo (SVG/PNG)"
+            compact
+          />
 
           <PropRow label="Text">
             <Input
@@ -2356,104 +1998,121 @@ const TileControls = ({ tile, placementId }) => {
       )}
 
       {/* Social Post */}
-      {isSocialPlacement && (
-        <Section title="Social" defaultOpen={true}>
-          <PropRow label="Aspect">
-            <SegmentedControl
-              options={[
-                { value: "4:5", label: "4:5" },
-                { value: "1:1", label: "1:1" },
-                { value: "1.91:1", label: "Wide" },
-              ]}
-              value={placementContent.socialAspect || "4:5"}
-              onChange={(val) => handlePlacementChange("socialAspect", val, true)}
-            />
-          </PropRow>
+      {isSocialPlacement && (() => {
+        const posts = placementContent.socialPosts || [
+          { caption: placementContent.socialCaption || '', likes: placementContent.socialLikes || '', image: placementContent.image || '' },
+        ];
+        const updatePost = (index, field, value, isCommit = false) => {
+          const next = posts.map((p, i) => i === index ? { ...p, [field]: value } : p);
+          setPlacementContent(placementId, { socialPosts: next }, isCommit);
+        };
+        const addPost = () => {
+          if (posts.length >= 3) return;
+          const next = [...posts, { caption: '', likes: '', image: '' }];
+          setPlacementContent(placementId, { socialPosts: next }, true);
+        };
+        const removePost = (index) => {
+          if (posts.length <= 1) return;
+          const next = posts.filter((_, i) => i !== index);
+          setPlacementContent(placementId, { socialPosts: next }, true);
+        };
+        return (
+          <Section title="Social" defaultOpen={true}>
+            <PropRow label="Handle">
+              <Input
+                value={placementContent.socialHandle || ""}
+                onChange={(e) => handlePlacementChange("socialHandle", e.target.value, false)}
+                onBlur={() => handlePlacementCommit("socialHandle", "")}
+                placeholder="brandname"
+              />
+            </PropRow>
 
-          <PropRow label="Handle">
-            <Input
-              value={placementContent.socialHandle || ""}
-              onChange={(e) => handlePlacementChange("socialHandle", e.target.value, false)}
-              onBlur={() => handlePlacementCommit("socialHandle", "")}
-              placeholder="brandname"
-            />
-          </PropRow>
+            <PropRow label="Sponsored">
+              <Input
+                value={placementContent.socialSponsored || ""}
+                onChange={(e) => handlePlacementChange("socialSponsored", e.target.value, false)}
+                onBlur={() => handlePlacementCommit("socialSponsored", "")}
+                placeholder="Sponsored"
+              />
+            </PropRow>
 
-          <PropRow label="Likes">
-            <Input
-              value={placementContent.socialLikes || ""}
-              onChange={(e) => handlePlacementChange("socialLikes", e.target.value, false)}
-              onBlur={() => handlePlacementCommit("socialLikes", "")}
-              placeholder="1,204 likes"
-            />
-          </PropRow>
+            {/* Per-post editing */}
+            <div className="flex items-center justify-between mt-1 mb-1">
+              <span className="text-11 font-medium uppercase tracking-wider" style={{ color: "var(--sidebar-text-secondary)" }}>
+                Posts ({posts.length})
+              </span>
+              {posts.length < 3 && (
+                <button
+                  type="button"
+                  className="btn-figma btn-figma-ghost"
+                  style={{ padding: '2px 6px', fontSize: 11 }}
+                  onClick={addPost}
+                >
+                  <Plus size={12} /> Add
+                </button>
+              )}
+            </div>
 
-          <PropRow label="Sponsored">
-            <Input
-              value={placementContent.socialSponsored || ""}
-              onChange={(e) => handlePlacementChange("socialSponsored", e.target.value, false)}
-              onBlur={() => handlePlacementCommit("socialSponsored", "")}
-              placeholder="Sponsored"
-            />
-          </PropRow>
-
-          <div>
-            <span
-              className="text-11 block mb-2"
-              style={{ color: "var(--sidebar-text-secondary)" }}
-            >
-              Caption
-            </span>
-            <TextArea
-              value={placementContent.socialCaption || ""}
-              onChange={(e) => handlePlacementChange("socialCaption", e.target.value, false)}
-              onBlur={() => handlePlacementCommit("socialCaption", "")}
-              placeholder="Write a short caption..."
-            />
-          </div>
-
-          <div>
-            <span
-              className="text-11 block mb-2"
-              style={{ color: "var(--sidebar-text-secondary)" }}
-            >
-              Image URL
-            </span>
-            <Input
-              value={placementContent.image || ""}
-              onChange={(e) => handlePlacementChange("image", e.target.value, false)}
-              onBlur={() => handlePlacementCommit("image", "")}
-              placeholder="https://images.unsplash.com/..."
-            />
-            <input
-              ref={placementImageInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePlacementImageUpload}
-            />
-            <button
-              type="button"
-              className="btn-figma btn-figma-ghost mt-2 w-full justify-center"
-              onClick={() => placementImageInputRef.current?.click()}
-            >
-              Upload Image
-            </button>
-            {placementContent.image && (
+            {posts.map((post, idx) => (
               <div
-                className="mt-2 h-20 rounded-md overflow-hidden"
-                style={{ background: "var(--sidebar-bg-active)" }}
+                key={idx}
+                className="rounded-md mb-2"
+                style={{
+                  padding: '8px',
+                  background: 'var(--sidebar-bg-hover)',
+                  border: '1px solid var(--sidebar-border)',
+                }}
               >
-                <img
-                  src={placementContent.image}
-                  alt=""
-                  className="w-full h-full object-cover opacity-80"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-11 font-medium" style={{ color: "var(--sidebar-text)" }}>
+                    Post {idx + 1}
+                  </span>
+                  {posts.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn-figma btn-figma-ghost"
+                      style={{ padding: '1px 4px' }}
+                      onClick={() => removePost(idx)}
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <TextArea
+                    value={post.caption || ""}
+                    onChange={(e) => updatePost(idx, 'caption', e.target.value, false)}
+                    onBlur={() => updatePost(idx, 'caption', post.caption || '', true)}
+                    placeholder="Caption..."
+                    style={{ fontSize: 11, minHeight: 48 }}
+                  />
+                  <Input
+                    value={post.likes || ""}
+                    onChange={(e) => updatePost(idx, 'likes', e.target.value, false)}
+                    onBlur={() => updatePost(idx, 'likes', post.likes || '', true)}
+                    placeholder="1,204 likes"
+                  />
+                  <Input
+                    value={post.image || ""}
+                    onChange={(e) => updatePost(idx, 'image', e.target.value, false)}
+                    onBlur={() => updatePost(idx, 'image', post.image || '', true)}
+                    placeholder="Image URL..."
+                  />
+                  {post.image && (
+                    <div
+                      className="h-16 rounded overflow-hidden"
+                      style={{ background: "var(--sidebar-bg-active)" }}
+                    >
+                      <img src={post.image} alt="" className="w-full h-full object-cover opacity-80" />
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </Section>
-      )}
+            ))}
+          </Section>
+        );
+      })()}
 
       {/* Content - only show if tile exists */}
       {tile && (
@@ -2530,46 +2189,37 @@ const TileControls = ({ tile, placementId }) => {
           </PropRow>
         )}
 
-        {tile.content.image !== undefined && (
+        {(tile.content.image !== undefined || placementContent.image !== undefined) && (
           <div>
             <span
               className="text-11 block mb-2"
               style={{ color: "var(--sidebar-text-secondary)" }}
             >
-              Image URL
+              Image
             </span>
+            <ImageDropZone
+              value={placementContent.image ?? tile.content.image ?? null}
+              onChange={(v) => {
+                if (placementId) {
+                  setPlacementContent(placementId, { image: v }, true);
+                } else if (tile) {
+                  updateTile(tile.id, { image: v }, true);
+                }
+              }}
+            />
             <Input
-              value={tile.content.image}
-              onChange={(e) => handleChange("image", e.target.value)}
-              onBlur={() => handleCommit("image")}
-              placeholder="https://images.unsplash.com/..."
+              value={placementContent.image ?? tile.content.image ?? ""}
+              onChange={(e) => placementId
+                ? handlePlacementChange("image", e.target.value, false)
+                : handleChange("image", e.target.value)
+              }
+              onBlur={() => placementId
+                ? handlePlacementCommit("image", "")
+                : handleCommit("image")
+              }
+              placeholder="or paste URL..."
+              className="mt-2"
             />
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageUpload}
-            />
-            <button
-              type="button"
-              className="btn-figma btn-figma-ghost mt-2 w-full justify-center"
-              onClick={() => imageInputRef.current?.click()}
-            >
-              Upload Image
-            </button>
-            {tile.content.image && (
-              <div
-                className="mt-2 h-20 rounded-md overflow-hidden"
-                style={{ background: "var(--sidebar-bg-active)" }}
-              >
-                <img
-                  src={tile.content.image}
-                  alt=""
-                  className="w-full h-full object-cover opacity-80"
-                />
-              </div>
-            )}
           </div>
         )}
 
@@ -2714,7 +2364,7 @@ const ControlPanel = () => {
         borderRight: "1px solid var(--sidebar-border)",
       }}
       initial={false}
-      animate={{ width: isCollapsed ? 48 : 300 }}
+      animate={{ width: isCollapsed ? 48 : 400 }}
       transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
     >
       {/* Collapse toggle - positioned inside panel edge */}
@@ -2740,18 +2390,48 @@ const ControlPanel = () => {
       </motion.button>
 
       {isCollapsed ? (
-        /* Collapsed state - toggle button handles expand */
-        <div className="flex flex-col items-center pt-12 gap-2" />
+        /* Collapsed state - icon shortcuts */
+        <div className="flex flex-col items-center pt-12 gap-1">
+          {[
+            { icon: Layers, label: "Layout" },
+            { icon: Type, label: "Typography" },
+            { icon: Palette, label: "Colors" },
+            { icon: Wand2, label: "Themes" },
+            { icon: Sparkles, label: "Logo" },
+          ].map((item) => (
+            <Tooltip key={item.label} content={item.label} position="right">
+              <button
+                onClick={() => setIsCollapsed(false)}
+                className="w-8 h-8 rounded-md flex items-center justify-center transition-fast"
+                style={{
+                  color: "var(--sidebar-text-muted)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--sidebar-bg-hover)";
+                  e.currentTarget.style.color = "var(--sidebar-text)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "var(--sidebar-text-muted)";
+                }}
+              >
+                <item.icon size={16} />
+              </button>
+            </Tooltip>
+          ))}
+        </div>
       ) : (
         /* Expanded state */
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Panel header */}
           <div
-            className="px-4 py-3.5 flex items-center justify-between flex-shrink-0"
-            style={{ borderBottom: "1px solid var(--sidebar-border-subtle)" }}
+            className="px-4 py-3.5 flex items-center justify-between flex-shrink-0 relative"
           >
             <span
-              className="text-12 font-semibold tracking-wide"
+              className="text-13 font-medium tracking-wide"
               style={{ color: "var(--sidebar-text)" }}
             >
               {focusedTileId ? "Tile" : "Design"}
@@ -2759,16 +2439,23 @@ const ControlPanel = () => {
             <div className="flex items-center gap-2 mr-8">
               {history.past.length > 0 && (
                 <span
-                  className="text-10 px-2 py-0.5 rounded-full"
+                  className="text-10 px-2 py-0.5 rounded-full font-medium"
                   style={{
-                    background: "var(--sidebar-bg-hover)",
-                    color: "var(--sidebar-text-muted)",
+                    background: "var(--accent-muted)",
+                    color: "var(--accent)",
                   }}
                 >
                   {history.past.length}
                 </span>
               )}
             </div>
+            {/* Subtle bottom fade */}
+            <div
+              className="absolute bottom-0 left-0 right-0 h-px"
+              style={{
+                background: "linear-gradient(90deg, transparent, var(--sidebar-border-subtle) 20%, var(--sidebar-border-subtle) 80%, transparent)",
+              }}
+            />
           </div>
 
           {/* Panel content */}
@@ -2800,16 +2487,17 @@ const ControlPanel = () => {
 
           {/* Panel footer */}
           <div
-            className="px-4 py-2.5 flex items-center gap-3 flex-shrink-0"
+            className="px-4 py-2.5 flex items-center justify-center gap-4 flex-shrink-0"
             style={{
               borderTop: "1px solid var(--sidebar-border-subtle)",
             }}
           >
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5" style={{ opacity: 0.7 }}>
               <Kbd>⌘Z</Kbd>
               <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>Undo</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="w-px h-3" style={{ background: "var(--sidebar-border-subtle)" }} />
+            <div className="flex items-center gap-1.5" style={{ opacity: 0.7 }}>
               <Kbd>⌘\</Kbd>
               <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>Toggle</span>
             </div>

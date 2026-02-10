@@ -16,9 +16,9 @@
  *
  * Maps placement IDs to tile components:
  * - hero → HeroTile (image-led hero)
- * - a → IdentityTile (logo/wordmark)
+ * - a → LogoTile (logo/wordmark)
  * - editorial/b → EditorialTile (typography showcase)
- * - image/d → SocialPostTile (social media mockup)
+ * - social/d → SocialPostTile (social media mockup)
  * - buttons/c → InterfaceTile (UI components)
  * - colors/f → ColorTile (color palette)
  *
@@ -35,19 +35,21 @@ import { useLayoutStore } from "../store/useLayoutStore";
 import { getPlacementKind } from "../config/placements";
 
 // Tile Imports
-import { IdentityTile } from "./tiles/IdentityTile";
+import { IconsTile } from "./tiles/IconsTile";
+import { LogoTile } from "./tiles/LogoTile";
+import { LogoSymbolTile } from "./tiles/LogoSymbolTile";
 import { HeroTile } from "./tiles/HeroTile";
 import { EditorialTile } from "./tiles/EditorialTile";
 import { SocialPostTile } from "./tiles/SocialPostTile";
 import { ImageTile } from "./tiles/ImageTile";
 import { InterfaceTile } from "./tiles/InterfaceTile";
-import { ColorTile } from "./tiles/ColorTile";
-import { ProductTile } from "./tiles/ProductTile";
-import { MenuTile } from "./tiles/MenuTile";
-import { IconTile } from "./tiles/IconTile";
+import { CardTile } from "./tiles/CardTile";
+import { ListTile } from "./tiles/ListTile";
+import { SwatchTile } from "./tiles/SwatchTile";
 import { SplitHeroTile } from "./tiles/SplitHeroTile";
-import { OverlayTile } from "./tiles/OverlayTile";
-import { SplitListTile } from "./tiles/SplitListTile";
+import { PatternTile } from "./tiles/PatternTile";
+import { StatsTile } from "./tiles/StatsTile";
+import { AppScreenTile } from "./tiles/AppScreenTile";
 import { getPlacementTileId, getPlacementTileType } from "../config/placements";
 const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
@@ -64,93 +66,112 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
       case 'hero':
         return { label: 'Hero', hint: 'Add headline' };
       case 'a':
-        return { label: 'Identity', hint: 'Add wordmark' };
-      case 'e':
+      case 'logo':
         return { label: 'Logo', hint: 'Upload logo' };
+      case 'e':
+        return { label: 'Icons', hint: 'Add icons' };
       case 'b':
       case 'editorial':
         return { label: 'Editorial', hint: 'Add copy' };
       case 'c':
       case 'buttons':
-        return { label: 'UI Preview', hint: 'Add UI elements' };
+        return { label: 'Interface', hint: 'Add UI elements' };
       case 'd':
-      case 'image':
-        return { label: 'Social Post', hint: 'Add image' };
+      case 'social':
+        return { label: 'Social', hint: 'Add social post' };
       case 'f':
       case 'colors':
-        return { label: 'Colors', hint: 'Add palette' };
+        return { label: 'List', hint: 'Add items' };
       default:
         return { label: id, hint: 'Add content' };
     }
   };
 
   const getTileForPlacement = (id) => {
+    // Each placement maps to a unique tile ID via placements.ts
     const placementTileId = getPlacementTileId(id);
     if (placementTileId) {
-      return tiles.find((t) => t.id === placementTileId);
+      const byId = tiles.find((t) => t.id === placementTileId);
+      if (byId) return byId;
     }
+    // Fallback: match by expected tile type for this placement
     const placementTileType = getPlacementTileType(id);
     if (placementTileType) {
-      return tiles.find((t) => t.type === placementTileType);
+      const byType = tiles.find((t) => t.type === placementTileType);
+      if (byType) return byType;
     }
     return undefined;
   };
 
+  const renderTileByType = (tileType, id) => {
+    switch (tileType) {
+      case 'hero':
+        return <HeroTile placementId={id} />;
+      case 'logo':
+        return <LogoTile placementId={id} />;
+      case 'logo-symbol':
+        return <LogoSymbolTile placementId={id} />;
+      case 'editorial':
+        return <EditorialTile placementId={id} />;
+      case 'social':
+        return activePreset === 'spread'
+          ? <ImageTile placementId={id} />
+          : <SocialPostTile placementId={id} />;
+      case 'ui-preview':
+        return <InterfaceTile placementId={id} />;
+      case 'card':
+      case 'product':
+        return <CardTile placementId={id} />;
+      case 'menu':
+      case 'utility':
+        return <ListTile placementId={id} />;
+      case 'split-hero':
+        return <SplitHeroTile placementId={id} />;
+      case 'overlay':
+        return <HeroTile placementId={id} variant="overlay" />;
+      case 'split-list':
+        return <ListTile placementId={id} variant="split" />;
+      case 'swatch':
+        return <SwatchTile placementId={id} />;
+      case 'icons':
+        return <IconsTile placementId={id} />;
+      case 'pattern':
+        return <PatternTile placementId={id} />;
+      case 'stats':
+        return <StatsTile placementId={id} />;
+      case 'app-screen':
+        return <AppScreenTile placementId={id} />;
+      case 'colors':
+        return activePreset === 'spread'
+          ? <SwatchTile placementId={id} />
+          : <SwatchTile placementId={id} variant="bars" />;
+      default:
+        return null;
+    }
+  };
+
   const renderTile = (id) => {
-    const kind = getPlacementKind(id);
-    if (kind === 'colors') {
-      return activePreset === 'foodDrink'
-        ? <IconTile placementId={id} />
-        : <ColorTile />;
-    }
+    // 1. Resolve the tile for this placement (each placement has a unique tile ID)
     const tile = getTileForPlacement(id);
-    const tileType = tile?.type;
-    if (tileType) {
-      switch (tileType) {
-        case 'hero':
-          return <HeroTile placementId={id} />;
-        case 'logo':
-          return <IdentityTile placementId={id} />;
-        case 'editorial':
-          return <EditorialTile placementId={id} />;
-        case 'image':
-          return activePreset === 'foodDrink'
-            ? <ImageTile placementId={id} />
-            : <SocialPostTile placementId={id} />;
-        case 'ui-preview':
-          return <InterfaceTile placementId={id} />;
-        case 'product':
-          return <ProductTile placementId={id} />;
-        case 'menu':
-        case 'utility':
-          return <MenuTile placementId={id} />;
-        case 'split-hero':
-          return <SplitHeroTile placementId={id} />;
-        case 'overlay':
-          return <OverlayTile placementId={id} />;
-        case 'split-list':
-          return <SplitListTile placementId={id} />;
-        case 'colors':
-          return activePreset === 'foodDrink'
-            ? <IconTile placementId={id} />
-            : <ColorTile />;
-        default:
-          break;
-      }
+    if (tile) {
+      const rendered = renderTileByType(tile.type, id);
+      if (rendered) return rendered;
     }
+
+    // 2. Fall back to placement kind (for placements without a matching tile)
+    const kind = getPlacementKind(id);
     switch (kind) {
       case 'identity':
-        return <IdentityTile placementId={id} />;
+        return <LogoTile placementId={id} />;
       case 'editorial':
         return <EditorialTile placementId={id} />;
       case 'social':
         return <SocialPostTile placementId={id} />;
       case 'interface':
         return <InterfaceTile placementId={id} />;
+      case 'icons':
       case 'colors':
-        return activePreset === 'foodDrink'
-          ? <IconTile placementId={id} />
-          : <ColorTile />;
+        return <SwatchTile placementId={id} />;
       default:
         return null;
     }
@@ -159,7 +180,7 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
   return (
     <div
       ref={ref}
-      className="flex-1 h-full min-h-0 overflow-auto transition-fast relative"
+      className="flex-1 h-full min-h-0 overflow-auto transition-fast relative bento-canvas"
       style={{
         backgroundColor: canvasBg || "var(--canvas-bg)",
         "--canvas-surface": colors.surface,
@@ -174,18 +195,6 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
           renderSlot={(placement) => {
             const content = renderTile(placement.id);
             const isFocused = placement.id === focusedTileId;
-            const tileLabel = placement.id?.[0]?.toLowerCase();
-            const labelBadge = tileLabel ? (
-              <span
-                className="pointer-events-none absolute left-2 top-2 text-10 font-medium uppercase tracking-wider"
-                style={{
-                  color: 'var(--tile-label-text)',
-                  opacity: 0.35,
-                }}
-              >
-                {tileLabel}
-              </span>
-            ) : null;
             return content ? (
               <div
                 className={`w-full h-full rounded-xl overflow-hidden transition-shadow duration-150 relative ${
@@ -199,7 +208,7 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
                 }}
               >
                 {content}
-                {labelBadge}
+
               </div>
             ) : (
               <div className="w-full h-full relative">
@@ -212,7 +221,7 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
                     setFocusedTile(placement.id);
                   }}
                 />
-                {labelBadge}
+
               </div>
             );
           }}

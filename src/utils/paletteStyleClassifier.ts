@@ -10,8 +10,10 @@
 import { type Palette, PALETTE_SECTIONS } from '../data/colorPalettes';
 import { hexToHSL } from './colorMapping';
 
+/** Visual style category assigned to each palette by the classifier. */
 export type PaletteStyle = 'pastel' | 'vintage' | 'neon' | 'warm' | 'cold' | 'light' | 'dark' | 'minimal';
 
+/** Human-readable display labels for each palette style. */
 export const STYLE_LABELS: Record<PaletteStyle, string> = {
   pastel: 'Pastel',
   vintage: 'Vintage',
@@ -23,6 +25,7 @@ export const STYLE_LABELS: Record<PaletteStyle, string> = {
   minimal: 'Minimal',
 };
 
+/** Display order for style filter pills and grouped views. */
 export const STYLE_ORDER: PaletteStyle[] = ['pastel', 'vintage', 'neon', 'warm', 'cold', 'light', 'dark', 'minimal'];
 
 interface ColorStats {
@@ -164,10 +167,8 @@ const classifyPalette = (palette: Palette, sectionId: string): PaletteStyle => {
   return hint;
 };
 
-// Pre-computed cache
-let _styleCache: Map<string, PaletteStyle> | null = null;
-
-const buildCache = (): Map<string, PaletteStyle> => {
+// Pre-computed cache (built once on first import)
+const STYLE_CACHE: Map<string, PaletteStyle> = (() => {
   const cache = new Map<string, PaletteStyle>();
   for (const section of PALETTE_SECTIONS) {
     for (const palette of section.palettes) {
@@ -175,31 +176,27 @@ const buildCache = (): Map<string, PaletteStyle> => {
     }
   }
   return cache;
-};
+})();
 
+/** Look up the pre-computed style for a palette by its ID. Falls back to 'light'. */
 export const getStyleForPalette = (paletteId: string): PaletteStyle => {
-  if (!_styleCache) {
-    _styleCache = buildCache();
-  }
-  return _styleCache.get(paletteId) || 'light';
+  return STYLE_CACHE.get(paletteId) || 'light';
 };
 
+/** A palette extended with its classified style and source section name. */
 export interface StyledPalette extends Palette {
   style: PaletteStyle;
   sectionName: string;
 }
 
+/** Get all palettes with style classifications attached. */
 export const getStyledPalettes = (): StyledPalette[] => {
-  if (!_styleCache) {
-    _styleCache = buildCache();
-  }
-
   const result: StyledPalette[] = [];
   for (const section of PALETTE_SECTIONS) {
     for (const palette of section.palettes) {
       result.push({
         ...palette,
-        style: _styleCache.get(palette.id) || 'light',
+        style: STYLE_CACHE.get(palette.id) || 'light',
         sectionName: section.name,
       });
     }
@@ -207,10 +204,12 @@ export const getStyledPalettes = (): StyledPalette[] => {
   return result;
 };
 
+/** Filter all palettes to only those matching the given style. */
 export const getPalettesByStyle = (style: PaletteStyle): StyledPalette[] => {
   return getStyledPalettes().filter(p => p.style === style);
 };
 
+/** Group all palettes by style. Used by PaletteGrid for section rendering. */
 export const getStyleGroups = (): Record<PaletteStyle, StyledPalette[]> => {
   const all = getStyledPalettes();
   const groups: Record<PaletteStyle, StyledPalette[]> = {

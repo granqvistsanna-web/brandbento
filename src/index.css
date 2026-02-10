@@ -23,9 +23,6 @@
   --canvas-border: #E5E5E5;
   --canvas-text: #1A1A1A;
   --canvas-text-secondary: #666666;
-  --tile-label-bg: rgba(255, 255, 255, 0.8);
-  --tile-label-text: rgba(24, 24, 24, 0.9);
-  --tile-label-border: rgba(0, 0, 0, 0.12);
 
   /* Accent Colors (Figma Blue) */
   --accent: #0D99FF;
@@ -76,10 +73,15 @@
   --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
   --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.05);
 
+  /* Focus & interaction */
+  --sidebar-focus-ring: 0 0 0 3px var(--accent-muted);
+
   /* Transitions */
   --transition-fast: 100ms ease;
   --transition-base: 150ms ease;
+  --transition-medium: 200ms ease;
   --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-enter: 500ms cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Z-index layers */
   --z-canvas: 1;
@@ -91,16 +93,30 @@
 
   /* Spacing scale */
   --space-1: 4px;
+  --space-1-5: 6px;
   --space-2: 8px;
+  --space-2-5: 10px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  --space-7: 28px;
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
   --space-20: 80px;
+
+  /* Icon sizing */
+  --icon-xs: 12px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+
+  /* Letter spacing */
+  --tracking-tight: 0.02em;
+  --tracking-wide: 0.08em;
+  --tracking-wider: 0.1em;
 }
 
 /* === DARK MODE OVERRIDES === */
@@ -123,9 +139,6 @@
   --canvas-border: #262626;
   --canvas-text: #FAFAFA;
   --canvas-text-secondary: #A0A0A0;
-  --tile-label-bg: rgba(18, 18, 18, 0.78);
-  --tile-label-text: rgba(248, 248, 248, 0.92);
-  --tile-label-border: rgba(255, 255, 255, 0.16);
 
   /* Accent Colors (slightly brighter for dark mode) */
   --accent: #0D99FF;
@@ -176,8 +189,14 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
+/* Smooth color transitions when switching palettes */
+.bento-canvas,
+.bento-canvas * {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
@@ -187,7 +206,7 @@ body {
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--sidebar-border);
+  background: var(--sidebar-text-muted);
 }
 
 /* Prevent scroll chaining on the main layout */
@@ -227,10 +246,10 @@ main {
   padding: 0 10px;
   background: transparent;
   border: 1px solid var(--sidebar-border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 12px;
   color: var(--sidebar-text);
-  transition: border-color 150ms ease, background 150ms ease;
+  transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
 }
 
 .input-figma:hover {
@@ -240,6 +259,7 @@ main {
 .input-figma:focus {
   border-color: var(--accent);
   background: var(--sidebar-bg);
+  box-shadow: var(--sidebar-focus-ring);
 }
 
 .input-figma::placeholder {
@@ -400,7 +420,7 @@ main {
 
 /* Scrollbar - Dark variant */
 .scrollbar-dark::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .scrollbar-dark::-webkit-scrollbar-track {
@@ -409,11 +429,11 @@ main {
 
 .scrollbar-dark::-webkit-scrollbar-thumb {
   background: var(--sidebar-bg-active);
-  border-radius: 3px;
+  border-radius: 10px;
 }
 
 .scrollbar-dark::-webkit-scrollbar-thumb:hover {
-  background: var(--sidebar-border);
+  background: var(--sidebar-text-muted);
 }
 
 /* Transition utilities */

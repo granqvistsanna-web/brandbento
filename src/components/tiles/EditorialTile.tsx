@@ -10,16 +10,27 @@
  * - Portrait/tall: bottom-aligned magazine composition
  * - Landscape/compact: centered, tighter spacing
  */
-import { useRef, useState, useEffect } from 'react';
-import { useBrandStore } from '@/store/useBrandStore';
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getAdaptiveTextColor } from '@/utils/color';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
+import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { getPresetContent } from '@/data/tilePresetContent';
+import { useTileToolbar } from '@/hooks/useTileToolbar';
+import {
+  FloatingToolbar,
+  ToolbarActions,
+  ToolbarLabel,
+  ToolbarTextInput,
+  ToolbarDivider,
+} from './FloatingToolbar';
 
 interface EditorialTileProps {
+  /** Grid placement ID — determines tile content and surface color */
   placementId?: string;
 }
 
@@ -29,6 +40,11 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shape, setShape] = useState<TileShape>('square');
 
+  // Shape detection — adapts layout between magazine compositions.
+  // Ratio thresholds: > 1.8 = landscape (triggers two-column spread),
+  // < 0.75 = portrait (tall, bottom-aligned), else square-ish.
+  // Uses a higher landscape threshold (1.8 vs 1.4–1.6 in other tiles)
+  // because the two-column editorial layout needs more horizontal room.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -51,6 +67,14 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
     }))
   );
   const activePreset = useBrandStore((state) => state.activePreset);
+  const updateTile = useBrandStore((s) => s.updateTile);
+  const placementTileId = getPlacementTileId(placementId);
+  const placementTileType = getPlacementTileType(placementId);
+  const tile = useBrandStore((state: BrandStore) => {
+    if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
+    if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);
+    return undefined;
+  });
   const tileSurfaceIndex = useBrandStore((state) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
@@ -64,7 +88,7 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
     tileSurfaceIndex,
     surfaces,
     bg,
-    defaultIndex: 0,
+    defaultIndex: 1,
   });
 
   const adaptiveTextColor = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
@@ -73,46 +97,25 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
 
   const isLandscape = shape === 'landscape';
 
-  const copyByPreset: Record<string, { pretitle: string; title: string; body: string; detail: string }> = {
-    default: {
-      pretitle: 'Studio Notes',
-      title: "Make the thing you wish existed.",
-      body: "A clear brand system for ideas that are ready to ship.",
-      detail: 'No. 01',
-    },
-    techStartup: {
-      pretitle: 'Product',
-      title: "Ship smarter updates, faster.",
-      body: "Turn complex product news into crisp, confident stories.",
-      detail: 'Vol. II',
-    },
-    luxuryRetail: {
-      pretitle: 'Atelier',
-      title: "Elevate the everyday.",
-      body: "An understated brand system with room for the extraordinary.",
-      detail: 'SS 26',
-    },
-    communityNonprofit: {
-      pretitle: 'Mission',
-      title: "Bring people into the story.",
-      body: "Warm, human-first design that makes the mission easy to join.",
-      detail: 'Ch. 01',
-    },
-    creativeStudio: {
-      pretitle: 'Manifesto',
-      title: "Make bold work feel effortless.",
-      body: "A flexible system for briefs, pitches, and launches.",
-      detail: 'Issue 04',
-    },
-    foodDrink: {
-      pretitle: 'Cuisine',
-      title: "Samba sweetness.",
-      body: "Succulent and bold, a dessert that captures bite.",
-      detail: 'Pg. 12',
-    },
-  };
+  const presetCopy = getPresetContent(activePreset).editorial;
 
-  const copy = copyByPreset[activePreset] ?? copyByPreset.default;
+  // Merge tile content with preset defaults as fallback
+  const tileContent = tile?.content || {};
+  const pretitle = tileContent.subcopy || presetCopy.pretitle;
+  const title = tileContent.headline || presetCopy.title;
+  const body = tileContent.body || presetCopy.body;
+  const copy = { ...presetCopy, pretitle, title, body };
+
+  // Floating toolbar
+  const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
+
+  const handleTextChange = useCallback((key: string, value: string) => {
+    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
+  }, [updateTile, tile?.id]);
+
+  const handleTextCommit = useCallback((key: string, value: string) => {
+    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
+  }, [updateTile, tile?.id]);
 
   // Landscape: two-column layout with pretitle+headline left, body right
   if (isLandscape) {
@@ -192,6 +195,38 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
             {copy.body}
           </p>
         </div>
+
+        {/* Floating toolbar when focused */}
+        {isFocused && anchorRect && (
+          <FloatingToolbar anchorRect={anchorRect}>
+            <ToolbarActions
+              onShuffle={() => {}}
+            />
+            <ToolbarDivider />
+            <ToolbarLabel>Content</ToolbarLabel>
+            <ToolbarTextInput
+              label="Pretitle"
+              value={pretitle}
+              onChange={(v) => handleTextChange('subcopy', v)}
+              onCommit={(v) => handleTextCommit('subcopy', v)}
+              placeholder={presetCopy.pretitle}
+            />
+            <ToolbarTextInput
+              label="Headline"
+              value={title}
+              onChange={(v) => handleTextChange('headline', v)}
+              onCommit={(v) => handleTextCommit('headline', v)}
+              placeholder={presetCopy.title}
+            />
+            <ToolbarTextInput
+              label="Body"
+              value={body}
+              onChange={(v) => handleTextChange('body', v)}
+              onCommit={(v) => handleTextCommit('body', v)}
+              placeholder={presetCopy.body}
+            />
+          </FloatingToolbar>
+        )}
       </div>
     );
   }
@@ -275,6 +310,38 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
           {copy.body}
         </p>
       </div>
+
+      {/* Floating toolbar when focused */}
+      {isFocused && anchorRect && (
+        <FloatingToolbar anchorRect={anchorRect}>
+          <ToolbarActions
+            onShuffle={() => {}}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Pretitle"
+            value={pretitle}
+            onChange={(v) => handleTextChange('subcopy', v)}
+            onCommit={(v) => handleTextCommit('subcopy', v)}
+            placeholder={presetCopy.pretitle}
+          />
+          <ToolbarTextInput
+            label="Headline"
+            value={title}
+            onChange={(v) => handleTextChange('headline', v)}
+            onCommit={(v) => handleTextCommit('headline', v)}
+            placeholder={presetCopy.title}
+          />
+          <ToolbarTextInput
+            label="Body"
+            value={body}
+            onChange={(v) => handleTextChange('body', v)}
+            onCommit={(v) => handleTextCommit('body', v)}
+            placeholder={presetCopy.body}
+          />
+        </FloatingToolbar>
+      )}
     </div>
   );
 }

@@ -86,20 +86,20 @@ describe('useBrandStore history behavior', () => {
   it('does not push history for draft placement content updates', () => {
     const { setPlacementContent } = useBrandStore.getState();
 
-    setPlacementContent('image', { socialHandle: 'draft' }, false);
+    setPlacementContent('social', { socialHandle: 'draft' }, false);
 
     const state = useBrandStore.getState();
     expect(state.history.past.length).toBe(0);
-    expect(state.placementContent.image?.socialHandle).toBe('draft');
+    expect(state.placementContent.social?.socialHandle).toBe('draft');
   });
 
   it('pushes history for committed placement content updates', () => {
     const { setPlacementContent } = useBrandStore.getState();
 
-    setPlacementContent('image', { socialHandle: 'committed' }, true);
+    setPlacementContent('social', { socialHandle: 'committed' }, true);
 
     const state = useBrandStore.getState();
     expect(state.history.past.length).toBe(1);
-    expect(state.placementContent.image?.socialHandle).toBe('committed');
+    expect(state.placementContent.social?.socialHandle).toBe('committed');
   });
 });

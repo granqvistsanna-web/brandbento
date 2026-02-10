@@ -1,3 +1,10 @@
+/**
+ * Color Palette Panel
+ *
+ * Top-level color section with two modes via segmented control:
+ * - Curated: browse pre-built palettes filtered by style (pastel, neon, etc.)
+ * - Custom: manually edit individual brand color roles (bg, text, primary, etc.)
+ */
 import { memo, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Palette, Sliders } from 'lucide-react';
@@ -47,9 +54,10 @@ export const ColorPalettePanel = memo(() => {
               <motion.button
                 key={m}
                 onClick={() => setMode(m)}
-                className="relative flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.06em] z-10"
+                className="relative flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.06em]"
                 style={{
                   color: isActive ? 'var(--sidebar-text)' : 'var(--sidebar-text-muted)',
+                  zIndex: 'var(--z-panel)',
                 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -57,7 +65,7 @@ export const ColorPalettePanel = memo(() => {
                   <motion.div
                     layoutId="segmented-bg"
                     className="absolute inset-0 rounded-full"
-                    style={{ background: 'var(--sidebar-bg-elevated)', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}
+                    style={{ background: 'var(--sidebar-bg-elevated)', boxShadow: 'var(--shadow-sm)' }}
                     transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -109,11 +117,7 @@ export const ColorPalettePanel = memo(() => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 12 }}
             transition={{ duration: 0.18 }}
-            className="flex-1 min-h-0 overflow-y-auto"
-            style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'var(--sidebar-border) transparent',
-            }}
+            className="flex-1 min-h-0 overflow-y-auto custom-scrollbar"
           >
             <CustomModePanel />
           </motion.div>

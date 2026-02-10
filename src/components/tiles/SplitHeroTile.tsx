@@ -9,7 +9,7 @@
  * - Landscape/square: side-by-side (image left, copy right)
  * - Portrait/narrow: stacked (image top, copy bottom)
  */
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
@@ -19,50 +19,33 @@ import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { getPresetContent } from '@/data/tilePresetContent';
+import { useTileToolbar } from '@/hooks/useTileToolbar';
+import {
+  FloatingToolbar,
+  ToolbarActions,
+  ToolbarLabel,
+  ToolbarTextInput,
+  ToolbarDivider,
+  getRandomShuffleImage,
+} from './FloatingToolbar';
 
 interface SplitHeroTileProps {
+  /** Grid placement ID — determines tile content and surface color */
   placementId?: string;
 }
 
 type TileShape = 'portrait' | 'square' | 'landscape';
 
-const INDUSTRY_COPY: Record<string, { headline: string; body: string; cta: string }> = {
-  default: {
-    headline: 'Defining Style',
-    body: 'A fusion of creativity and craftsmanship. We bring timeless pieces that elevate everyday design.',
-    cta: 'Read More',
-  },
-  techStartup: {
-    headline: 'Built Different',
-    body: 'Engineering meets design. Products that redefine what users expect from modern software.',
-    cta: 'Explore',
-  },
-  luxuryRetail: {
-    headline: 'Defining Style',
-    body: 'A fusion of creativity and craftsmanship. We bring timeless pieces that elevate everyday fashion.',
-    cta: 'Read More',
-  },
-  communityNonprofit: {
-    headline: 'Stronger Together',
-    body: 'Community-driven impact that creates lasting change. Every voice matters, every action counts.',
-    cta: 'Join Us',
-  },
-  creativeStudio: {
-    headline: 'Make It Real',
-    body: 'From concept to craft. We shape ideas into work that moves people and shifts culture.',
-    cta: 'See Work',
-  },
-  foodDrink: {
-    headline: 'Pure Flavor',
-    body: 'Seasonal ingredients, bold combinations. Every dish is a story of origin and craft.',
-    cta: 'Our Menu',
-  },
-};
 
 export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shape, setShape] = useState<TileShape>('landscape');
 
+  // Shape detection — switches between stacked (portrait) and
+  // side-by-side (landscape/square) image+copy layout.
+  // Ratio thresholds: < 0.75 = portrait (stacks image above copy),
+  // > 1.4 = landscape (image left, copy right), else square (same as landscape).
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -100,11 +83,13 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
   );
 
   const content = { ...tile?.content, ...(placementContent || {}) };
-  const industryCopy = INDUSTRY_COPY[activePreset] ?? INDUSTRY_COPY.default;
+  const industryCopy = getPresetContent(activePreset).splitHero;
   const imageUrl = content.image;
   const headline = content.headline || industryCopy.headline;
   const body = content.body || content.subcopy || industryCopy.body;
   const cta = content.cta || content.buttonLabel || industryCopy.cta;
+
+  const updateTile = useBrandStore((s) => s.updateTile);
 
   const { bg, text, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({
@@ -119,6 +104,17 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
   const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
   const typeScale = getTypeScale(typography);
   const spacing = getLetterSpacing(typography.letterSpacing);
+
+  // Floating toolbar
+  const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
+
+  const handleTextChange = useCallback((key: string, value: string) => {
+    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
+  }, [updateTile, tile?.id]);
+
+  const handleTextCommit = useCallback((key: string, value: string) => {
+    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
+  }, [updateTile, tile?.id]);
 
   const isPortrait = shape === 'portrait';
 
@@ -212,6 +208,48 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
           {cta}
         </span>
       </div>
+
+      {/* Floating toolbar when focused */}
+      {isFocused && anchorRect && (
+        <FloatingToolbar anchorRect={anchorRect}>
+          <ToolbarActions
+            onShuffle={() => {
+              if (tile?.id) updateTile(tile.id, { image: getRandomShuffleImage(content.image) }, true);
+            }}
+            hasImage
+            imageLocked={!!content.imageLocked}
+            onToggleLock={() => {
+              if (tile?.id) updateTile(tile.id, { imageLocked: !content.imageLocked }, true);
+            }}
+            onImageUpload={(dataUrl) => {
+              if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
+            }}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Headline"
+            value={headline}
+            onChange={(v) => handleTextChange('headline', v)}
+            onCommit={(v) => handleTextCommit('headline', v)}
+            placeholder={industryCopy.headline}
+          />
+          <ToolbarTextInput
+            label="Body"
+            value={content.body || content.subcopy || ''}
+            onChange={(v) => handleTextChange('body', v)}
+            onCommit={(v) => handleTextCommit('body', v)}
+            placeholder={industryCopy.body}
+          />
+          <ToolbarTextInput
+            label="CTA"
+            value={content.cta || content.buttonLabel || ''}
+            onChange={(v) => handleTextChange('cta', v)}
+            onCommit={(v) => handleTextCommit('cta', v)}
+            placeholder={industryCopy.cta}
+          />
+        </FloatingToolbar>
+      )}
     </div>
   );
 }
