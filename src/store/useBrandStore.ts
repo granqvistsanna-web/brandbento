@@ -228,6 +228,10 @@ export interface TileContent {
   patternImageLocked?: boolean;
   /** Whether the CTA button is hidden (split-hero tiles) */
   ctaHidden?: boolean;
+  /** Manual icon color override (hex string, icons tiles) */
+  iconColor?: string;
+  /** Whether to show tinted cell backgrounds behind icons (default true) */
+  iconShowBg?: boolean;
 }
 
 /**
@@ -262,6 +266,8 @@ export interface HistoryState {
   tileSurfaces: Record<string, number | undefined>;
   /** Placement-specific content overrides */
   placementContent: Record<string, TileContent>;
+  /** Recently used fonts at this point in history */
+  recentFonts?: string[];
 }
 
 /**
@@ -489,6 +495,8 @@ export interface BrandStore {
   activeCollectionId: string | null;
   /** Cached image URLs from the active Lummi collection (shuffle pool source) */
   collectionImagePool: string[];
+  /** Recently used font families (max 5, most recent first) */
+  recentFonts: string[];
 
   // ─────────────────────────────────────────────────────────────────
   // UI State Actions
@@ -547,6 +555,8 @@ export interface BrandStore {
   setImageCollection: (collectionId: string | null, imageUrls: string[]) => void;
   /** Resets brand and tiles to default values */
   resetToDefaults: () => void;
+  /** Adds a font to recently used list (max 5, deduplicates) */
+  addRecentFont: (family: string) => void;
 
   // ─────────────────────────────────────────────────────────────────
   // History Actions
@@ -1510,6 +1520,7 @@ export const useBrandStore = create<BrandStore>()(
       placementContent: defaultPlacementContent,
       activeCollectionId: null,
       collectionImagePool: [],
+      recentFonts: [],
 
       setFocusedTile: (id) => set({ focusedTileId: id }),
 
@@ -1557,7 +1568,7 @@ export const useBrandStore = create<BrandStore>()(
       },
 
       shuffleBrand: () => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
         const allPalettes = getAllPalettes();
 
         // Weight palettes by color count and hue diversity for better shuffle quality
@@ -1629,14 +1640,14 @@ export const useBrandStore = create<BrandStore>()(
           },
           activePreset: "custom",
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       shuffleColors: () => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
         const allPalettes = getAllPalettes();
 
         // Weighted random palette selection (same logic as shuffleBrand)
@@ -1683,14 +1694,14 @@ export const useBrandStore = create<BrandStore>()(
           brand: { ...brand, colors: colorMapping },
           activePreset: "custom",
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       shuffleTypography: () => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
 
         let fIdx = Math.floor(Math.random() * FONT_PAIRINGS.length);
         if (FONT_PAIRINGS.length > 1 && fIdx === _lastShuffleFontIdx) {
@@ -1714,14 +1725,14 @@ export const useBrandStore = create<BrandStore>()(
           },
           activePreset: "custom",
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       loadPreset: (presetName) => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
         const preset = BRAND_PRESETS[presetName];
         if (!preset) return;
 
@@ -1729,7 +1740,7 @@ export const useBrandStore = create<BrandStore>()(
           brand: preset,
           activePreset: presetName,
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
@@ -1737,7 +1748,7 @@ export const useBrandStore = create<BrandStore>()(
 
       applyRawPalette: (colors) => {
         if (colors.length === 0) return;
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
 
         const rawMapping = mapPaletteToBrand(colors);
         const colorMapping = enforceContrast(rawMapping);
@@ -1745,14 +1756,14 @@ export const useBrandStore = create<BrandStore>()(
         set({
           brand: { ...brand, colors: colorMapping as Colors },
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       applyPalette: (paletteId, complexity = 'full') => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
         const palette = getPaletteById(paletteId);
         if (!palette) return;
 
@@ -1797,14 +1808,14 @@ export const useBrandStore = create<BrandStore>()(
             colors: colorMapping as Colors,
           },
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       swapTileType: (tileId, newType) => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
         const tile = tiles.find((t) => t.id === tileId);
         if (!tile) return;
 
@@ -1817,14 +1828,14 @@ export const useBrandStore = create<BrandStore>()(
         set({
           tiles: newTiles,
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       updateBrand: (newBrand, isCommit = true) => {
-        const { brand, history, tiles, tileSurfaces, placementContent } = get();
+        const { brand, history, tiles, tileSurfaces, placementContent, recentFonts } = get();
         if (!newBrand || Object.keys(newBrand).length === 0) return;
         if (!hasBrandChanges(brand, newBrand)) return;
 
@@ -1847,7 +1858,7 @@ export const useBrandStore = create<BrandStore>()(
           set({
             brand: nextBrand,
             history: {
-              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
               future: [],
             },
           });
@@ -1857,7 +1868,7 @@ export const useBrandStore = create<BrandStore>()(
       },
 
       updateTile: (tileId, newContent, isCommit = true) => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
         const currentTile = tiles.find((t) => t.id === tileId);
         if (!currentTile) return;
         if (!hasTileContentChanges(currentTile.content, newContent)) return;
@@ -1869,7 +1880,7 @@ export const useBrandStore = create<BrandStore>()(
           set({
             tiles: newTiles,
             history: {
-              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
               future: [],
             },
           });
@@ -1879,7 +1890,7 @@ export const useBrandStore = create<BrandStore>()(
       },
 
       setTileSurface: (placementId, surfaceIndex, isCommit = true) => {
-        const { tileSurfaces, history, brand, tiles, placementContent } = get();
+        const { tileSurfaces, history, brand, tiles, placementContent, recentFonts } = get();
         if (tileSurfaces[placementId] === surfaceIndex) return;
         const nextSurfaces = {
           ...tileSurfaces,
@@ -1890,7 +1901,7 @@ export const useBrandStore = create<BrandStore>()(
           set({
             tileSurfaces: nextSurfaces,
             history: {
-              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
               future: [],
             },
           });
@@ -1900,7 +1911,7 @@ export const useBrandStore = create<BrandStore>()(
       },
 
       setPlacementContent: (placementId, newContent, isCommit = true) => {
-        const { placementContent, history, brand, tiles, tileSurfaces } = get();
+        const { placementContent, history, brand, tiles, tileSurfaces, recentFonts } = get();
         const currentContent = placementContent[placementId] || {};
         if (!hasTileContentChanges(currentContent, newContent)) return;
         const nextContent = {
@@ -1912,7 +1923,7 @@ export const useBrandStore = create<BrandStore>()(
           set({
             placementContent: nextContent,
             history: {
-              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+              past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
               future: [],
             },
           });
@@ -1922,7 +1933,7 @@ export const useBrandStore = create<BrandStore>()(
       },
 
       resetToDefaults: () => {
-        const { history, brand, tiles, tileSurfaces, placementContent } = get();
+        const { history, brand, tiles, tileSurfaces, placementContent, recentFonts } = get();
 
         set({
           brand: DEFAULT_BRAND,
@@ -1933,14 +1944,14 @@ export const useBrandStore = create<BrandStore>()(
           activeCollectionId: null,
           collectionImagePool: [],
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       setImageCollection: (collectionId, imageUrls) => {
-        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const { brand, tiles, tileSurfaces, placementContent, history, recentFonts } = get();
 
         if (imageUrls.length === 0) {
           set({ activeCollectionId: collectionId, collectionImagePool: [] });
@@ -1977,14 +1988,14 @@ export const useBrandStore = create<BrandStore>()(
           tiles: newTiles,
           placementContent: newPlacementContent,
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: [],
           },
         });
       },
 
       undo: () => {
-        const { history, brand, tiles, tileSurfaces, placementContent } = get();
+        const { history, brand, tiles, tileSurfaces, placementContent, recentFonts } = get();
         if (history.past.length === 0) return;
 
         const previous = history.past[history.past.length - 1];
@@ -1995,15 +2006,16 @@ export const useBrandStore = create<BrandStore>()(
           tiles: previous.tiles,
           tileSurfaces: previous.tileSurfaces,
           placementContent: previous.placementContent ?? defaultPlacementContent,
+          recentFonts: previous.recentFonts ?? [],
           history: {
             past: newPast,
-            future: [{ brand, tiles, tileSurfaces, placementContent }, ...history.future],
+            future: [{ brand, tiles, tileSurfaces, placementContent, recentFonts }, ...history.future],
           },
         });
       },
 
       redo: () => {
-        const { history, brand, tiles, tileSurfaces, placementContent } = get();
+        const { history, brand, tiles, tileSurfaces, placementContent, recentFonts } = get();
         if (history.future.length === 0) return;
 
         const next = history.future[0];
@@ -2014,11 +2026,21 @@ export const useBrandStore = create<BrandStore>()(
           tiles: next.tiles,
           tileSurfaces: next.tileSurfaces,
           placementContent: next.placementContent ?? defaultPlacementContent,
+          recentFonts: next.recentFonts ?? [],
           history: {
-            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent, recentFonts }),
             future: newFuture,
           },
         });
+      },
+
+      addRecentFont: (family) => {
+        const { recentFonts } = get();
+        // Remove if already exists (deduplicate)
+        const filtered = recentFonts.filter(f => f !== family);
+        // Prepend new font and cap at 5
+        const updated = [family, ...filtered].slice(0, 5);
+        set({ recentFonts: updated });
       },
     }),
     {
@@ -2061,6 +2083,7 @@ export const useBrandStore = create<BrandStore>()(
           },
           activeCollectionId: persistedState.activeCollectionId ?? null,
           collectionImagePool: persistedState.collectionImagePool ?? [],
+          recentFonts: persistedState.recentFonts ?? [],
         } as BrandStore;
       },
       // Persist only serializable user data. Exclude:
@@ -2077,6 +2100,7 @@ export const useBrandStore = create<BrandStore>()(
         placementContent: state.placementContent,
         activeCollectionId: state.activeCollectionId,
         collectionImagePool: state.collectionImagePool,
+        recentFonts: state.recentFonts,
       }),
     }
   )
