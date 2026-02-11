@@ -143,44 +143,56 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
   const pad = 'clamp(20px, 8%, 40px)';
 
   /* ─── Shared icon element ─── */
+  const stagePad = Math.round(iconSize * 0.08);
+  const stageRadius = iconRadius + stagePad;
+
   const iconElement = (
     <div
       style={{
-        width: iconSize,
-        height: iconSize,
-        borderRadius: iconRadius,
-        backgroundColor: brandIconBg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'background-color 0.3s ease',
+        padding: stagePad,
+        borderRadius: stageRadius,
+        backgroundColor: bg,
         flexShrink: 0,
-        boxShadow: `0 ${iconSize * 0.04}px ${iconSize * 0.16}px rgba(0,0,0,0.12), 0 ${iconSize * 0.02}px ${iconSize * 0.06}px rgba(0,0,0,0.08)`,
+        boxShadow: `0 ${iconSize * 0.03}px ${iconSize * 0.12}px rgba(0,0,0,0.10)`,
+        transition: 'background-color 0.3s ease',
       }}
     >
-      {logo.image ? (
-        <img
-          src={logo.image}
-          alt=""
-          style={{
-            width: iconSize * 0.58,
-            height: iconSize * 0.58,
-            objectFit: 'contain',
-          }}
-        />
-      ) : (
-        <span
-          style={{
-            fontSize: iconSize * 0.42,
-            fontWeight: 700,
-            color: brandIconText,
-            lineHeight: 1,
-            fontFamily: headlineFont,
-          }}
-        >
-          {(logo.text || 'A').charAt(0)}
-        </span>
-      )}
+      <div
+        style={{
+          width: iconSize,
+          height: iconSize,
+          borderRadius: iconRadius,
+          backgroundColor: brandIconBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'background-color 0.3s ease',
+        }}
+      >
+        {logo.image ? (
+          <img
+            src={logo.image}
+            alt=""
+            style={{
+              width: iconSize * 0.58,
+              height: iconSize * 0.58,
+              objectFit: 'contain',
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              fontSize: iconSize * 0.42,
+              fontWeight: 700,
+              color: brandIconText,
+              lineHeight: 1,
+              fontFamily: headlineFont,
+            }}
+          >
+            {(logo.text || 'A').charAt(0)}
+          </span>
+        )}
+      </div>
     </div>
   );
 
@@ -220,24 +232,6 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
     </h1>
   );
 
-  const detailElement = (
-    <span
-      className="select-none"
-      style={{
-        fontFamily: bodyFont,
-        fontWeight: parseInt(typography.weightBody) || 400,
-        fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 11)}px`,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: adaptiveText,
-        opacity: 0.28,
-        fontVariantNumeric: 'tabular-nums',
-      }}
-    >
-      01
-    </span>
-  );
-
   const ruleStyle = {
     backgroundColor: adaptiveText,
     opacity: 0.1,
@@ -251,13 +245,6 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
         className="w-full h-full relative overflow-hidden transition-colors duration-300"
         style={{ backgroundColor: surfaceBg }}
       >
-        <div
-          className="absolute select-none"
-          style={{ top: pad, right: pad }}
-        >
-          {detailElement}
-        </div>
-
         <div
           style={{
             width: '100%',
@@ -317,13 +304,6 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
         style={{ backgroundColor: surfaceBg }}
       >
         <div
-          className="absolute select-none"
-          style={{ top: pad, right: pad }}
-        >
-          {detailElement}
-        </div>
-
-        <div
           style={{
             width: '100%',
             height: '100%',
@@ -376,13 +356,6 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
       className="w-full h-full relative overflow-hidden transition-colors duration-300"
       style={{ backgroundColor: surfaceBg }}
     >
-      <div
-        className="absolute select-none"
-        style={{ top: pad, left: pad }}
-      >
-        {detailElement}
-      </div>
-
       <div
         className="absolute"
         style={{

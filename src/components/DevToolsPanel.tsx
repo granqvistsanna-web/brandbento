@@ -17,7 +17,7 @@ import { PatternTile } from './tiles/PatternTile';
 import { StatsTile } from './tiles/StatsTile';
 import { MessagingTile } from './tiles/MessagingTile';
 import { SpecimenTile } from './tiles/SpecimenTile';
-import { PersonalityTile } from './tiles/PersonalityTile';
+
 import { ColorBlocksTile } from './tiles/ColorBlocksTile';
 import { BusinessCardTile } from './tiles/BusinessCardTile';
 import { AppIconTile } from './tiles/AppIconTile';
@@ -361,20 +361,6 @@ const TILE_CATALOG: CatalogEntry[] = [
       { w: 200, h: 200, label: '1x1' },
       { w: 300, h: 200, label: '2x1' },
       { w: 150, h: 300, label: '1x2' },
-    ],
-  },
-  {
-    type: 'personality',
-    label: 'PersonalityTile',
-    component: PersonalityTile,
-    placementId: 'hero',
-    tileId: '',
-    fields: [
-      { name: 'items', contentKey: 'items', type: 'items' },
-    ],
-    sizes: [
-      { w: 200, h: 200, label: '1x1' },
-      { w: 300, h: 200, label: '2x1' },
     ],
   },
   {

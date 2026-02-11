@@ -63,17 +63,21 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-7 todos in `.planning/todos/pending/`:
-- ~~Font search improvements (ui)~~ DONE (quick-001)
-- ~~Restructure color palettes panel (ui)~~ DONE (already implemented)
+8 todos in `.planning/todos/pending/`:
 - Expand surface color options (ui)
 - Per-tile color overrides (ui)
 - Export presets for sized outputs (ui)
 - Lummi image collections UI (ui)
 - Code-splitting for bundle size (tooling)
-- ~~IconsTile overhaul (ui)~~ DONE (quick-003)
-- ~~Tile reordering via drag-and-drop (ui)~~ DONE (quick-002)
 - SVG and PDF export options (ui)
+- Copy to clipboard export (ui)
+- Tile review & refinement — 1/20 done (IconsTile), 2 planned (HeroTile, SplitHeroTile)
+
+**Completed (removed from pending):**
+- ~~Font search improvements~~ → quick-001
+- ~~Restructure color palettes panel~~ → already implemented
+- ~~IconsTile overhaul~~ → quick-003
+- ~~Tile reordering via drag-and-drop~~ → quick-002
 
 ### Blockers/Concerns
 

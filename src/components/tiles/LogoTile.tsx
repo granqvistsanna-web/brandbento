@@ -10,7 +10,6 @@ import { useBrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { hexToHSL } from '@/utils/colorMapping';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
-import { resolveSurfaceColor } from '@/utils/surface';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { getFontCategory, clampFontSize } from '@/utils/typography';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
@@ -21,7 +20,7 @@ import {
   ToolbarSlider,
   ToolbarDivider,
   ToolbarTileTypeGrid,
-  ToolbarSurfaceSwatches,
+  ToolbarColorPicker,
   ToolbarTextInput,
 } from './FloatingToolbar';
 
@@ -43,38 +42,49 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
   const updateBrand = useBrandStore((s) => s.updateBrand);
   const brand = useBrandStore((s) => s.brand);
   const swapTileType = useBrandStore((s) => s.swapTileType);
-  const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const tile = useBrandStore((state) =>
     state.tiles.find((t) => t.type === 'logo')
   );
-  const tileSurfaceIndex = useBrandStore((state) =>
-    placementId ? state.tileSurfaces[placementId] : undefined
-  );
-  const { padding, size: logoSize, text: logoText, image: logoImage } = logo;
+  const {
+    padding, size: logoSize, text: logoText, image: logoImage,
+    color: logoColorOverride, bgColor: logoBgOverride,
+    fontFamily: logoFontOverride, fontWeight: logoWeightOverride,
+    letterSpacing: logoTrackingOverride, lineHeight: logoLineHeightOverride,
+  } = logo;
   const { primary, bg, surfaces } = colors;
-
-  const surfaceBg = resolveSurfaceColor({
-    placementId,
-    tileSurfaceIndex,
-    surfaces,
-    bg,
-    defaultIndex: 0,
-  });
 
   const isHero = placementId === 'hero';
   const showWordmark = Boolean(logoText && logoText.trim().length > 0);
-  const headlineWeight = parseInt(typography.weightHeadline) || 700;
+
+  // Resolve font: logo override > font preview > brand primary
   const fontPreview = useBrandStore((state) => state.fontPreview);
+  const resolvedFontName = logoFontOverride || (fontPreview?.target === "primary" ? fontPreview.font : typography.primary);
+  const { fontFamily: resolvedFont } = useGoogleFonts(resolvedFontName, getFontCategory(resolvedFontName));
 
-  // Apply font preview if active
-  const primaryFontChoice = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  // Resolve weight
+  const resolvedWeight = logoWeightOverride ?? (parseInt(typography.weightHeadline) || 700);
 
-  const { fontFamily: primaryFont } = useGoogleFonts(primaryFontChoice, getFontCategory(primaryFontChoice));
+  // Resolve letter spacing & line height
+  const resolvedTracking = logoTrackingOverride ?? 0.04;
+  const resolvedLineHeight = logoLineHeightOverride ?? 1;
+
+  // Resolve background color: logo override > primary (non-hero) / surface (hero)
+  const defaultBg = primary || bg;
+  const tileBg = logoBgOverride || defaultBg;
+
+  // Resolve text color: logo override > auto from bg luminance
+  const autoBgForText = tileBg;
+  const autoTextColor = adaptiveColor(autoBgForText, COLOR_DEFAULTS.TEXT_DARK, COLOR_DEFAULTS.WHITE);
+  const textColor = logoColorOverride || autoTextColor;
+
   const { isFocused, containerRef, anchorRect } = useTileToolbar(placementId);
 
   const handleLogoChange = useCallback((key: string, value: unknown, isCommit = true) => {
     updateBrand({ logo: { ...brand.logo, [key]: value } }, isCommit);
   }, [updateBrand, brand.logo]);
+
+  // Palette colors for color pickers (surfaces + primary + accent)
+  const paletteColors = [...new Set([primary, ...surfaces, colors.accent, colors.text, bg])];
 
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
@@ -89,11 +99,21 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
         onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
       />
       <ToolbarDivider />
-      <ToolbarSurfaceSwatches
-        surfaces={surfaces}
-        bgColor={bg}
-        currentIndex={tileSurfaceIndex}
-        onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+      <ToolbarColorPicker
+        label="Background"
+        color={tileBg}
+        autoColor={defaultBg}
+        paletteColors={paletteColors}
+        onChange={(hex) => handleLogoChange('bgColor', hex ?? null, false)}
+        onCommit={() => handleLogoChange('bgColor', logo.bgColor ?? null, true)}
+      />
+      <ToolbarColorPicker
+        label="Text Color"
+        color={textColor}
+        autoColor={autoTextColor}
+        paletteColors={paletteColors}
+        onChange={(hex) => handleLogoChange('color', hex ?? null, false)}
+        onCommit={() => handleLogoChange('color', logo.color ?? null, true)}
       />
       <ToolbarDivider />
       <ToolbarLabel>Logo</ToolbarLabel>
@@ -122,23 +142,52 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
         onChange={(v) => handleLogoChange('padding', Math.round(v), false)}
         onCommit={(v) => handleLogoChange('padding', Math.round(v), true)}
       />
+      <ToolbarDivider />
+      <ToolbarLabel>Typography</ToolbarLabel>
+      <ToolbarTextInput
+        label="Font"
+        value={logoFontOverride || typography.primary}
+        onChange={(v) => handleLogoChange('fontFamily', v || null, false)}
+        onCommit={(v) => handleLogoChange('fontFamily', v || null, true)}
+        placeholder={typography.primary}
+      />
+      <ToolbarSlider
+        label="Weight"
+        value={resolvedWeight}
+        min={100}
+        max={900}
+        step={100}
+        displayValue={`${resolvedWeight}`}
+        onChange={(v) => handleLogoChange('fontWeight', Math.round(v), false)}
+        onCommit={(v) => handleLogoChange('fontWeight', Math.round(v), true)}
+      />
+      <ToolbarSlider
+        label="Tracking"
+        value={resolvedTracking}
+        min={-0.05}
+        max={0.3}
+        step={0.01}
+        displayValue={`${resolvedTracking.toFixed(2)}em`}
+        onChange={(v) => handleLogoChange('letterSpacing', parseFloat(v.toFixed(2)), false)}
+        onCommit={(v) => handleLogoChange('letterSpacing', parseFloat(v.toFixed(2)), true)}
+      />
+      <ToolbarSlider
+        label="Line Height"
+        value={resolvedLineHeight}
+        min={0.8}
+        max={2.0}
+        step={0.05}
+        displayValue={`${resolvedLineHeight.toFixed(2)}`}
+        onChange={(v) => handleLogoChange('lineHeight', parseFloat(v.toFixed(2)), false)}
+        onCommit={(v) => handleLogoChange('lineHeight', parseFloat(v.toFixed(2)), true)}
+      />
     </FloatingToolbar>
   );
-
-  // Use primary color as background, adaptive foreground
-  const logoBg = primary || surfaceBg;
-  const logoFg = adaptiveColor(logoBg, COLOR_DEFAULTS.TEXT_DARK, COLOR_DEFAULTS.WHITE);
 
   // Hero placement renders larger
   const fontSize = isHero
     ? clampFontSize(logoSize * 2, 32, 160)
     : clampFontSize(logoSize * 1.6, 24, 120);
-
-  // For hero, use surface bg; for regular, use primary bg
-  const tileBg = isHero ? surfaceBg : logoBg;
-  const textColor = isHero
-    ? (hexToHSL(surfaceBg).l > 55 ? primary : COLOR_DEFAULTS.WHITE)
-    : logoFg;
 
   return (
     <div ref={containerRef} className="w-full h-full relative overflow-hidden">
@@ -161,12 +210,12 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
         ) : (
           <span
             style={{
-              fontFamily: primaryFont,
+              fontFamily: resolvedFont,
               fontSize: `${fontSize}px`,
-              fontWeight: headlineWeight,
-              letterSpacing: '0.04em',
+              fontWeight: resolvedWeight,
+              letterSpacing: `${resolvedTracking}em`,
               color: textColor,
-              lineHeight: 1,
+              lineHeight: resolvedLineHeight,
             }}
           >
             {showWordmark ? logoText : 'BRAND'}

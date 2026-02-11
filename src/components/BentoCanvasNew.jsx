@@ -53,7 +53,7 @@ import { PatternTile } from "./tiles/PatternTile";
 import { StatsTile } from "./tiles/StatsTile";
 import { MessagingTile } from "./tiles/MessagingTile";
 import { SpecimenTile } from "./tiles/SpecimenTile";
-import { PersonalityTile } from "./tiles/PersonalityTile";
+
 import { ColorBlocksTile } from "./tiles/ColorBlocksTile";
 import { BusinessCardTile } from "./tiles/BusinessCardTile";
 import { AppIconTile } from "./tiles/AppIconTile";
@@ -212,8 +212,7 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
         return <MessagingTile placementId={id} />;
       case 'specimen':
         return <SpecimenTile placementId={id} />;
-      case 'personality':
-        return <PersonalityTile placementId={id} />;
+
       case 'color-blocks':
         return <ColorBlocksTile placementId={id} />;
       case 'business-card':

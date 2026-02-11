@@ -122,6 +122,18 @@ export interface Logo {
   padding: number;
   /** Font size for text-based logos in pixels */
   size: number;
+  /** Text color override (null/undefined = auto from bg luminance) */
+  color?: string | null;
+  /** Background color override (null/undefined = brand primary) */
+  bgColor?: string | null;
+  /** Font family override (null/undefined = typography.primary) */
+  fontFamily?: string | null;
+  /** Font weight override (null/undefined = typography.weightHeadline) */
+  fontWeight?: number | null;
+  /** Letter spacing in em (null/undefined = 0.04) */
+  letterSpacing?: number | null;
+  /** Line height (null/undefined = 1) */
+  lineHeight?: number | null;
 }
 
 /**
@@ -238,6 +250,58 @@ export interface TileContent {
   iconGridSize?: '1' | '2x2' | '3x3';
   /** Data URI of a custom uploaded SVG (replaces icon grid when set) */
   iconCustomSvg?: string;
+
+  /* ─── Logo Symbol tile fields ─── */
+  /** Show background container behind symbol */
+  symbolBg?: boolean;
+  /** Background container color (hex) */
+  symbolBgColor?: string;
+  /** Background container corner radius in px */
+  symbolBgRadius?: number;
+  /** Padding inside background container in px */
+  symbolBgPadding?: number;
+  /** Show subtle shadow on background container */
+  symbolBgShadow?: boolean;
+  /** Override color for symbol/SVG (hex) */
+  symbolColor?: string;
+  /** Render SVG as stroke instead of fill */
+  symbolStroke?: boolean;
+  /** Optional short label below/beside symbol */
+  symbolLabel?: string;
+
+  /* ─── Hero/Statement tile fields ─── */
+  /** Variation mode: 'image' (no text), 'image-headline' (default), 'solid-headline' */
+  heroVariation?: 'image' | 'image-headline' | 'solid-headline';
+  /** Headline font weight override (e.g. 400, 600, 700, 800, 900) */
+  heroFontWeight?: number;
+  /** Font size multiplier relative to type scale step3 (default 1.0, range 0.5-2.0) */
+  heroFontScale?: number;
+  /** Letter spacing in em (e.g. -0.04 to 0.2) */
+  heroTracking?: number;
+  /** Line height (e.g. 0.85 to 1.4) */
+  heroLineHeight?: number;
+  /** Text color override hex (null = white over images, brand text over solid) */
+  heroTextColor?: string;
+  /** Text alignment: 'left' | 'center' | 'right' */
+  heroTextAlign?: 'left' | 'center' | 'right';
+  /** Horizontal content alignment: 'left' | 'center' | 'right' */
+  heroAlignH?: 'left' | 'center' | 'right';
+  /** Vertical content alignment: 'top' | 'center' | 'bottom' */
+  heroAlignV?: 'top' | 'center' | 'bottom';
+  /** Content padding as percentage (3-12, default 6) */
+  heroPadding?: number;
+  /** Max width constraint for headline in ch (0 = none, e.g. 12-30ch) */
+  heroMaxWidth?: number;
+  /** Whether overlay is enabled (default true for image variations) */
+  heroOverlayEnabled?: boolean;
+  /** Overlay base color hex (default #000000) */
+  heroOverlayColor?: string;
+  /** Overlay opacity 0-100 (default 50) */
+  heroOverlayOpacity?: number;
+  /** Gradient overlay: null = solid color, or { color1: hex, color2: hex } */
+  heroOverlayGradient?: { color1: string; color2: string } | null;
+  /** CSS blend mode for overlay (default 'normal') */
+  heroBlendMode?: string;
 }
 
 /**
@@ -618,8 +682,6 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "hero",
         content: {
           headline: "Software that gets out of your way",
-          subcopy: "Less setup. More shipping. You know the drill.",
-          cta: "Try It Free",
           image: "/images/visualelectric-1740659731603.png",
         },
         colSpan: 2,
@@ -799,8 +861,6 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "hero",
         content: {
           headline: "We make things people actually remember",
-          subcopy: "Big ideas. Small egos. Zero synergy decks.",
-          cta: "See Work",
           image: "/images/20250622_2048_Candid Office Consultation_simple_compose_01jycfdk73fj1az74wv8n0rgwt.png",
         },
         colSpan: 3,
@@ -905,7 +965,6 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "hero",
         content: {
           headline: "Food worth sitting down for",
-          subcopy: "Seasonal plates, honest ingredients, and absolutely zero foam.",
           image: "/images/visualelectric-1751999916329.png",
         },
         colSpan: 2,
@@ -1023,8 +1082,6 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "hero",
         content: {
           headline: "Feel like yourself again",
-          subcopy: "Simple routines, real ingredients, no guru required.",
-          cta: "Start Here",
           image: "/images/visualelectric-1753860123700.png",
         },
         colSpan: 1,
@@ -1117,8 +1174,6 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "hero",
         content: {
           headline: "I design things people use",
-          subcopy: "Clean interfaces. Clear thinking. No fluff.",
-          cta: "Say Hello",
           image: "/images/visualelectric-1740667024491.png",
         },
         colSpan: 2,
@@ -1271,8 +1326,7 @@ export const exportAsJSON = (brand: Brand | null): string => {
 const defaultTileContent: Record<string, TileContent> = {
   hero: {
     headline: "New Hero",
-    subcopy: "Hero subcopy",
-    cta: "Click here",
+    heroVariation: 'image-headline',
   },
   editorial: { headline: "New Editorial", body: "Editorial body text" },
   product: {
@@ -1295,9 +1349,8 @@ const defaultTileContent: Record<string, TileContent> = {
   logo: { label: "Brand" },
   overlay: {
     headline: "The Winter Collection",
-    body: "Garments and products so essential that they merge into the wholeness of our lives.",
-    label: "About Us",
     image: "/images/visualelectric-1751915506477.png",
+    heroVariation: 'image-headline',
   },
   social: {
     image: "/images/visualelectric-1750703676698.png",

@@ -57,6 +57,40 @@ interface TileContent {
   patternImage?: string;
   /** Whether the custom pattern image is locked from shuffle — reserved for pattern tile */
   patternImageLocked?: boolean;
+
+  /* --- Hero/Statement tile fields --- */
+  /** Variation mode: 'image' (no text), 'image-headline' (default), 'solid-headline' */
+  heroVariation?: 'image' | 'image-headline' | 'solid-headline';
+  /** Headline font weight override (e.g. 400, 600, 700, 800, 900) */
+  heroFontWeight?: number;
+  /** Font size multiplier relative to type scale step3 (default 1.0, range 0.5-2.0) */
+  heroFontScale?: number;
+  /** Letter spacing in em (e.g. -0.04 to 0.2) */
+  heroTracking?: number;
+  /** Line height (e.g. 0.85 to 1.4) */
+  heroLineHeight?: number;
+  /** Text color override hex (null = white over images, brand text over solid) */
+  heroTextColor?: string;
+  /** Text alignment: 'left' | 'center' | 'right' */
+  heroTextAlign?: 'left' | 'center' | 'right';
+  /** Horizontal content alignment: 'left' | 'center' | 'right' */
+  heroAlignH?: 'left' | 'center' | 'right';
+  /** Vertical content alignment: 'top' | 'center' | 'bottom' */
+  heroAlignV?: 'top' | 'center' | 'bottom';
+  /** Content padding as percentage (3-12, default 6) */
+  heroPadding?: number;
+  /** Max width constraint for headline in ch (0 = none, e.g. 12-30ch) */
+  heroMaxWidth?: number;
+  /** Whether overlay is enabled (default true for image variations) */
+  heroOverlayEnabled?: boolean;
+  /** Overlay base color hex (default #000000) */
+  heroOverlayColor?: string;
+  /** Overlay opacity 0-100 (default 50) */
+  heroOverlayOpacity?: number;
+  /** Gradient overlay: null = solid color, or { color1: hex, color2: hex } */
+  heroOverlayGradient?: { color1: string; color2: string } | null;
+  /** CSS blend mode for overlay (default 'normal') */
+  heroBlendMode?: string;
   /** App screen image URL (for feed variant) */
   screenImage?: string;
   /** Whether the screen image is locked from shuffle */
@@ -84,8 +118,8 @@ interface Tile {
 export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
   hero: {
     headline: "Nothing Extra",
-    subcopy: "A point of view, distilled to its essentials.",
-    cta: "Explore",
+    image: "/images/visualelectric-1740667024491.png",
+    heroVariation: 'image-headline',
   },
   editorial: {
     headline: "The Details Are the Design",
@@ -128,9 +162,8 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
   },
   overlay: {
     headline: "Less, But Better",
-    body: "The things worth keeping feel like they were always there.",
-    label: "The Edit",
     image: "/images/visualelectric-1751915506477.png",
+    heroVariation: 'image-headline',
   },
   "split-list": {
     headline: "What\nWe Do",
@@ -201,8 +234,6 @@ export const INITIAL_TILES: Tile[] = [
     type: "hero",
     content: {
       headline: "Nothing Extra",
-      subcopy: "A point of view, distilled to its essentials.",
-      cta: "Explore",
       image: "/images/visualelectric-1740667024491.png",
     },
     colSpan: 2,

@@ -43,7 +43,7 @@ import {
   RiLayoutGrid2Fill,
   RiChatQuoteFill,
   RiFontSize2,
-  RiUserHeartFill,
+
   RiLayoutMasonryFill,
   RiBankCardFill,
   RiSmartphoneFill,
@@ -728,7 +728,7 @@ const TILE_TYPES = [
   { value: 'stats', label: 'Stats', icon: RiLineChartFill },
   { value: 'messaging', label: 'Message', icon: RiChatQuoteFill },
   { value: 'specimen', label: 'Specimen', icon: RiFontSize2 },
-  { value: 'personality', label: 'Voice', icon: RiUserHeartFill },
+
   { value: 'color-blocks', label: 'Blocks', icon: RiLayoutMasonryFill },
   { value: 'business-card', label: 'Card', icon: RiBankCardFill },
   { value: 'app-icon', label: 'App', icon: RiSmartphoneFill },
@@ -806,8 +806,14 @@ interface ToolbarColorPickerProps {
 
 export function ToolbarColorPicker({ label, color, autoColor, paletteColors = [], onChange, onCommit }: ToolbarColorPickerProps) {
   const [open, setOpen] = useState(false);
+  const [hexInput, setHexInput] = useState(color.toUpperCase());
   const isAuto = color === autoColor;
   const swatchSize = 20;
+
+  // Keep hex input in sync with external color changes
+  useEffect(() => {
+    setHexInput(color.toUpperCase());
+  }, [color]);
 
   return (
     <div>
@@ -875,9 +881,33 @@ export function ToolbarColorPicker({ label, color, autoColor, paletteColors = []
             color={color}
             onChange={(hex) => onChange(hex)}
           />
-          <div style={{ marginTop: 6, fontSize: 10, fontWeight: 500, color: 'var(--sidebar-text-muted)', textAlign: 'center' }}>
-            {color.toUpperCase()}
-          </div>
+          <input
+            type="text"
+            value={hexInput}
+            onChange={(e) => {
+              const raw = e.target.value.toUpperCase();
+              setHexInput(raw);
+              const cleaned = raw.replace('#', '');
+              if (/^[0-9A-F]{6}$/.test(cleaned)) {
+                onChange('#' + cleaned);
+              }
+            }}
+            onBlur={() => onCommit?.()}
+            style={{
+              marginTop: 6,
+              width: '100%',
+              fontSize: 10,
+              fontFamily: 'ui-monospace, monospace',
+              fontWeight: 500,
+              padding: '3px 6px',
+              borderRadius: 4,
+              border: '1px solid var(--sidebar-border)',
+              background: 'transparent',
+              color: 'var(--sidebar-text)',
+              textAlign: 'center',
+              boxSizing: 'border-box',
+            }}
+          />
         </div>
       )}
     </div>

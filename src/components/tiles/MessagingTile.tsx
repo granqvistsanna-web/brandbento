@@ -43,13 +43,11 @@ interface MessagingTileProps {
   placementId?: string;
 }
 
-type TileShape = 'portrait' | 'square' | 'landscape';
-
 /* ─── Component ─── */
 
 export function MessagingTile({ placementId }: MessagingTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [shape, setShape] = useState<TileShape>('square');
+  const [dims, setDims] = useState({ w: 340, h: 340 });
 
   useEffect(() => {
     const el = containerRef.current;
@@ -57,10 +55,7 @@ export function MessagingTile({ placementId }: MessagingTileProps) {
     const ro = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       if (!width || !height) return;
-      const ratio = width / height;
-      if (ratio > 1.8) setShape('landscape');
-      else if (ratio < 0.75) setShape('portrait');
-      else setShape('square');
+      setDims({ w: width, h: height });
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -118,12 +113,20 @@ export function MessagingTile({ placementId }: MessagingTileProps) {
     updateTile(tile.id, { headline: preset }, true);
   }, [tile?.id, statement, updateTile]);
 
-  /* ─── Font size — scale with shape ─── */
-  const headlineSize = shape === 'landscape'
-    ? clampFontSize(typeScale.step3 * 1.4, 22, 56)
-    : shape === 'portrait'
-      ? clampFontSize(typeScale.step3 * 1.2, 20, 48)
-      : clampFontSize(typeScale.step3 * 1.4, 22, 56);
+  /* ─── Font size — adaptive to container + text length ─── */
+  const isLandscape = dims.w / dims.h > 1.8;
+  const charCount = statement.length;
+  // Width-based scale so type grows/shrinks with tile
+  const widthScale = dims.w / 340;
+  // Longer statements get smaller type to ensure fit
+  const lengthFactor = Math.max(0.55, Math.min(1, 36 / charCount));
+  // In landscape, type can be larger since there's horizontal room
+  const shapeFactor = isLandscape ? 1.2 : 1;
+  const headlineSize = clampFontSize(
+    typeScale.step3 * widthScale * lengthFactor * shapeFactor,
+    14,
+    56
+  );
 
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
@@ -158,8 +161,8 @@ export function MessagingTile({ placementId }: MessagingTileProps) {
       className="w-full h-full flex flex-col justify-end transition-colors duration-300 relative overflow-hidden"
       style={{
         backgroundColor: surfaceBg,
-        padding: 'clamp(24px, 8%, 48px)',
-        paddingBottom: 'clamp(28px, 10%, 52px)',
+        padding: 'clamp(20px, 7%, 40px)',
+        paddingBottom: `clamp(28px, 10%, 52px)`,
       }}
     >
       {/* Statement */}
@@ -173,7 +176,6 @@ export function MessagingTile({ placementId }: MessagingTileProps) {
           textTransform: getHeadlineTransform(typography) as React.CSSProperties['textTransform'],
           color: adaptiveText,
           textWrap: 'balance',
-          maxWidth: shape === 'landscape' ? '38ch' : '22ch',
         }}
       >
         {statement}

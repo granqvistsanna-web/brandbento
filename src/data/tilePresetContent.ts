@@ -12,9 +12,7 @@ export interface EditorialPresetContent {
 }
 
 export interface OverlayPresetContent {
-  label: string;
   headline: string;
-  body: string;
 }
 
 export interface SplitHeroPresetContent {
@@ -40,9 +38,6 @@ export interface MessagingPresetContent {
   headline: string;
 }
 
-export interface PersonalityPresetContent {
-  items: string[];
-}
 
 export interface BusinessCardPresetContent {
   name: string;
@@ -66,7 +61,7 @@ interface PresetContent {
   menu: MenuPresetContent;
   splitList: SplitListPresetContent;
   messaging: MessagingPresetContent;
-  personality: PersonalityPresetContent;
+
   businessCard: BusinessCardPresetContent;
   story: StoryPresetContent;
 }
@@ -80,9 +75,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       detail: 'No. 01',
     },
     overlay: {
-      label: 'The Edit',
       headline: 'Less, But Better',
-      body: 'The things worth keeping feel like they were always there.',
     },
     splitHero: {
       headline: 'Start With Why Not',
@@ -103,9 +96,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     messaging: {
       headline: 'Your brand has a voice. Use it before someone else does.',
     },
-    personality: {
-      items: ['Friendly', 'Witty', 'Confident', 'Playful', 'Human', 'Enthusiastic', 'Energetic', 'Curious'],
-    },
+
     businessCard: {
       name: 'Jessica Smith',
       title: 'Marketing Manager',
@@ -128,9 +119,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       detail: 'v2.0',
     },
     overlay: {
-      label: 'Now Live',
       headline: 'Shipping Is a Feature',
-      body: 'Your best ideas shouldn\u2019t sit in a backlog.',
     },
     splitHero: {
       headline: 'Built for Builders',
@@ -151,9 +140,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     messaging: {
       headline: 'We build the infrastructure so you can build what matters.',
     },
-    personality: {
-      items: ['Direct', 'Smart', 'Precise', 'Confident', 'Forward', 'Clear', 'Curious', 'Pragmatic'],
-    },
+
     businessCard: {
       name: 'Kai Chen',
       title: 'Head of Product',
@@ -176,9 +163,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       detail: 'SS 26',
     },
     overlay: {
-      label: 'New Season',
       headline: 'Quiet Luxury, Loud Confidence',
-      body: 'Pieces you reach for every morning without thinking.',
     },
     splitHero: {
       headline: 'Made to Last',
@@ -199,9 +184,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     messaging: {
       headline: 'True luxury is the freedom to choose less.',
     },
-    personality: {
-      items: ['Refined', 'Quiet', 'Considered', 'Timeless', 'Elegant', 'Restrained', 'Intentional', 'Warm'],
-    },
+
     businessCard: {
       name: 'Élodie Laurent',
       title: 'Creative Director',
@@ -224,9 +207,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       detail: 'Ch. 01',
     },
     overlay: {
-      label: 'Our Story',
       headline: 'Neighbors First',
-      body: 'Big change starts small. A knock on a door. A seat at the table.',
     },
     splitHero: {
       headline: 'People Over Presentations',
@@ -247,9 +228,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     messaging: {
       headline: 'Every neighborhood deserves a seat at the table.',
     },
-    personality: {
-      items: ['Warm', 'Inclusive', 'Honest', 'Grounded', 'Caring', 'Approachable', 'Joyful', 'Authentic'],
-    },
+
     businessCard: {
       name: 'Maya Johnson',
       title: 'Program Director',
@@ -272,9 +251,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       detail: 'Issue 04',
     },
     overlay: {
-      label: 'Case Study',
       headline: 'The Messy Middle',
-      body: 'Every portfolio shows the finish line. We\u2019re here for the all-nighter.',
     },
     splitHero: {
       headline: 'Less Deck, More Doing',
@@ -295,9 +272,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     messaging: {
       headline: 'We don\u2019t make pretty things. We make things that move people.',
     },
-    personality: {
-      items: ['Bold', 'Playful', 'Irreverent', 'Sharp', 'Passionate', 'Curious', 'Provocative', 'Human'],
-    },
+
     businessCard: {
       name: 'Jordan Reeves',
       title: 'Co-Founder / ECD',
@@ -320,9 +295,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       detail: 'Pg. 12',
     },
     overlay: {
-      label: 'The Kitchen',
       headline: 'Ingredient-First, Always',
-      body: 'We let the produce do the talking.',
     },
     splitHero: {
       headline: 'Come Hungry',
@@ -343,9 +316,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     messaging: {
       headline: 'Good food starts with good people. Everything else follows.',
     },
-    personality: {
-      items: ['Warm', 'Honest', 'Inviting', 'Earthy', 'Generous', 'Lively', 'Grounded', 'Real'],
-    },
+
     businessCard: {
       name: 'Rosa Martínez',
       title: 'Head Chef & Owner',
