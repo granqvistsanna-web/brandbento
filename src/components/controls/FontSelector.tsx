@@ -84,12 +84,16 @@ export const FontSelector = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const loadedPreviewRef = useRef(new Set<string>());
 
-  // Get recentFonts and addRecentFont from store
+  // Get recentFonts, addRecentFont, and setFontPreview from store
   const recentFonts = useBrandStore(state => state.recentFonts);
   const addRecentFont = useBrandStore(state => state.addRecentFont);
+  const setFontPreview = useBrandStore(state => state.setFontPreview);
 
   // Map label to preview target: "Headline" → "primary", "Body" → "secondary"
   const target: "primary" | "secondary" = label === "Headline" ? "primary" : "secondary";
+
+  // Debounce timer for preview to avoid rapid flashing
+  const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use the font search hook
   const { fonts: filteredFonts, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter } = useFontSearch(recentFonts);
@@ -104,11 +108,24 @@ export const FontSelector = ({
         setIsOpen(false);
         setSearchQuery('');
         setCategoryFilter(null);
+        setFontPreview(null, target); // Clear preview on close
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setSearchQuery, setCategoryFilter]);
+  }, [setSearchQuery, setCategoryFilter, setFontPreview, target]);
+
+  // Clear preview when dropdown closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Clear any pending preview timer
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+        previewTimerRef.current = null;
+      }
+      setFontPreview(null, target);
+    }
+  }, [isOpen, setFontPreview, target]);
 
   // Calculate position & focus search on open
   useEffect(() => {
@@ -177,12 +194,27 @@ export const FontSelector = ({
   }, [filteredFonts, recentFonts]);
 
   const handleFontHover = useCallback((family: string) => {
-    if (!loadedPreviewRef.current.has(family)) {
-      loadedPreviewRef.current.add(family);
-      const meta = GOOGLE_FONTS_MAP.get(family) as { source?: FontSource } | undefined;
-      loadFontWithFallback(family, ["400"], 3000, meta?.source || "google");
+    // Clear any pending preview timer
+    if (previewTimerRef.current) {
+      clearTimeout(previewTimerRef.current);
     }
-  }, []);
+
+    // Debounce preview by 100ms to avoid rapid flashing
+    previewTimerRef.current = setTimeout(() => {
+      // Load font if not already loaded
+      if (!loadedPreviewRef.current.has(family)) {
+        loadedPreviewRef.current.add(family);
+        const meta = GOOGLE_FONTS_MAP.get(family) as { source?: FontSource } | undefined;
+        loadFontWithFallback(family, ["400"], 3000, meta?.source || "google").then(() => {
+          // After font loads, trigger preview
+          setFontPreview(family, target);
+        });
+      } else {
+        // Font already loaded, trigger preview immediately
+        setFontPreview(family, target);
+      }
+    }, 100);
+  }, [target, setFontPreview]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -213,6 +245,7 @@ export const FontSelector = ({
         e.preventDefault();
         addRecentFont(filteredFonts[highlightIdx].family);
         onChange(filteredFonts[highlightIdx].family);
+        setFontPreview(null, target); // Clear preview
         setIsOpen(false);
         setSearchQuery('');
         setCategoryFilter(null);
@@ -227,7 +260,7 @@ export const FontSelector = ({
         }
       }
     },
-    [isOpen, highlightIdx, filteredFonts, onChange, addRecentFont, setSearchQuery, setCategoryFilter, searchQuery]
+    [isOpen, highlightIdx, filteredFonts, onChange, addRecentFont, setSearchQuery, setCategoryFilter, searchQuery, setFontPreview, target]
   );
 
   useEffect(() => {
@@ -460,6 +493,7 @@ export const FontSelector = ({
                           onSelect={() => {
                             addRecentFont(font.family);
                             onChange(font.family);
+                            setFontPreview(null, target); // Clear preview
                             setIsOpen(false);
                             setSearchQuery('');
                             setCategoryFilter(null);
