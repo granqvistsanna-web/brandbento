@@ -7,6 +7,8 @@ import {
   RiArrowDownSLine as ChevronDown,
   RiCheckFill as Check,
   RiStarFill as Star,
+  RiSearchLine as SearchIcon,
+  RiCloseLine as CloseIcon,
 } from "react-icons/ri";
 import { motion, AnimatePresence } from "motion/react";
 import { GOOGLE_FONTS_MAP, type FontSource } from "../../data/googleFontsMetadata";
@@ -78,6 +80,7 @@ export const FontSelector = ({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const loadedPreviewRef = useRef(new Set<string>());
 
   // Get recentFonts from store
@@ -115,6 +118,9 @@ export const FontSelector = ({
         width: rect.width,
       });
       setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
         if (listRef.current) {
           const selected = listRef.current.querySelector("[data-selected]");
           if (selected) (selected as HTMLElement).scrollIntoView({ block: "center" });
@@ -227,9 +233,56 @@ export const FontSelector = ({
             }}
             onKeyDown={handleKeyDown}
           >
+            {/* Search input */}
+            <div className="px-2.5 pt-2.5 pb-2">
+              <div className="relative">
+                <SearchIcon
+                  size={14}
+                  className="absolute left-2.5 top-1/2"
+                  style={{
+                    transform: "translateY(-50%)",
+                    color: "var(--sidebar-text-muted)",
+                  }}
+                />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search fonts..."
+                  className="w-full pl-8 pr-8 py-1.5 text-12 rounded-lg transition-fast"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--sidebar-border-subtle)",
+                    color: "var(--sidebar-text)",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.border = "1px solid var(--accent)";
+                    e.currentTarget.style.boxShadow = "var(--sidebar-focus-ring)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.border = "1px solid var(--sidebar-border-subtle)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2"
+                    style={{
+                      transform: "translateY(-50%)",
+                      color: "var(--sidebar-text-muted)",
+                    }}
+                  >
+                    <CloseIcon size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Category pills */}
             <div
-              className="px-2.5 pt-2.5 pb-1.5"
+              className="px-2.5 pb-1.5"
               style={{ borderBottom: "1px solid var(--sidebar-border)" }}
             >
               <div className="flex flex-wrap gap-1 pb-0.5">
