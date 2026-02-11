@@ -63,9 +63,9 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-9 todos in `.planning/todos/pending/`:
+7 todos in `.planning/todos/pending/`:
 - ~~Font search improvements (ui)~~ DONE (quick-001)
-- Restructure color palettes panel (ui)
+- ~~Restructure color palettes panel (ui)~~ DONE (already implemented)
 - Expand surface color options (ui)
 - Per-tile color overrides (ui)
 - Export presets for sized outputs (ui)
@@ -144,7 +144,7 @@ Resume file: None
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 001 | Font search improvements | 2026-02-11 | - | [001-font-search-improvements](./quick/001-font-search-improvements/) |
+| 001 | Font search improvements | 2026-02-11 | f295901 | [001-font-search-improvements](./quick/001-font-search-improvements/) |
 | 002 | Tile reordering via drag-and-drop | 2026-02-11 | 87fcd84 | [002-tile-reordering-drag-and-drop](./quick/002-tile-reordering-drag-and-drop/) |
 
 ---
