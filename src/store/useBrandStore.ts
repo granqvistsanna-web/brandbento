@@ -39,7 +39,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { getPaletteById, getAllPalettes } from "../data/colorPalettes";
-import { mapPaletteToBrand, enforceContrast, hexToHSL, hslToHex } from "../utils/colorMapping";
+import { mapPaletteToBrand, enforceContrast } from "../utils/colorMapping";
 import { DEFAULT_BRAND, BRAND_PRESETS } from "../data/brandPresets";
 import { INITIAL_TILES } from "../data/tileDefaults";
 import { getPlacementTileId, getPlacementTileType, INITIAL_TILE_SURFACES } from "../config/placements";
@@ -437,24 +437,12 @@ const hasTileContentChanges = (
 };
 
 /**
- * Temporary font preview state.
- * Used for hover-preview of fonts before committing selection.
- */
-export interface FontPreview {
-  /** Font family name being previewed */
-  font: string;
-  /** Which typography slot to preview in (primary or secondary) */
-  target: "primary" | "secondary";
-}
-
-/**
  * Complete store interface with state and actions.
  *
  * ## State Properties
  * - `brand`: Current brand configuration (typography, colors, logo, imagery)
  * - `tiles`: Array of tile configurations for the bento grid
  * - `focusedTileId`: Currently selected tile for editing (null if none)
- * - `fontPreview`: Temporary font being previewed on hover
  * - `theme`: User's theme preference (light/dark/system)
  * - `resolvedTheme`: Computed theme after applying system preference
  * - `history`: Undo/redo state stacks
@@ -477,10 +465,6 @@ export interface BrandStore {
   tiles: Tile[];
   /** ID of the currently focused/selected tile (null if none) */
   focusedTileId: string | null;
-  /** @deprecated Legacy dark mode preview toggle - use theme instead */
-  darkModePreview: boolean;
-  /** Temporary font preview state for hover effects */
-  fontPreview: FontPreview | null;
   /** User's theme preference */
   theme: "light" | "dark" | "system";
   /** Computed theme after resolving "system" preference */
@@ -497,6 +481,8 @@ export interface BrandStore {
   collectionImagePool: string[];
   /** Recently used font families (max 5, most recent first) */
   recentFonts: string[];
+  /** Live font preview state (null when not previewing) */
+  fontPreview: { font: string; target: "primary" | "secondary" } | null;
 
   // ─────────────────────────────────────────────────────────────────
   // UI State Actions
@@ -504,10 +490,6 @@ export interface BrandStore {
 
   /** Sets the currently focused tile for editing */
   setFocusedTile: (id: string | null) => void;
-  /** @deprecated Use setTheme instead */
-  toggleDarkMode: () => void;
-  /** Sets temporary font preview for hover effects */
-  setFontPreview: (font: string | null, target?: "primary" | "secondary") => void;
   /** Sets the user's theme preference */
   setTheme: (theme: "light" | "dark" | "system") => void;
   /** Sets resolved theme (called by useTheme when system preference changes) */
@@ -557,6 +539,8 @@ export interface BrandStore {
   resetToDefaults: () => void;
   /** Adds a font to recently used list (max 5, deduplicates) */
   addRecentFont: (family: string) => void;
+  /** Sets live font preview (null to clear) */
+  setFontPreview: (font: string | null, target: "primary" | "secondary") => void;
 
   // ─────────────────────────────────────────────────────────────────
   // History Actions
@@ -571,25 +555,6 @@ export interface BrandStore {
 // ============================================
 // LOCAL PRESETS (extends imported BRAND_PRESETS)
 // ============================================
-
-// Additional preset configurations (empty for now)
-
-
-/*
-  default: DEFAULT_BRAND,
-  techStartup: {
-  typography: {
-    primary: "Sora",
-      secondary: "Inter",
-        ui: "Inter",
-          scale: 1.2,
-            baseSize: 16,
-              weightHeadline: "700",
-                weightBody: "400",
-                  letterSpacing: "normal",
-    },
-*/
-
 
 // Ready-made templates with complete brand + tile layouts
 interface StarterTemplate {
@@ -1220,87 +1185,6 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Generates color harmony variations from a base color.
- * Useful for creating cohesive color palettes.
- *
- * @param baseColor - Starting hex color
- * @returns Object with analogous (±30°), complementary (+180°), and triadic (+120°, +240°) colors
- *
- * @example
- * const harmony = getColorHarmony('#3B82F6');
- * // harmony.analogous = ['#823BF6', '#3BF6F6']
- * // harmony.complementary = '#F6823B'
- * // harmony.triadic = ['#82F63B', '#F63B82']
- */
-export const getColorHarmony = (baseColor: string) => {
-  const hsl = hexToHSL(baseColor);
-  return {
-    analogous: [
-      hslToHex((hsl.h + 30) % 360, hsl.s, hsl.l),
-      hslToHex((hsl.h - 30 + 360) % 360, hsl.s, hsl.l),
-    ],
-    complementary: hslToHex((hsl.h + 180) % 360, hsl.s, hsl.l),
-    triadic: [
-      hslToHex((hsl.h + 120) % 360, hsl.s, hsl.l),
-      hslToHex((hsl.h + 240) % 360, hsl.s, hsl.l),
-    ],
-  };
-};
-
-/**
- * Calculates WCAG contrast ratio between two colors.
- * Uses relative luminance formula per WCAG 2.1 specification.
- *
- * @param color1 - First hex color
- * @param color2 - Second hex color
- * @returns Contrast ratio (1-21). AA requires 4.5:1 for text, 3:1 for large text.
- *
- * @example
- * const ratio = getContrastRatio('#FFFFFF', '#000000'); // 21
- * const isAACompliant = ratio >= 4.5;
- */
-export const getContrastRatio = (color1: string, color2: string): number => {
-  const getLuminance = (hex: string): number => {
-    let rHex: string, gHex: string, bHex: string;
-
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (result) {
-      rHex = result[1];
-      gHex = result[2];
-      bHex = result[3];
-    } else {
-      const shorthand = /^#?([a-f\d])([a-f\d])([a-f\d])$/i.exec(hex);
-      if (shorthand) {
-        rHex = shorthand[1] + shorthand[1];
-        gHex = shorthand[2] + shorthand[2];
-        bHex = shorthand[3] + shorthand[3];
-      } else {
-        return 0;
-      }
-    }
-
-    const rgb = [
-      parseInt(rHex, 16) / 255,
-      parseInt(gHex, 16) / 255,
-      parseInt(bHex, 16) / 255,
-    ].map((val) => {
-      return val <= 0.03928
-        ? val / 12.92
-        : Math.pow((val + 0.055) / 1.055, 2.4);
-    });
-
-    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
-  };
-
-  const l1 = getLuminance(color1);
-  const l2 = getLuminance(color2);
-  const lighter = Math.max(l1, l2);
-  const darker = Math.min(l1, l2);
-
-  return (lighter + 0.05) / (darker + 0.05);
-};
-
 // ============================================
 // EXPORT FUNCTIONS
 // ============================================
@@ -1491,7 +1375,7 @@ let _lastShuffleFontIdx = -1;
  *
  * Uses Zustand with persist middleware for localStorage persistence.
  * Only persists essential state (brand, tiles, theme, tileSurfaces) to avoid
- * storing transient UI state like focusedTileId or fontPreview.
+ * storing transient UI state like focusedTileId.
  *
  * @example
  * // Subscribe to specific slices (recommended for performance)
@@ -1508,8 +1392,6 @@ export const useBrandStore = create<BrandStore>()(
       activePreset: "default",
       tiles: INITIAL_TILES,
       focusedTileId: null,
-      darkModePreview: false,
-      fontPreview: null,
       theme: "system",
       resolvedTheme: "light",
       history: {
@@ -1521,14 +1403,9 @@ export const useBrandStore = create<BrandStore>()(
       activeCollectionId: null,
       collectionImagePool: [],
       recentFonts: [],
+      fontPreview: null,
 
       setFocusedTile: (id) => set({ focusedTileId: id }),
-
-      toggleDarkMode: () =>
-        set((state) => ({ darkModePreview: !state.darkModePreview })),
-
-      setFontPreview: (font, target) =>
-        set({ fontPreview: font ? { font, target: target || "primary" } : null }),
 
       setTheme: (theme) => set({ theme }),
 
@@ -2042,6 +1919,10 @@ export const useBrandStore = create<BrandStore>()(
         const updated = [family, ...filtered].slice(0, 5);
         set({ recentFonts: updated });
       },
+
+      setFontPreview: (font, target) => {
+        set({ fontPreview: font ? { font, target } : null });
+      },
     }),
     {
       name: "brand-store",
@@ -2088,9 +1969,7 @@ export const useBrandStore = create<BrandStore>()(
       },
       // Persist only serializable user data. Exclude:
       // - focusedTileId (UI state, not user data)
-      // - fontPreview (transient hover state)
       // - history (undo/redo is session-only)
-      // - darkModePreview (transient toggle state)
       partialize: (state) => ({
         brand: state.brand,
         tiles: state.tiles,

@@ -88,6 +88,9 @@ export const FontSelector = ({
   const recentFonts = useBrandStore(state => state.recentFonts);
   const addRecentFont = useBrandStore(state => state.addRecentFont);
 
+  // Map label to preview target: "Headline" → "primary", "Body" → "secondary"
+  const target: "primary" | "secondary" = label === "Headline" ? "primary" : "secondary";
+
   // Use the font search hook
   const { fonts: filteredFonts, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter } = useFontSearch(recentFonts);
 
