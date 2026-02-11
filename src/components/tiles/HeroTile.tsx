@@ -12,7 +12,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight, getHeadlineTransform } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { IMAGE_OVERLAY_TEXT, imageOverlayTextMuted } from '@/utils/colorDefaults';
 import { getImageFilter } from '@/utils/imagery';
 import { getPresetContent } from '@/data/tilePresetContent';
@@ -73,6 +73,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
   const activePreset = useBrandStore((state: BrandStore) => state.activePreset);
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
+  const fontPreview = useBrandStore((state: BrandStore) => state.fontPreview);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -104,12 +105,13 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
     ? (content.label || content.subcopy || overlayCopy.label)
     : undefined;
 
-  const spacing = getLetterSpacing(typography.letterSpacing);
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
-  const typeScale = getTypeScale(typography);
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
 
-  const isSpread = activePreset === 'spread';
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
+  const typeScale = getTypeScale(typography);
 
   // Floating toolbar
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);

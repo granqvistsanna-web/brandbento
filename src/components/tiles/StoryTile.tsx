@@ -15,7 +15,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale, getLetterSpacing } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight } from '@/utils/typography';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
@@ -94,12 +94,16 @@ export function StoryTile({ placementId }: StoryTileProps) {
   const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 0 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
   const ctaTextColor = getAdaptiveTextColor(primary, '#ffffff', '#000000');
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
   const typeScale = getTypeScale(typography);
-  const spacing = getLetterSpacing(typography.letterSpacing);
 
   /* ─── Content ─── */
   const presetCopy = getPresetContent(activePreset).story;
@@ -323,8 +327,8 @@ export function StoryTile({ placementId }: StoryTileProps) {
                 fontFamily: headlineFont,
                 fontWeight: parseInt(typography.weightHeadline) || 700,
                 fontSize: 18,
-                lineHeight: 1.12,
-                letterSpacing: spacing,
+                lineHeight: getHeadlineLineHeight(typography),
+                letterSpacing: getHeadlineTracking(typography),
                 color: cardText,
                 textWrap: 'balance',
                 marginBottom: 8,
@@ -339,7 +343,8 @@ export function StoryTile({ placementId }: StoryTileProps) {
                 fontFamily: bodyFont,
                 fontWeight: parseInt(typography.weightBody) || 400,
                 fontSize: 10.5,
-                lineHeight: 1.5,
+                lineHeight: getBodyLineHeight(typography),
+                letterSpacing: getBodyTracking(typography),
                 color: cardText,
                 opacity: 0.55,
                 maxWidth: '30ch',

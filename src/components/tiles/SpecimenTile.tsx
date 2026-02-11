@@ -13,7 +13,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getHeadlineLineHeight } from '@/utils/typography';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -84,10 +84,15 @@ export function SpecimenTile({ placementId }: SpecimenTileProps) {
   const { bg, text: textColor, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 0 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
   const typeScale = getTypeScale(typography);
 
   /* ─── Content ─── */
@@ -167,8 +172,8 @@ export function SpecimenTile({ placementId }: SpecimenTileProps) {
           fontFamily: headlineFont,
           fontWeight: parseInt(typography.weightHeadline) || 700,
           fontSize: `${specimenSize}px`,
-          lineHeight: 1.15,
-          letterSpacing: '-0.01em',
+          lineHeight: getHeadlineLineHeight(typography),
+          letterSpacing: getHeadlineTracking(typography),
           color: adaptiveText,
           textAlign: 'center',
           whiteSpace: 'pre-line',

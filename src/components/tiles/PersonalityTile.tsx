@@ -90,9 +90,13 @@ export function PersonalityTile({ placementId }: PersonalityTileProps) {
   const adaptiveText = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
   const { l: surfaceL } = hexToHSL(surfaceBg);
   const isLight = surfaceL > 55;
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFontChoice, getFontCategory(secondaryFontChoice));
   const typeScale = getTypeScale(typography);
 
   /* ─── Content ─── */

@@ -19,7 +19,7 @@ import { COLOR_DEFAULTS, IMAGE_OVERLAY_TEXT, imageOverlayTextMuted } from '@/uti
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getHeadlineLineHeight } from '@/utils/typography';
 import { getImageFilter } from '@/utils/imagery';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
@@ -98,10 +98,15 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
     defaultIndex: 1,
   });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  const fontPreview = useBrandStore((state) => state.fontPreview);
+
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
   const typeScale = getTypeScale(typography);
-  const spacing = getLetterSpacing(typography.letterSpacing);
 
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
@@ -141,7 +146,6 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
         bodyFont={bodyFont}
         typeScale={typeScale}
         typography={typography}
-        spacing={spacing}
         activePreset={activePreset}
         logoText={logoText}
         isFocused={isFocused}
@@ -318,7 +322,6 @@ function SplitLayout({
   bodyFont,
   typeScale,
   typography,
-  spacing,
   activePreset,
   logoText,
   isFocused,
@@ -338,7 +341,6 @@ function SplitLayout({
   bodyFont: string;
   typeScale: ReturnType<typeof getTypeScale>;
   typography: BrandStore['brand']['typography'];
-  spacing: string;
   activePreset: string;
   logoText: string | undefined;
   isFocused: boolean;
@@ -420,12 +422,12 @@ function SplitLayout({
             {brandLabel}
           </span>
           <h2
-            className="leading-[1.02]"
             style={{
               fontFamily: headlineFont,
               fontWeight: parseInt(typography.weightHeadline) || 700,
               fontSize: `${clampFontSize(typeScale.step2, 18, 32)}px`,
-              letterSpacing: spacing,
+              lineHeight: getHeadlineLineHeight(typography),
+              letterSpacing: getHeadlineTracking(typography),
               color: IMAGE_OVERLAY_TEXT,
               whiteSpace: 'pre-line',
             }}
@@ -445,12 +447,12 @@ function SplitLayout({
         }}
       >
         <h3
-          className="leading-[1.1]"
           style={{
             fontFamily: headlineFont,
             fontWeight: parseInt(typography.weightHeadline) || 700,
             fontSize: `${clampFontSize(typeScale.base, 14, 22)}px`,
-            letterSpacing: spacing,
+            lineHeight: getHeadlineLineHeight(typography),
+            letterSpacing: getHeadlineTracking(typography),
             color: adaptiveText,
             marginBottom: `${clampFontSize(typeScale.base * 0.6, 8, 18)}px`,
             flexShrink: 0,

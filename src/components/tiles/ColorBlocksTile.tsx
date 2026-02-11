@@ -77,9 +77,13 @@ export function ColorBlocksTile({ placementId }: ColorBlocksTileProps) {
   const { bg, text: textColor, primary, accent, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 0 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography (for label) ─── */
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFontChoice, getFontCategory(secondaryFontChoice));
   const typeScale = getTypeScale(typography);
 
   /* ─── Content ─── */

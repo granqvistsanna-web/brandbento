@@ -13,7 +13,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { getImageFilter } from '@/utils/imagery';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
@@ -45,6 +45,7 @@ export function CardTile({ placementId }: CardTileProps) {
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const setTileSurface = useBrandStore((s) => s.setTileSurface);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -65,8 +66,13 @@ export function CardTile({ placementId }: CardTileProps) {
     defaultIndex: 1,
   });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
   const typeScale = getTypeScale(typography);
 
   const content = tile?.content || {};
@@ -139,10 +145,10 @@ export function CardTile({ placementId }: CardTileProps) {
               color: adaptiveText,
               fontFamily: headlineFont,
               fontWeight: parseInt(typography.weightHeadline) || 700,
-              letterSpacing: '0.06em',
+              letterSpacing: getHeadlineTracking(typography),
               fontSize: `${clampFontSize(typeScale.step1)}px`,
-              textTransform: 'uppercase' as const,
-              lineHeight: 1.15,
+              textTransform: getHeadlineTransform(typography) as React.CSSProperties['textTransform'],
+              lineHeight: getHeadlineLineHeight(typography),
             }}
           >
             {title}
@@ -153,7 +159,8 @@ export function CardTile({ placementId }: CardTileProps) {
               opacity: 0.55,
               fontFamily: bodyFont,
               fontSize: `${clampFontSize(typeScale.stepMinus1)}px`,
-              lineHeight: 1.3,
+              lineHeight: getBodyLineHeight(typography),
+              letterSpacing: getBodyTracking(typography),
             }}
           >
             {subtitle}

@@ -54,10 +54,14 @@ export function SwatchTile({ placementId, variant = 'chips' }: SwatchTileProps) 
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
   const { bg, surfaces, primary, accent, text } = colors;
+  const fontPreview = useBrandStore((state) => state.fontPreview);
+
+  // Apply font preview if active
+  const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
 
   const { fontFamily: bodyFont } = useGoogleFonts(
-    typography.secondary,
-    getFontCategory(typography.secondary)
+    secondaryFontChoice,
+    getFontCategory(secondaryFontChoice)
   );
   const { fontFamily: uiFont } = useGoogleFonts(
     typography.ui,

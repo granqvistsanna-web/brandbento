@@ -13,7 +13,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getHeadlineLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
@@ -92,12 +92,16 @@ export function MessagingTile({ placementId }: MessagingTileProps) {
   const { bg, text: textColor, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 2 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
   const typeScale = getTypeScale(typography);
-  const spacing = getLetterSpacing(typography.letterSpacing);
 
   /* ─── Content ─── */
   const presetCopy = getPresetContent(activePreset).messaging;
@@ -165,8 +169,9 @@ export function MessagingTile({ placementId }: MessagingTileProps) {
           fontFamily: headlineFont,
           fontWeight: parseInt(typography.weightHeadline) || 700,
           fontSize: `${headlineSize}px`,
-          lineHeight: 1.08,
-          letterSpacing: spacing,
+          lineHeight: getHeadlineLineHeight(typography),
+          letterSpacing: getHeadlineTracking(typography),
+          textTransform: getHeadlineTransform(typography) as React.CSSProperties['textTransform'],
           color: adaptiveText,
           textWrap: 'balance',
           maxWidth: shape === 'landscape' ? '38ch' : '22ch',

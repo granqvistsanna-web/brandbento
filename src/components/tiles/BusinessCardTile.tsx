@@ -15,7 +15,7 @@ import { hexToHSL } from '@/utils/colorMapping';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { getFontCategory } from '@/utils/typography';
+import { getFontCategory, getHeadlineLineHeight, getBodyLineHeight, getBodyTracking } from '@/utils/typography';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
@@ -102,10 +102,15 @@ export function BusinessCardTile({ placementId }: BusinessCardTileProps) {
   const { l: textL } = hexToHSL(textColor);
   // If brand text is light, use dark text on the white card
   const cardTextColor = textL > 55 ? '#1a1a1a' : textColor;
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
 
   /* ─── Content (field mapping: headline=name, subcopy=title, label=email, price=phone, body=address, cta=website) ─── */
   const presetCopy = getPresetContent(activePreset).businessCard;
@@ -249,7 +254,7 @@ export function BusinessCardTile({ placementId }: BusinessCardTileProps) {
                 fontWeight: parseInt(typography.weightHeadline) || 700,
                 fontSize: 12,
                 color: cardTextColor,
-                lineHeight: 1.3,
+                lineHeight: getHeadlineLineHeight(typography),
                 marginBottom: 2,
               }}
             >
@@ -261,7 +266,8 @@ export function BusinessCardTile({ placementId }: BusinessCardTileProps) {
                 fontSize: 9.5,
                 color: cardTextColor,
                 opacity: 0.6,
-                lineHeight: 1.5,
+                lineHeight: getBodyLineHeight(typography),
+                letterSpacing: getBodyTracking(typography),
               }}
             >
               {title}
@@ -281,7 +287,8 @@ export function BusinessCardTile({ placementId }: BusinessCardTileProps) {
               fontSize: 9,
               color: cardTextColor,
               opacity: 0.5,
-              lineHeight: 1.5,
+              lineHeight: getBodyLineHeight(typography),
+              letterSpacing: getBodyTracking(typography),
               whiteSpace: 'pre-line',
             }}
           >

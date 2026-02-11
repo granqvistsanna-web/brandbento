@@ -18,7 +18,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight } from '@/utils/typography';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
@@ -73,6 +73,7 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const setTileSurface = useBrandStore((s) => s.setTileSurface);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -83,10 +84,15 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
   const tileSurfaceIndex = useBrandStore((state) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
-  const { primary, secondary, weightHeadline, weightBody, letterSpacing } = typography;
+  const { primary, secondary, weightHeadline, weightBody } = typography;
   const { text: textColor, bg, surfaces } = colors;
-  const { fontFamily: headlineFont } = useGoogleFonts(primary, getFontCategory(primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(secondary, getFontCategory(secondary));
+
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
 
   const surfaceBg = resolveSurfaceColor({
     placementId,
@@ -98,7 +104,6 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
 
   const adaptiveTextColor = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
   const typeScale = getTypeScale(typography);
-  const spacing = getLetterSpacing(letterSpacing);
 
   const isLandscape = shape === 'landscape';
 

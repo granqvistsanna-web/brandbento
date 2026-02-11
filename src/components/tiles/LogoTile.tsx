@@ -64,8 +64,12 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
   const isHero = placementId === 'hero';
   const showWordmark = Boolean(logoText && logoText.trim().length > 0);
   const headlineWeight = parseInt(typography.weightHeadline) || 700;
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
-  const { fontFamily: primaryFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
+  // Apply font preview if active
+  const primaryFontChoice = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+
+  const { fontFamily: primaryFont } = useGoogleFonts(primaryFontChoice, getFontCategory(primaryFontChoice));
   const { isFocused, containerRef, anchorRect } = useTileToolbar(placementId);
 
   const handleLogoChange = useCallback((key: string, value: unknown, isCommit = true) => {

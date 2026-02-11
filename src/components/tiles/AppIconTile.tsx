@@ -2,10 +2,9 @@
  * App Icon / Iconography Tile Component
  *
  * iPhone home screen mockup showing the brand's app icon alongside
- * system apps. The kind of context shot you see in brand identity
- * presentations — "here's how our icon looks on a real device."
- *
- * Uses scale-to-fit pattern with a partial phone frame.
+ * system apps. The phone sits offset to the right against a bold
+ * brand-colored background — the kind of context shot you see in
+ * brand identity presentations.
  */
 import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
@@ -27,13 +26,18 @@ import {
   ToolbarLabel,
 } from './FloatingToolbar';
 
-/* ─── Design-space dimensions ─── */
-const PHONE_W = 260;
-const PHONE_H = 320;
+/* ─── Phone design-space constants ─── */
+const PHONE_W = 236;
+const PHONE_H = 460;
+const BEZEL = 8;
+const PHONE_RADIUS = 40;
+const SCREEN_RADIUS = PHONE_RADIUS - BEZEL;
 const ICON_SIZE = 52;
 const ICON_RADIUS = 12;
 const ICON_GAP = 18;
 const LABEL_SIZE = 9;
+const ISLAND_W = 72;
+const ISLAND_H = 18;
 
 /* ─── Types ─── */
 
@@ -41,7 +45,7 @@ interface AppIconTileProps {
   placementId?: string;
 }
 
-/* ─── System App Icons (rendered in CSS) ─── */
+/* ─── System App Icons ─── */
 
 function CalendarIcon() {
   const day = new Date().getDate();
@@ -51,42 +55,49 @@ function CalendarIcon() {
       style={{
         width: ICON_SIZE, height: ICON_SIZE, borderRadius: ICON_RADIUS,
         backgroundColor: '#fff', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-        position: 'relative',
+        alignItems: 'center', overflow: 'hidden',
       }}
     >
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 14, backgroundColor: '#ff3b30' }} />
-      <span style={{ fontSize: 7.5, fontWeight: 600, color: '#ff3b30', letterSpacing: '0.04em', marginTop: 6 }}>
-        {weekday}
-      </span>
-      <span style={{ fontSize: 22, fontWeight: 300, color: '#1a1a1a', lineHeight: 1, marginTop: -1 }}>
-        {day}
-      </span>
+      <div
+        style={{
+          width: '100%', height: 15, backgroundColor: '#ff3b30',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        <span style={{ fontSize: 7.5, fontWeight: 700, color: '#fff', letterSpacing: '0.06em', lineHeight: 1 }}>
+          {weekday}
+        </span>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: 24, fontWeight: 300, color: '#1a1a1a', lineHeight: 1, marginTop: -2 }}>
+          {day}
+        </span>
+      </div>
     </div>
   );
 }
 
 function CalculatorIcon() {
+  const rows = [
+    ['#a5a5a5', '#a5a5a5', '#a5a5a5', '#ff9500'],
+    ['#333', '#333', '#333', '#ff9500'],
+    ['#333', '#333', '#333', '#ff9500'],
+    ['#333', '#333', '#333', '#ff9500'],
+  ];
   return (
     <div
       style={{
         width: ICON_SIZE, height: ICON_SIZE, borderRadius: ICON_RADIUS,
-        backgroundColor: '#1c1c1e', display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)', gridTemplateRows: 'repeat(5, 1fr)',
-        gap: 2, padding: 6,
+        backgroundColor: '#1c1c1e', display: 'flex', flexDirection: 'column',
+        gap: 2.5, padding: '7px 5px 5px',
       }}
     >
-      {/* Top row: display area */}
-      <div style={{ gridColumn: '1 / -1', backgroundColor: '#2c2c2e', borderRadius: 2 }} />
-      {/* Button rows */}
-      {Array.from({ length: 12 }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            backgroundColor: i % 4 === 3 ? '#ff9500' : i < 4 ? '#636366' : '#d4d4d2',
-            borderRadius: 2,
-          }}
-        />
+      {rows.map((row, ri) => (
+        <div key={ri} style={{ display: 'flex', gap: 2.5, flex: 1 }}>
+          {row.map((c, ci) => (
+            <div key={ci} style={{ flex: 1, backgroundColor: c, borderRadius: 3 }} />
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -116,7 +127,7 @@ function ThreadsIcon() {
 
 export function AppIconTile({ placementId }: AppIconTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const [dims, setDims] = useState({ w: 400, h: 300 });
 
   useEffect(() => {
     const el = containerRef.current;
@@ -124,9 +135,7 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
       if (width === 0 || height === 0) return;
-      const pad = Math.min(width, height) * 0.06;
-      const s = Math.min((width - pad * 2) / PHONE_W, (height - pad * 2) / PHONE_H);
-      setScale(s);
+      setDims({ w: width, h: height });
     };
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -160,14 +169,19 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
   const { bg, text: textColor, primary, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 0 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFontChoice, getFontCategory(secondaryFontChoice));
   const typeScale = getTypeScale(typography);
 
   /* ─── Content ─── */
   const tileContent = tile?.content || {};
   const appName = tileContent.headerTitle || logo.text || 'App';
+  const headline = tileContent.headline || 'Personality';
   const label = tileContent.label || 'Iconography';
 
   /* ─── Toolbar ─── */
@@ -195,16 +209,34 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
         onCommit={(v) => tile?.id && updateTile(tile.id, { headerTitle: v }, true)}
         placeholder="App name"
       />
+      <ToolbarTextInput
+        label="Category"
+        value={headline}
+        onChange={(v) => tile?.id && updateTile(tile.id, { headline: v }, false)}
+        onCommit={(v) => tile?.id && updateTile(tile.id, { headline: v }, true)}
+        placeholder="Category label"
+      />
     </FloatingToolbar>
   );
 
   /* ─── Brand app icon ─── */
   const brandIconBg = primary;
-  const brandIconTextColor = getAdaptiveTextColor(primary, '#ffffff', '#000000');
+  const brandIconText = getAdaptiveTextColor(primary, '#ffffff', '#000000');
 
-  /* ─── Phone wallpaper ─── */
+  /* ─── Phone wallpaper color ─── */
   const { l: surfL } = hexToHSL(surfaceBg);
-  const wallpaperBg = surfaces?.[1] || (surfL > 55 ? '#f0efe9' : '#2a2a2e');
+  const wallpaperBg = surfaces?.[1] || (surfL > 55 ? '#f2ece4' : '#2a2a2e');
+  const wallpaperText = getAdaptiveTextColor(wallpaperBg, '#000', '#fff');
+
+  /* ─── Phone scale & position ─── */
+  const isLandscape = dims.w > dims.h * 1.3;
+  const widthFactor = isLandscape ? 0.45 : 0.55;
+  const phoneScale = Math.max(
+    0.3,
+    Math.min((dims.h * 0.92) / PHONE_H, (dims.w * widthFactor) / PHONE_W, 1.15)
+  );
+  const scaledW = PHONE_W * phoneScale;
+  const scaledH = PHONE_H * phoneScale;
 
   const apps = [
     {
@@ -220,7 +252,7 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
           {logo.image ? (
             <img src={logo.image} alt="" style={{ width: 30, height: 30, objectFit: 'contain' }} />
           ) : (
-            <span style={{ fontSize: 22, fontWeight: 700, color: brandIconTextColor }}>
+            <span style={{ fontSize: 22, fontWeight: 700, color: brandIconText }}>
               {(logo.text || 'A').charAt(0)}
             </span>
           )}
@@ -235,114 +267,187 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full flex items-center justify-center transition-colors duration-300 relative overflow-hidden"
+      className="w-full h-full relative overflow-hidden transition-colors duration-300"
       style={{ backgroundColor: surfaceBg }}
     >
-      {/* Scaled phone frame */}
+      {/* ── Top-left accent bar + category label ── */}
       <div
+        className="absolute z-10"
         style={{
-          width: PHONE_W,
-          height: PHONE_H,
-          transform: `scale(${scale})`,
-          transformOrigin: 'center center',
-          backgroundColor: wallpaperBg,
-          borderRadius: 28,
-          overflow: 'hidden',
-          position: 'relative',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
+          top: 0,
+          left: 0,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        {/* Status bar */}
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '10px 20px 0',
+            width: 'clamp(3px, 0.8%, 5px)',
+            height: 'clamp(24px, 10%, 48px)',
+            backgroundColor: primary,
+            borderRadius: '0 2px 2px 0',
+            transition: 'background-color 0.3s ease',
+          }}
+        />
+        <span
+          style={{
+            fontFamily: bodyFont,
+            fontWeight: parseInt(typography.weightBody) || 400,
+            fontSize: `${clampFontSize(typeScale.step2, 16, 28)}px`,
+            fontStyle: 'italic',
+            letterSpacing: '0.01em',
+            lineHeight: 1.2,
+            color: adaptiveText,
+            opacity: 0.9,
+            paddingLeft: 'clamp(16px, 6%, 32px)',
+            paddingTop: 'clamp(8px, 2.5%, 14px)',
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: 600, color: getAdaptiveTextColor(wallpaperBg, '#000', '#fff') }}>
-            12:30
-          </span>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            {/* Signal bars */}
-            <svg width="14" height="10" viewBox="0 0 14 10">
-              {[0, 1, 2, 3].map((i) => (
-                <rect
-                  key={i}
-                  x={i * 3.5}
-                  y={10 - (i + 1) * 2.5}
-                  width="2.5"
-                  height={(i + 1) * 2.5}
-                  rx="0.5"
-                  fill={getAdaptiveTextColor(wallpaperBg, '#000', '#fff')}
-                />
-              ))}
-            </svg>
-            {/* WiFi */}
-            <svg width="12" height="10" viewBox="0 0 12 10" fill={getAdaptiveTextColor(wallpaperBg, '#000', '#fff')}>
-              <path d="M6 9a1.2 1.2 0 100-2.4A1.2 1.2 0 006 9z" />
-              <path d="M3.5 6.5a3.5 3.5 0 015 0" stroke={getAdaptiveTextColor(wallpaperBg, '#000', '#fff')} fill="none" strokeWidth="1.2" strokeLinecap="round" />
-              <path d="M1.5 4.5a6 6 0 019 0" stroke={getAdaptiveTextColor(wallpaperBg, '#000', '#fff')} fill="none" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-            {/* Battery */}
-            <svg width="18" height="9" viewBox="0 0 18 9">
-              <rect x="0" y="0" width="15.5" height="9" rx="1.5" stroke={getAdaptiveTextColor(wallpaperBg, '#000', '#fff')} fill="none" strokeWidth="1" />
-              <rect x="2" y="2" width="10" height="5" rx="0.5" fill={getAdaptiveTextColor(wallpaperBg, '#000', '#fff')} />
-              <rect x="16" y="2.5" width="1.5" height="4" rx="0.5" fill={getAdaptiveTextColor(wallpaperBg, '#000', '#fff')} opacity="0.4" />
-            </svg>
-          </div>
-        </div>
+          {headline}
+        </span>
+      </div>
 
-        {/* App grid */}
+      {/* ── Phone mockup — offset right, partially cropped ── */}
+      <div
+        style={{
+          position: 'absolute',
+          left: dims.w - scaledW * 0.88,
+          top: (dims.h - scaledH) / 2,
+          width: PHONE_W,
+          height: PHONE_H,
+          transform: `scale(${phoneScale})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        {/* Dark bezel */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: ICON_GAP,
-            justifyItems: 'center',
-            padding: '36px 36px 20px',
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#1a1a1a',
+            borderRadius: PHONE_RADIUS,
+            padding: BEZEL,
+            boxSizing: 'border-box',
+            boxShadow: '-4px 4px 32px rgba(0,0,0,0.2), -1px 1px 8px rgba(0,0,0,0.1)',
           }}
         >
-          {apps.map((app) => (
-            <div
-              key={app.name}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}
-            >
-              {app.icon}
-              <span
+          {/* Screen */}
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: wallpaperBg,
+              borderRadius: SCREEN_RADIUS,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'background-color 0.3s ease',
+            }}
+          >
+            {/* Dynamic Island */}
+            <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
+              <div
                 style={{
-                  fontSize: LABEL_SIZE,
-                  color: getAdaptiveTextColor(wallpaperBg, '#000', '#fff'),
-                  fontWeight: 400,
-                  letterSpacing: '0.01em',
-                  textAlign: 'center',
-                  maxWidth: ICON_SIZE + 10,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  width: ISLAND_W,
+                  height: ISLAND_H,
+                  backgroundColor: '#000',
+                  borderRadius: ISLAND_H / 2,
                 }}
-              >
-                {app.name}
-              </span>
+              />
             </div>
-          ))}
+
+            {/* Status bar */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '6px 20px 0',
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 600, color: wallpaperText }}>
+                12:30
+              </span>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <svg width="14" height="10" viewBox="0 0 14 10">
+                  {[0, 1, 2, 3].map((i) => (
+                    <rect
+                      key={i}
+                      x={i * 3.5}
+                      y={10 - (i + 1) * 2.5}
+                      width="2.5"
+                      height={(i + 1) * 2.5}
+                      rx="0.5"
+                      fill={wallpaperText}
+                    />
+                  ))}
+                </svg>
+                <svg width="12" height="10" viewBox="0 0 12 10" fill={wallpaperText}>
+                  <path d="M6 9a1.2 1.2 0 100-2.4A1.2 1.2 0 006 9z" />
+                  <path d="M3.5 6.5a3.5 3.5 0 015 0" stroke={wallpaperText} fill="none" strokeWidth="1.2" strokeLinecap="round" />
+                  <path d="M1.5 4.5a6 6 0 019 0" stroke={wallpaperText} fill="none" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                <svg width="18" height="9" viewBox="0 0 18 9">
+                  <rect x="0" y="0" width="15.5" height="9" rx="1.5" stroke={wallpaperText} fill="none" strokeWidth="1" />
+                  <rect x="2" y="2" width="10" height="5" rx="0.5" fill={wallpaperText} />
+                  <rect x="16" y="2.5" width="1.5" height="4" rx="0.5" fill={wallpaperText} opacity="0.4" />
+                </svg>
+              </div>
+            </div>
+
+            {/* App grid */}
+            <div
+              style={{
+                flex: 1,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: ICON_GAP,
+                justifyItems: 'center',
+                alignContent: 'center',
+                padding: '24px 32px',
+              }}
+            >
+              {apps.map((app) => (
+                <div
+                  key={app.name}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}
+                >
+                  {app.icon}
+                  <span
+                    style={{
+                      fontSize: LABEL_SIZE,
+                      color: wallpaperText,
+                      fontWeight: 400,
+                      letterSpacing: '0.01em',
+                      textAlign: 'center',
+                      maxWidth: ICON_SIZE + 10,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {app.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Corner label */}
+      {/* ── Bottom-left label ── */}
       <span
         className="absolute select-none"
         style={{
-          bottom: 'clamp(16px, 6%, 28px)',
-          left: 'clamp(16px, 6%, 28px)',
+          bottom: 'clamp(16px, 6%, 32px)',
+          left: 'clamp(16px, 6%, 32px)',
           fontFamily: bodyFont,
           fontWeight: parseInt(typography.weightBody) || 400,
-          fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 12)}px`,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
+          fontSize: `${clampFontSize(typeScale.stepMinus1, 10, 14)}px`,
+          letterSpacing: '0.06em',
+          fontStyle: 'italic',
           color: adaptiveText,
-          opacity: 0.35,
+          opacity: 0.3,
         }}
       >
         {label}

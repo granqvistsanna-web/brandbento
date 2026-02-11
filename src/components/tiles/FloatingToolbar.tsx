@@ -14,7 +14,7 @@
  * - **ToolbarSlider** — Range input with custom track/thumb styling.
  * - **ToolbarSegmented** — Pill-style option switcher.
  * - **ToolbarItemList** — Editable numbered list (e.g. menu items).
- * - **ToolbarLabel** — Uppercase section heading.
+ * - **ToolbarLabel** — Section heading.
  * - **ToolbarDivider** — Horizontal 1px rule.
  *
  * @module FloatingToolbar
@@ -49,6 +49,7 @@ import {
   RiSmartphoneFill,
   RiCameraFill,
 } from 'react-icons/ri';
+import { HexColorPicker } from 'react-colorful';
 import { useBrandStore } from '@/store/useBrandStore';
 
 /* ─── Image pool for shuffle ───
@@ -325,15 +326,13 @@ export function ToolbarActions({
 
 /* ─── Label ─── */
 
-/** Uppercase section heading inside the toolbar (e.g. "Content", "Icons"). */
+/** Section heading inside the toolbar (e.g. "Content", "Icons"). */
 export function ToolbarLabel({ children }: { children: ReactNode }) {
   return (
     <span
       style={{
-        fontSize: 10,
-        fontWeight: 600,
-        textTransform: 'uppercase',
-        letterSpacing: '0.06em',
+        fontSize: 11,
+        fontWeight: 500,
         color: 'var(--sidebar-text-muted)',
         display: 'block',
         marginBottom: -4,
@@ -432,7 +431,7 @@ export function ToolbarSlider({
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)' }}>
+        <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)' }}>
           {label}
         </span>
         <span style={{ fontSize: 10, fontFamily: 'ui-monospace, monospace', color: 'var(--sidebar-text-secondary)' }}>
@@ -487,7 +486,7 @@ interface ToolbarSegmentedProps {
 export function ToolbarSegmented({ label, options, value, onChange }: ToolbarSegmentedProps) {
   return (
     <div>
-      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
         {label}
       </span>
       <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', background: 'var(--sidebar-bg-hover)', padding: 3, gap: 2 }}>
@@ -555,7 +554,7 @@ export function ToolbarItemList({ label, items, maxItems = 4, onChange, onCommit
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)' }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)' }}>
         {label}
       </span>
       {displayed.map((item, i) => (
@@ -662,7 +661,7 @@ export function ToolbarSurfaceSwatches({ surfaces, bgColor, currentIndex, onSurf
 
   return (
     <div>
-      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
         Surface
       </span>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -744,10 +743,10 @@ interface ToolbarTileTypeGridProps {
 export function ToolbarTileTypeGrid({ currentType, onTypeChange }: ToolbarTileTypeGridProps) {
   return (
     <div>
-      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
         Type
       </span>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
         {TILE_TYPES.map((type) => {
           const Icon = type.icon;
           const isSelected = currentType === type.value;
@@ -759,14 +758,14 @@ export function ToolbarTileTypeGrid({ currentType, onTypeChange }: ToolbarTileTy
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                width: 'auto',
-                height: 26,
+                gap: 5,
+                padding: '4px 6px',
                 borderRadius: 5,
                 border: 'none',
                 cursor: 'pointer',
-                background: isSelected ? 'var(--sidebar-bg-hover)' : 'transparent',
+                background: isSelected ? 'var(--sidebar-bg-active)' : 'transparent',
                 color: isSelected ? 'var(--sidebar-text)' : 'var(--sidebar-text-muted)',
+                fontWeight: isSelected ? 500 : 400,
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
@@ -782,11 +781,153 @@ export function ToolbarTileTypeGrid({ currentType, onTypeChange }: ToolbarTileTy
                 }
               }}
             >
-              <Icon size={13} />
+              <Icon size={11} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 10, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {type.label}
+              </span>
             </button>
           );
         })}
       </div>
     </div>
+  );
+}
+
+/* ─── Color Picker ─── */
+
+interface ToolbarColorPickerProps {
+  label: string;
+  color: string;
+  autoColor: string;
+  paletteColors?: string[];
+  onChange: (hex: string | undefined) => void;
+  onCommit?: () => void;
+}
+
+export function ToolbarColorPicker({ label, color, autoColor, paletteColors = [], onChange, onCommit }: ToolbarColorPickerProps) {
+  const [open, setOpen] = useState(false);
+  const isAuto = color === autoColor;
+  const swatchSize = 20;
+
+  return (
+    <div>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
+        {label}
+      </span>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        {/* Auto button */}
+        <button
+          onClick={() => { onChange(undefined); setOpen(false); onCommit?.(); }}
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            padding: '2px 6px',
+            borderRadius: 4,
+            border: 'none',
+            cursor: 'pointer',
+            background: isAuto ? 'var(--accent)' : 'var(--sidebar-bg-hover)',
+            color: isAuto ? '#fff' : 'var(--sidebar-text-muted)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          Auto
+        </button>
+
+        {/* Current color swatch — toggles picker */}
+        <button
+          onClick={() => setOpen(!open)}
+          style={{
+            width: swatchSize,
+            height: swatchSize,
+            borderRadius: '50%',
+            border: 'none',
+            cursor: 'pointer',
+            backgroundColor: color,
+            boxShadow: open
+              ? `0 0 0 2px var(--sidebar-bg), 0 0 0 4px var(--accent)`
+              : 'inset 0 0 0 1px rgba(0,0,0,0.12)',
+            transition: 'box-shadow 0.15s ease',
+          }}
+        />
+
+        {/* Palette quick-picks */}
+        {paletteColors.filter(c => c !== color).slice(0, 5).map((c, i) => (
+          <button
+            key={i}
+            onClick={() => { onChange(c); onCommit?.(); }}
+            style={{
+              width: swatchSize - 4,
+              height: swatchSize - 4,
+              borderRadius: '50%',
+              border: 'none',
+              cursor: 'pointer',
+              backgroundColor: c,
+              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+              transition: 'box-shadow 0.15s ease',
+            }}
+          />
+        ))}
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 8 }}>
+          <HexColorPicker
+            color={color}
+            onChange={(hex) => onChange(hex)}
+          />
+          <div style={{ marginTop: 6, fontSize: 10, fontWeight: 500, color: 'var(--sidebar-text-muted)', textAlign: 'center' }}>
+            {color.toUpperCase()}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Toggle ─── */
+
+interface ToolbarToggleProps {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+export function ToolbarToggle({ label, checked, onChange }: ToolbarToggleProps) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+      <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)' }}>
+        {label}
+      </span>
+      <button
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        style={{
+          width: 28,
+          height: 16,
+          borderRadius: 8,
+          border: 'none',
+          cursor: 'pointer',
+          backgroundColor: checked ? 'var(--accent)' : 'var(--sidebar-bg-hover)',
+          position: 'relative',
+          transition: 'background-color 0.15s ease',
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            position: 'absolute',
+            top: 2,
+            left: checked ? 14 : 2,
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            backgroundColor: '#fff',
+            transition: 'left 0.15s ease',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+          }}
+        />
+      </button>
+    </label>
   );
 }

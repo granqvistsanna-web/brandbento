@@ -30,10 +30,11 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
   ToolbarDivider,
   ToolbarTileTypeGrid,
   ToolbarSurfaceSwatches,
+  ToolbarColorPicker,
+  ToolbarToggle,
 } from './FloatingToolbar';
 
 interface IconsTileProps {
@@ -68,12 +69,18 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
   );
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const setTileSurface = useBrandStore((s) => s.setTileSurface);
+  const setPlacementContent = useBrandStore((s) => s.setPlacementContent);
   const tile = useBrandStore((state) =>
     state.tiles.find((t) => t.type === 'icons')
   );
   const tileSurfaceIndex = useBrandStore((state) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
+  const placementContent = useBrandStore((state) =>
+    placementId ? state.placementContent[placementId] : undefined
+  );
+  const iconColorOverride = placementContent?.iconColor || undefined;
+  const iconShowBg = placementContent?.iconShowBg ?? true;
   const { primary, bg, surfaces } = colors;
 
   const surfaceBg = resolveSurfaceColor({
@@ -87,14 +94,14 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
   const surfaceL = hexToHSL(surfaceBg).l;
   const surfaceLight = surfaceL > 55;
   const primaryL = primary ? hexToHSL(primary).l : 50;
-  // Use brand primary as icon color if it has enough contrast (> 25 lightness
-  // delta) against the surface; otherwise fall back to neutral dark/light.
+  // Auto icon color: brand primary if contrast > 25 LD, else neutral
   const primaryContrast = Math.abs(surfaceL - primaryL);
-  const iconColor = primaryContrast > 25 ? primary : (surfaceLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.TEXT_LIGHT);
+  const autoIconColor = primaryContrast > 25 ? primary : (surfaceLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.TEXT_LIGHT);
+  const iconColor = iconColorOverride || autoIconColor;
 
   // Tinted cell background: same hue as the icon at 10% opacity for subtle branding
   const iconHSL = hexToHSL(iconColor);
-  const tintBg = `hsla(${iconHSL.h}, ${iconHSL.s}%, ${iconHSL.l}%, 0.1)`;
+  const tintBg = iconShowBg ? `hsla(${iconHSL.h}, ${iconHSL.s}%, ${iconHSL.l}%, 0.1)` : 'transparent';
 
   // Scale-to-fit: the 2x2 grid is authored at GRID_W x GRID_H then
   // uniformly scaled to fill the tile with 12% proportional padding.
@@ -125,13 +132,40 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
 
   const currentIcons = ICON_SETS[iconSetIndex];
 
+  const paletteColors = useBrandStore((s) => s.brand.colors.paletteColors) || [];
+
+  const handleIconColorChange = useCallback((hex: string | undefined) => {
+    if (!placementId) return;
+    setPlacementContent(placementId, { iconColor: hex || '' }, !hex);
+  }, [placementId, setPlacementContent]);
+
+  const handleIconColorCommit = useCallback(() => {
+    if (!placementId) return;
+    setPlacementContent(placementId, { iconColor: iconColorOverride }, true);
+  }, [placementId, iconColorOverride, setPlacementContent]);
+
+  const handleToggleBg = useCallback((checked: boolean) => {
+    if (!placementId) return;
+    setPlacementContent(placementId, { iconShowBg: checked }, true);
+  }, [placementId, setPlacementContent]);
+
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
       <ToolbarActions onShuffle={handleShuffle} />
       <ToolbarDivider />
-      <ToolbarTileTypeGrid
-        currentType={tile?.type || 'icons'}
-        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      <ToolbarColorPicker
+        label="Icon Color"
+        color={iconColor}
+        autoColor={autoIconColor}
+        paletteColors={paletteColors}
+        onChange={handleIconColorChange}
+        onCommit={handleIconColorCommit}
+      />
+      <ToolbarDivider />
+      <ToolbarToggle
+        label="Cell Backgrounds"
+        checked={iconShowBg}
+        onChange={handleToggleBg}
       />
       <ToolbarDivider />
       <ToolbarSurfaceSwatches
@@ -141,7 +175,10 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
         onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
       />
       <ToolbarDivider />
-      <ToolbarLabel>Icons</ToolbarLabel>
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || 'icons'}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
     </FloatingToolbar>
   );
 

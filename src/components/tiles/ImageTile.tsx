@@ -40,7 +40,12 @@ export const ImageTile = ({ placementId }: { placementId: string }) => {
     })));
     const imageFilter = getImageFilter(imagery?.style ?? 'default', imagery?.overlay ?? 0);
     const updateTile = useBrandStore((s) => s.updateTile);
-    const { fontFamily: headlineFont } = useGoogleFonts(typography?.primary || 'Inter', getFontCategory(typography?.primary));
+    const fontPreview = useBrandStore((state) => state.fontPreview);
+
+    // Apply font preview if active
+    const primaryFontChoice = fontPreview?.target === "primary" ? fontPreview.font : (typography?.primary || 'Inter');
+
+    const { fontFamily: headlineFont } = useGoogleFonts(primaryFontChoice, getFontCategory(primaryFontChoice));
     const typeScale = getTypeScale(typography);
 
     const content = tile?.content || {};

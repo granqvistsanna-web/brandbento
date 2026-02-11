@@ -53,6 +53,10 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const brand = useBrandStore((s) => s.brand);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
+
+  // Apply font preview if active
+  const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : bodyFont;
 
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
@@ -84,7 +88,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
   const primaryLabel = content.buttonLabel || 'Get Started';
   const secondaryLabel = content.headerTitle || 'Learn More';
 
-  const { fontFamily: uiFont } = useGoogleFonts(bodyFont, getFontCategory(bodyFont));
+  const { fontFamily: uiFont } = useGoogleFonts(secondaryFontChoice, getFontCategory(secondaryFontChoice));
 
   const tileBg = resolveSurfaceColor({
     placementId,

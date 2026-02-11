@@ -17,7 +17,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight } from '@/utils/typography';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -95,10 +95,15 @@ export function StatsTile({ placementId }: StatsTileProps) {
   const { bg, text, surfaces } = colors;
   const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 0 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
+  const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
-  const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
+  // Apply font preview if active
+  const primaryFont = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
+  const secondaryFont = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
+
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFont, getFontCategory(primaryFont));
+  const { fontFamily: bodyFont } = useGoogleFonts(secondaryFont, getFontCategory(secondaryFont));
   const typeScale = getTypeScale(typography);
 
   /* ─── Content (with defaults) ─── */
@@ -133,8 +138,8 @@ export function StatsTile({ placementId }: StatsTileProps) {
     fontFamily: headlineFont,
     fontWeight: parseInt(typography.weightHeadline) || 700,
     fontSize: `${clampFontSize(typeScale.step3 * 2, 36, 140)}px`,
-    lineHeight: 1,
-    letterSpacing: '-0.03em',
+    lineHeight: getHeadlineLineHeight(typography),
+    letterSpacing: getHeadlineTracking(typography),
     color: adaptiveText,
     textWrap: 'balance',
   };
@@ -145,7 +150,8 @@ export function StatsTile({ placementId }: StatsTileProps) {
     fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 14)}px`,
     color: adaptiveText,
     opacity: 0.38,
-    lineHeight: 1.4,
+    lineHeight: getBodyLineHeight(typography),
+    letterSpacing: getBodyTracking(typography),
   };
 
   /* ─── Toolbar JSX (shared between layouts) ─── */
