@@ -13,7 +13,7 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 Phase: Phase 7 (Polish) - not started
 Plan: None created yet
 Status: In progress (working on todos)
-Last activity: 2026-02-11 - Completed quick-002: tile reordering drag-and-drop
+Last activity: 2026-02-11 - Completed font-search-improvements todo (2 plans, verified)
 
 Progress: [███████████░] 8/9 phases complete
 
@@ -137,7 +137,7 @@ None currently blocking.
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed quick-002: tile reordering drag-and-drop
+Stopped at: Completed font-search-improvements todo (2 plans, 2 waves, verified)
 Resume file: None
 
 ### Quick Tasks Completed
