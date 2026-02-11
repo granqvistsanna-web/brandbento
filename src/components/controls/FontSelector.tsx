@@ -93,7 +93,7 @@ export const FontSelector = ({
   const target: "primary" | "secondary" = label === "Headline" ? "primary" : "secondary";
 
   // Debounce timer for preview to avoid rapid flashing
-  const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Use the font search hook
   const { fonts: filteredFonts, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter } = useFontSearch(recentFonts);
