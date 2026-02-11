@@ -9,9 +9,11 @@ import {
   RiStarFill as Star,
 } from "react-icons/ri";
 import { motion, AnimatePresence } from "motion/react";
-import { GOOGLE_FONTS, GOOGLE_FONTS_MAP, type FontSource } from "../../data/googleFontsMetadata";
+import { GOOGLE_FONTS_MAP, type FontSource } from "../../data/googleFontsMetadata";
 import { loadFontWithFallback } from "../../services/googleFonts";
 import { PropRow } from "./index";
+import { useFontSearch } from "../../hooks/useFontSearch";
+import { useBrandStore } from "../../store/useBrandStore";
 
 const CATEGORY_FILTERS = [
   { value: "all", label: "All" },
@@ -70,7 +72,6 @@ export const FontSelector = ({
   onChange: (family: string) => void;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [category, setCategory] = useState("all");
   const [highlightIdx, setHighlightIdx] = useState(-1);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const ref = useRef<HTMLDivElement>(null);
@@ -78,6 +79,12 @@ export const FontSelector = ({
   const listRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const loadedPreviewRef = useRef(new Set<string>());
+
+  // Get recentFonts from store
+  const recentFonts = useBrandStore(state => state.recentFonts);
+
+  // Use the font search hook
+  const { fonts: filteredFonts, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, recentCount } = useFontSearch(recentFonts);
 
   // Close on click outside
   useEffect(() => {
@@ -117,22 +124,11 @@ export const FontSelector = ({
     }
   }, [isOpen]);
 
-  // Build filtered font list
-  const filteredFonts = useMemo(() => {
-    let list = GOOGLE_FONTS;
-    if (category !== "all") {
-      list = list.filter((f) => f.category === category);
-    }
-    return [...list].sort((a, b) => {
-      if (a.curated && !b.curated) return -1;
-      if (!a.curated && b.curated) return 1;
-      return a.family.localeCompare(b.family);
-    });
-  }, [category]);
-
   const firstNonCuratedIdx = useMemo(() => {
-    return filteredFonts.findIndex((f) => !f.curated);
-  }, [filteredFonts]);
+    const idx = filteredFonts.findIndex((f) => !f.curated);
+    // If we have recent fonts, adjust the index
+    return idx >= 0 && recentCount > 0 ? idx + 1 : idx;
+  }, [filteredFonts, recentCount]);
 
   const handleFontHover = useCallback((family: string) => {
     if (!loadedPreviewRef.current.has(family)) {
@@ -237,37 +233,34 @@ export const FontSelector = ({
               style={{ borderBottom: "1px solid var(--sidebar-border)" }}
             >
               <div className="flex flex-wrap gap-1 pb-0.5">
-                {CATEGORY_FILTERS.map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => {
-                      setCategory(cat.value);
-                      setHighlightIdx(-1);
-                    }}
-                    className="px-2.5 py-0.5 rounded-full text-11 transition-fast"
-                    style={{
-                      background:
-                        category === cat.value
-                          ? "var(--accent)"
-                          : "transparent",
-                      color:
-                        category === cat.value
-                          ? "#fff"
-                          : "var(--sidebar-text-muted)",
-                      fontWeight: category === cat.value ? 600 : 400,
-                    }}
-                    onMouseOver={(e) => {
-                      if (category !== cat.value)
-                        (e.currentTarget as HTMLElement).style.background = "var(--sidebar-bg-hover)";
-                    }}
-                    onMouseOut={(e) => {
-                      if (category !== cat.value)
-                        (e.currentTarget as HTMLElement).style.background = "transparent";
-                    }}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
+                {CATEGORY_FILTERS.map((cat) => {
+                  const isActive = (cat.value === "all" && categoryFilter === null) || categoryFilter === cat.value;
+                  return (
+                    <button
+                      key={cat.value}
+                      onClick={() => {
+                        setCategoryFilter(cat.value === "all" ? null : cat.value as any);
+                        setHighlightIdx(-1);
+                      }}
+                      className="px-2.5 py-0.5 rounded-full text-11 transition-fast"
+                      style={{
+                        background: isActive ? "var(--accent)" : "transparent",
+                        color: isActive ? "#fff" : "var(--sidebar-text-muted)",
+                        fontWeight: isActive ? 600 : 400,
+                      }}
+                      onMouseOver={(e) => {
+                        if (!isActive)
+                          (e.currentTarget as HTMLElement).style.background = "var(--sidebar-bg-hover)";
+                      }}
+                      onMouseOut={(e) => {
+                        if (!isActive)
+                          (e.currentTarget as HTMLElement).style.background = "transparent";
+                      }}
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
