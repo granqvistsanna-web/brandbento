@@ -19,9 +19,36 @@
  *
  * @module FloatingToolbar
  */
-import { useRef, useCallback, useState, useEffect, type ReactNode } from 'react';
+import { useRef, useCallback, useState, useEffect, useLayoutEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { RiShuffleFill as Shuffle, RiImageAddFill as ImagePlus, RiLockFill as Lock, RiLockUnlockFill as Unlock } from 'react-icons/ri';
+import {
+  RiShuffleFill as Shuffle,
+  RiImageAddFill as ImagePlus,
+  RiLockFill as Lock,
+  RiLockUnlockFill as Unlock,
+  RiStackFill,
+  RiFileTextFill,
+  RiBox3Fill,
+  RiListUnordered,
+  RiLayoutGridFill,
+  RiImageFill,
+  RiHashtag,
+  RiLayoutColumnFill,
+  RiCheckboxBlankFill,
+  RiLayoutRowFill,
+  RiSparklingFill,
+  RiFingerprintFill,
+  RiGridFill,
+  RiLineChartFill,
+  RiLayoutGrid2Fill,
+  RiChatQuoteFill,
+  RiFontSize2,
+  RiUserHeartFill,
+  RiLayoutMasonryFill,
+  RiBankCardFill,
+  RiSmartphoneFill,
+  RiCameraFill,
+} from 'react-icons/ri';
 import { useBrandStore } from '@/store/useBrandStore';
 
 /* ─── Image pool for shuffle ───
@@ -86,7 +113,8 @@ interface FloatingToolbarProps {
  * 4. Clamp `top` between 8px and (viewport height - 400px) to keep
  *    the panel visible even for tiles near the bottom edge.
  */
-export function FloatingToolbar({ anchorRect, children, width = 220 }: FloatingToolbarProps) {
+export function FloatingToolbar({ anchorRect, children, width = 260 }: FloatingToolbarProps) {
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
   // Close toolbar on Escape
@@ -102,24 +130,43 @@ export function FloatingToolbar({ anchorRect, children, width = 220 }: FloatingT
 
   useEffect(() => {
     const gap = 8;
+    const margin = 8;
     const spaceRight = window.innerWidth - anchorRect.right;
     // Prefer right side; fall back to left if insufficient space
     const left = spaceRight >= width + gap
       ? anchorRect.right + gap
       : anchorRect.left - width - gap;
-    // Keep panel vertically within viewport (reserve 400px for panel height)
-    const top = Math.max(8, Math.min(anchorRect.top, window.innerHeight - 400));
-    setPos({ top, left: Math.max(8, left) });
+    // Initial top — align with tile, will be refined in useLayoutEffect
+    const top = Math.max(margin, anchorRect.top);
+    setPos({ top, left: Math.max(margin, left) });
   }, [anchorRect, width]);
+
+  // After content renders, measure actual height and shift up if it clips
+  // the bottom of the viewport. Runs before paint so no flicker.
+  useLayoutEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const margin = 8;
+    const rect = el.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight - margin) {
+      setPos((prev) => ({
+        ...prev,
+        top: Math.max(margin, window.innerHeight - rect.height - margin),
+      }));
+    }
+  });
 
   return createPortal(
     <div
+      ref={toolbarRef}
       onClick={(e) => e.stopPropagation()}
       style={{
         position: 'fixed',
         top: pos.top,
         left: pos.left,
         width,
+        maxHeight: 'min(calc(100vh - 32px), 600px)',
+        overflowY: 'auto' as const,
         zIndex: 50,
         background: 'var(--sidebar-bg)',
         border: '1px solid var(--sidebar-border-subtle)',
@@ -534,6 +581,212 @@ export function ToolbarItemList({ label, items, maxItems = 4, onChange, onCommit
           />
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ─── Text Area ─── */
+
+interface ToolbarTextAreaProps {
+  label?: string;
+  value: string;
+  onChange: (value: string) => void;
+  onCommit: (value: string) => void;
+  placeholder?: string;
+  maxRows?: number;
+}
+
+export function ToolbarTextArea({
+  label,
+  value,
+  onChange,
+  onCommit,
+  placeholder,
+  maxRows = 3,
+}: ToolbarTextAreaProps) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  const autoGrow = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const lineHeight = 16;
+    el.style.height = `${Math.min(el.scrollHeight, lineHeight * maxRows + 10)}px`;
+  }, [maxRows]);
+
+  useEffect(() => { autoGrow(); }, [value, autoGrow]);
+
+  return (
+    <div>
+      {label && (
+        <span style={{ fontSize: 10, color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 4 }}>
+          {label}
+        </span>
+      )}
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => { onChange(e.target.value); }}
+        onBlur={(e) => onCommit(e.target.value)}
+        placeholder={placeholder}
+        rows={1}
+        style={{
+          width: '100%',
+          fontSize: 11,
+          lineHeight: '16px',
+          padding: '4px 8px',
+          borderRadius: 6,
+          background: 'transparent',
+          color: 'var(--sidebar-text)',
+          border: '1px solid var(--sidebar-border)',
+          resize: 'none',
+          minWidth: 0,
+          boxSizing: 'border-box',
+        }}
+      />
+    </div>
+  );
+}
+
+/* ─── Surface Swatches ─── */
+
+interface ToolbarSurfaceSwatchesProps {
+  surfaces: string[];
+  bgColor: string;
+  currentIndex: number | undefined;
+  onSurfaceChange: (index: number | undefined) => void;
+}
+
+export function ToolbarSurfaceSwatches({ surfaces, bgColor, currentIndex, onSurfaceChange }: ToolbarSurfaceSwatchesProps) {
+  const swatchSize = 20;
+
+  return (
+    <div>
+      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
+        Surface
+      </span>
+      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+        {/* Auto option */}
+        <button
+          onClick={() => onSurfaceChange(undefined)}
+          aria-label="Auto surface"
+          style={{
+            width: swatchSize,
+            height: swatchSize,
+            borderRadius: '50%',
+            border: 'none',
+            cursor: 'pointer',
+            background: `linear-gradient(135deg, ${surfaces?.[0] || bgColor} 50%, ${surfaces?.[1] || bgColor} 50%)`,
+            boxShadow: currentIndex === undefined
+              ? `0 0 0 2px var(--sidebar-bg), 0 0 0 4px var(--accent)`
+              : 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+            transition: 'box-shadow 0.15s ease',
+          }}
+        />
+
+        {/* Surface options */}
+        {(surfaces || []).slice(0, 7).map((surface: string, index: number) => (
+          <button
+            key={index}
+            onClick={() => onSurfaceChange(index)}
+            aria-label={`Surface ${index + 1}`}
+            style={{
+              width: swatchSize,
+              height: swatchSize,
+              borderRadius: '50%',
+              border: 'none',
+              cursor: 'pointer',
+              backgroundColor: surface,
+              boxShadow: currentIndex === index
+                ? `0 0 0 2px var(--sidebar-bg), 0 0 0 4px var(--accent)`
+                : 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+              transition: 'box-shadow 0.15s ease',
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Tile Type Grid ─── */
+
+const TILE_TYPES = [
+  { value: 'hero', label: 'Hero', icon: RiStackFill },
+  { value: 'editorial', label: 'Editorial', icon: RiFileTextFill },
+  { value: 'product', label: 'Product', icon: RiBox3Fill },
+  { value: 'menu', label: 'Menu', icon: RiListUnordered },
+  { value: 'ui-preview', label: 'Interface', icon: RiLayoutGridFill },
+  { value: 'social', label: 'Social', icon: RiImageFill },
+  { value: 'utility', label: 'List', icon: RiHashtag },
+  { value: 'logo', label: 'Logo', icon: RiSparklingFill },
+  { value: 'logo-symbol', label: 'Symbol', icon: RiFingerprintFill },
+  { value: 'icons', label: 'Icons', icon: RiGridFill },
+  { value: 'split-hero', label: 'Split', icon: RiLayoutColumnFill },
+  { value: 'overlay', label: 'Overlay', icon: RiCheckboxBlankFill },
+  { value: 'split-list', label: 'Split List', icon: RiLayoutRowFill },
+  { value: 'pattern', label: 'Pattern', icon: RiLayoutGrid2Fill },
+  { value: 'stats', label: 'Stats', icon: RiLineChartFill },
+  { value: 'messaging', label: 'Message', icon: RiChatQuoteFill },
+  { value: 'specimen', label: 'Specimen', icon: RiFontSize2 },
+  { value: 'personality', label: 'Voice', icon: RiUserHeartFill },
+  { value: 'color-blocks', label: 'Blocks', icon: RiLayoutMasonryFill },
+  { value: 'business-card', label: 'Card', icon: RiBankCardFill },
+  { value: 'app-icon', label: 'App', icon: RiSmartphoneFill },
+  { value: 'story', label: 'Story', icon: RiCameraFill },
+];
+
+interface ToolbarTileTypeGridProps {
+  currentType: string;
+  onTypeChange: (type: string) => void;
+}
+
+export function ToolbarTileTypeGrid({ currentType, onTypeChange }: ToolbarTileTypeGridProps) {
+  return (
+    <div>
+      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
+        Type
+      </span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 2 }}>
+        {TILE_TYPES.map((type) => {
+          const Icon = type.icon;
+          const isSelected = currentType === type.value;
+          return (
+            <button
+              key={type.value}
+              onClick={() => onTypeChange(type.value)}
+              title={type.label}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 'auto',
+                height: 26,
+                borderRadius: 5,
+                border: 'none',
+                cursor: 'pointer',
+                background: isSelected ? 'var(--sidebar-bg-hover)' : 'transparent',
+                color: isSelected ? 'var(--sidebar-text)' : 'var(--sidebar-text-muted)',
+                transition: 'all 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.background = 'var(--sidebar-bg-hover)';
+                  e.currentTarget.style.color = 'var(--sidebar-text)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--sidebar-text-muted)';
+                }
+              }}
+            >
+              <Icon size={13} />
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

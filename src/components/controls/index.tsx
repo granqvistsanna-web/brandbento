@@ -241,44 +241,57 @@ export const Section = ({
   badge,
   defaultOpen = true,
   noPadding = false,
+  action,
 }: {
   title: string;
   children: React.ReactNode;
   badge?: string | null;
   defaultOpen?: boolean;
   noPadding?: boolean;
+  action?: React.ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <div className="group">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-3 transition-colors hover:bg-[var(--sidebar-bg-hover)] sticky top-0 z-10"
-        style={{ background: "var(--sidebar-bg)", border: "none", cursor: "pointer", paddingBlock: 16, paddingInline: 24 }}
+      <div
+        className="flex items-center sticky top-0 z-10"
+        style={{ background: "var(--sidebar-bg)" }}
       >
-        <motion.div
-          animate={{ rotate: isOpen ? 90 : 0 }}
-          transition={{ duration: 0.15 }}
-          style={{ color: "var(--sidebar-text-muted)" }}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex-1 flex items-center gap-3 transition-colors hover:bg-[var(--sidebar-bg-hover)]"
+          style={{ background: "transparent", border: "none", cursor: "pointer", paddingBlock: 16, paddingInline: 24, paddingRight: action ? 8 : 24 }}
         >
-          <ChevronRight size={11} />
-        </motion.div>
+          <motion.div
+            animate={{ rotate: isOpen ? 90 : 0 }}
+            transition={{ duration: 0.15 }}
+            style={{ color: "var(--sidebar-text-muted)" }}
+          >
+            <ChevronRight size={11} />
+          </motion.div>
 
-        <span
-          className="flex-1 text-left select-none"
-          style={{
-            color: "var(--sidebar-text)",
-            fontSize: 13,
-            fontWeight: 500,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {title}
-        </span>
+          <span
+            className="flex-1 text-left select-none"
+            style={{
+              color: "var(--sidebar-text)",
+              fontSize: 13,
+              fontWeight: 500,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {title}
+          </span>
 
-        {badge && <div>{badge}</div>}
-      </button>
+          {badge && <div>{badge}</div>}
+        </button>
+
+        {action && (
+          <div style={{ paddingRight: 16 }}>
+            {action}
+          </div>
+        )}
+      </div>
 
       <AnimatePresence initial={false}>
         {isOpen && (

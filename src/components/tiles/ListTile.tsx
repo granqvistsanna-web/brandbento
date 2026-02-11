@@ -20,11 +20,18 @@ import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { getImageFilter } from '@/utils/imagery';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
+  ToolbarTextInput,
+  ToolbarItemList,
+  ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarLabel,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -58,13 +65,15 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
     return () => ro.disconnect();
   }, [variant]);
 
-  const { colors, typography, activePreset } = useBrandStore(
+  const { colors, typography, activePreset, imagery } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       typography: state.brand.typography,
       activePreset: state.activePreset,
+      imagery: state.brand.imagery,
     }))
   );
+  const imageFilter = getImageFilter(imagery.style, imagery.overlay);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -95,11 +104,29 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
   const spacing = getLetterSpacing(typography.letterSpacing);
 
   const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
 
   // Floating toolbar
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
   const content = { ...tile?.content, ...(placementContent || {}) };
+
+  const sharedToolbarTop = (
+    <>
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || (variant === 'split' ? 'split-list' : 'menu')}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
+      <ToolbarDivider />
+      <ToolbarSurfaceSwatches
+        surfaces={surfaces}
+        bgColor={bg}
+        currentIndex={tileSurfaceIndex}
+        onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+      />
+    </>
+  );
 
   if (variant === 'split') {
     return (
@@ -121,6 +148,8 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
         anchorRect={anchorRect}
         tile={tile}
         updateTile={updateTile}
+        sharedToolbarTop={sharedToolbarTop}
+        imageFilter={imageFilter}
       />
     );
   }
@@ -137,6 +166,9 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
       activePreset={activePreset}
       isFocused={isFocused}
       anchorRect={anchorRect}
+      tile={tile}
+      updateTile={updateTile}
+      sharedToolbarTop={sharedToolbarTop}
     />
   );
 }
@@ -154,6 +186,9 @@ function StandaloneLayout({
   activePreset,
   isFocused,
   anchorRect,
+  tile,
+  updateTile,
+  sharedToolbarTop,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   content: Record<string, unknown>;
@@ -165,6 +200,9 @@ function StandaloneLayout({
   activePreset: string;
   isFocused: boolean;
   anchorRect: DOMRect | null;
+  tile: Tile | undefined;
+  updateTile: BrandStore['updateTile'];
+  sharedToolbarTop: React.ReactNode;
 }) {
   const industryDefaults = getPresetContent(activePreset).menu;
   const subcopy = (content.subcopy as string) || industryDefaults.subcopy;
@@ -230,12 +268,36 @@ function StandaloneLayout({
         </div>
       </div>
 
-      {isFocused && anchorRect && (
+      {isFocused && anchorRect && tile?.id && (
         <FloatingToolbar anchorRect={anchorRect}>
           <ToolbarActions
             onShuffle={() => {
               /* List tile has no image to shuffle */
             }}
+          />
+          <ToolbarDivider />
+          {sharedToolbarTop}
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Label"
+            value={(content.subcopy as string) || ''}
+            onChange={(v) => updateTile(tile!.id, { subcopy: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { subcopy: v }, true)}
+            placeholder="Section label"
+          />
+          <ToolbarItemList
+            label="Items"
+            items={(content.items as string[]) || industryDefaults.items}
+            onChange={(items) => updateTile(tile!.id, { items }, false)}
+            onCommit={(items) => updateTile(tile!.id, { items }, true)}
+          />
+          <ToolbarTextInput
+            label="Action"
+            value={(content.buttonLabel as string) || ''}
+            onChange={(v) => updateTile(tile!.id, { buttonLabel: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { buttonLabel: v }, true)}
+            placeholder="Action label"
           />
         </FloatingToolbar>
       )}
@@ -263,6 +325,8 @@ function SplitLayout({
   anchorRect,
   tile,
   updateTile,
+  sharedToolbarTop,
+  imageFilter,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   shape: TileShape;
@@ -281,6 +345,8 @@ function SplitLayout({
   anchorRect: DOMRect | null;
   tile: Tile | undefined;
   updateTile: BrandStore['updateTile'];
+  sharedToolbarTop: React.ReactNode;
+  imageFilter: string;
 }) {
   const industryCopy = getPresetContent(activePreset).splitList;
   const imageUrl = content.image as string | undefined;
@@ -316,6 +382,7 @@ function SplitLayout({
             initial={{ opacity: 0, scale: 1.02 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            style={{ filter: imageFilter }}
           />
         ) : (
           <div
@@ -431,7 +498,7 @@ function SplitLayout({
       </div>
 
       {/* Floating toolbar when focused */}
-      {isFocused && anchorRect && (
+      {isFocused && anchorRect && tile?.id && (
         <FloatingToolbar anchorRect={anchorRect}>
           <ToolbarActions
             onShuffle={() => {
@@ -445,6 +512,30 @@ function SplitLayout({
             onImageUpload={(dataUrl) => {
               if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
             }}
+          />
+          <ToolbarDivider />
+          {sharedToolbarTop}
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Headline"
+            value={(content.headline as string) || ''}
+            onChange={(v) => updateTile(tile!.id, { headline: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { headline: v }, true)}
+            placeholder="Headline"
+          />
+          <ToolbarTextInput
+            label="Heading"
+            value={(content.overlayText as string) || ''}
+            onChange={(v) => updateTile(tile!.id, { overlayText: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { overlayText: v }, true)}
+            placeholder="List heading"
+          />
+          <ToolbarItemList
+            label="Items"
+            items={(content.items as string[]) || industryCopy.items}
+            onChange={(items) => updateTile(tile!.id, { items }, false)}
+            onCommit={(items) => updateTile(tile!.id, { items }, true)}
           />
         </FloatingToolbar>
       )}

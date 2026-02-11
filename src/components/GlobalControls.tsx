@@ -5,6 +5,7 @@
  */
 import React from "react";
 import { motion } from "motion/react";
+import { RiShuffleLine } from "react-icons/ri";
 import { useBrandStore } from "../store/useBrandStore";
 import { Section, PropRow, Input, Slider, SegmentedControl } from "./controls";
 import { FontSelector } from "./controls/FontSelector";
@@ -13,6 +14,40 @@ import { ColorPalettePanel } from "./color/ColorPalettePanel";
 import { getContrastRatio } from "../utils/colorMapping";
 import ImageDropZone from "./ImageDropZone";
 import { ImageCollections } from "./controls/ImageCollections";
+
+const ShuffleButton = ({ onClick, shortcut }: { onClick: () => void; shortcut: string }) => (
+  <motion.button
+    onClick={(e) => {
+      e.stopPropagation();
+      onClick();
+    }}
+    title={`Shuffle (${shortcut})`}
+    whileHover={{ scale: 1.1 }}
+    whileTap={{ scale: 0.9 }}
+    style={{
+      background: "transparent",
+      border: "none",
+      cursor: "pointer",
+      padding: 4,
+      borderRadius: 6,
+      color: "var(--sidebar-text-muted)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      transition: "color 0.15s, background 0.15s",
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.color = "var(--sidebar-text)";
+      e.currentTarget.style.background = "var(--sidebar-bg-hover)";
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.color = "var(--sidebar-text-muted)";
+      e.currentTarget.style.background = "transparent";
+    }}
+  >
+    <RiShuffleLine size={14} />
+  </motion.button>
+);
 
 // ============================================
 // PRESET CARDS
@@ -172,6 +207,8 @@ const PresetCard = ({
 const GlobalControls = React.memo(() => {
   const brand = useBrandStore((s) => s.brand);
   const updateBrand = useBrandStore((s) => s.updateBrand);
+  const shuffleColors = useBrandStore((s) => s.shuffleColors);
+  const shuffleTypography = useBrandStore((s) => s.shuffleTypography);
   const loadPreset = useBrandStore((s) => s.loadPreset);
   const activePreset = useBrandStore((s) => s.activePreset);
 
@@ -197,7 +234,7 @@ const GlobalControls = React.memo(() => {
       </Section>
 
       {/* Typography */}
-      <Section title="Typography">
+      <Section title="Typography" action={<ShuffleButton onClick={shuffleTypography} shortcut="T" />}>
         <FontSelector
           label="Headline"
           value={brand.typography.primary}
@@ -248,10 +285,108 @@ const GlobalControls = React.memo(() => {
           step={1}
           unit="px"
         />
+
+        <Slider
+          label="Headline Weight"
+          value={parseInt(brand.typography.weightHeadline) || 700}
+          onChange={(val) =>
+            handleChange("typography", "weightHeadline", String(Math.round(val / 100) * 100), false)
+          }
+          onBlur={() =>
+            handleChange("typography", "weightHeadline", brand.typography.weightHeadline, true)
+          }
+          min={100}
+          max={900}
+          step={100}
+        />
+
+        <Slider
+          label="Body Weight"
+          value={parseInt(brand.typography.weightBody) || 400}
+          onChange={(val) =>
+            handleChange("typography", "weightBody", String(Math.round(val / 100) * 100), false)
+          }
+          onBlur={() =>
+            handleChange("typography", "weightBody", brand.typography.weightBody, true)
+          }
+          min={100}
+          max={900}
+          step={100}
+        />
+
+        <Slider
+          label="Headline Leading"
+          value={brand.typography.lineHeightHeadline}
+          onChange={(val) =>
+            handleChange("typography", "lineHeightHeadline", val, false)
+          }
+          onBlur={() =>
+            handleChange("typography", "lineHeightHeadline", brand.typography.lineHeightHeadline, true)
+          }
+          min={0.9}
+          max={1.3}
+          step={0.01}
+        />
+
+        <Slider
+          label="Body Leading"
+          value={brand.typography.lineHeightBody}
+          onChange={(val) =>
+            handleChange("typography", "lineHeightBody", val, false)
+          }
+          onBlur={() =>
+            handleChange("typography", "lineHeightBody", brand.typography.lineHeightBody, true)
+          }
+          min={1.2}
+          max={2.0}
+          step={0.01}
+        />
+
+        <Slider
+          label="Headline Tracking"
+          value={brand.typography.trackingHeadline}
+          onChange={(val) =>
+            handleChange("typography", "trackingHeadline", Math.round(val * 1000) / 1000, false)
+          }
+          onBlur={() =>
+            handleChange("typography", "trackingHeadline", brand.typography.trackingHeadline, true)
+          }
+          min={-0.05}
+          max={0.1}
+          step={0.005}
+          unit="em"
+        />
+
+        <Slider
+          label="Body Tracking"
+          value={brand.typography.trackingBody}
+          onChange={(val) =>
+            handleChange("typography", "trackingBody", Math.round(val * 1000) / 1000, false)
+          }
+          onBlur={() =>
+            handleChange("typography", "trackingBody", brand.typography.trackingBody, true)
+          }
+          min={-0.05}
+          max={0.1}
+          step={0.005}
+          unit="em"
+        />
+
+        <PropRow label="Headline Case">
+          <SegmentedControl
+            options={[
+              { value: "none", label: "None" },
+              { value: "uppercase", label: "Upper" },
+              { value: "capitalize", label: "Title" },
+            ]}
+            value={brand.typography.transformHeadline}
+            onChange={(val) => handleChange("typography", "transformHeadline", val, true)}
+          />
+        </PropRow>
       </Section>
 
       {/* Color Palettes */}
-      <Section title="Color Palettes" defaultOpen noPadding>
+      <Section title="Color Palettes" defaultOpen noPadding action={<ShuffleButton onClick={shuffleColors} shortcut="C" />}>
         <ColorPalettePanel />
       </Section>
 
@@ -286,6 +421,32 @@ const GlobalControls = React.memo(() => {
 
       {/* Image Collections */}
       <ImageCollections />
+
+      {/* Imagery Style */}
+      <Section title="Imagery" defaultOpen={false}>
+        <PropRow label="Style">
+          <SegmentedControl
+            options={[
+              { value: "default", label: "Default" },
+              { value: "grayscale", label: "B&W" },
+              { value: "tint", label: "Tint" },
+            ]}
+            value={brand.imagery.style}
+            onChange={(val) => handleChange("imagery", "style", val, true)}
+          />
+        </PropRow>
+
+        <Slider
+          label="Overlay"
+          value={brand.imagery.overlay}
+          onChange={(val) => handleChange("imagery", "overlay", Math.round(val), false)}
+          onBlur={() => handleChange("imagery", "overlay", brand.imagery.overlay, true)}
+          min={0}
+          max={100}
+          step={1}
+          unit="%"
+        />
+      </Section>
 
       {/* Industry Themes */}
       <Section

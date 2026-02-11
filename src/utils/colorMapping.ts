@@ -682,29 +682,42 @@ export interface ColumnRoles {
   contrastRatio: number;
 }
 
+/** Optional per-column overrides for auto-derived roles. */
+export interface ColumnRoleOverrides {
+  tone?: string;
+  text?: string;
+  textCta?: string;
+}
+
 /**
  * Derive all 6 display roles for a single color column.
  * Background and CTA are pass-through (editable by user).
- * Tone, text, textCta, and contrastRatio are auto-derived.
+ * Tone, text, textCta, and contrastRatio are auto-derived
+ * unless overridden via the optional `overrides` param.
  */
-export const deriveColumnRoles = (background: string, cta: string): ColumnRoles => {
+export const deriveColumnRoles = (
+  background: string,
+  cta: string,
+  overrides?: ColumnRoleOverrides,
+): ColumnRoles => {
   const bgHsl = hexToHSL(background);
   const isLight = bgHsl.l > LIGHTNESS_THRESHOLD;
 
-  // Tone: subtle lightness shift from background
+  // Auto-derive base values
   const toneL = isLight
     ? Math.max(bgHsl.l - 10, 5)
     : Math.min(bgHsl.l + 10, 95);
-  const tone = hslToHex(bgHsl.h, bgHsl.s, toneL);
-
-  // Text: high-contrast color on the background
-  const text = isLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.TEXT_LIGHT;
-
-  // Text-CTA: high-contrast color on the CTA button
+  const autoTone = hslToHex(bgHsl.h, bgHsl.s, toneL);
+  const autoText = isLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.TEXT_LIGHT;
   const ctaHsl = hexToHSL(cta);
-  const textCta = ctaHsl.l > LIGHTNESS_THRESHOLD
+  const autoTextCta = ctaHsl.l > LIGHTNESS_THRESHOLD
     ? COLOR_DEFAULTS.TEXT_DARK
     : COLOR_DEFAULTS.TEXT_LIGHT;
+
+  // Apply overrides when present
+  const tone = overrides?.tone ?? autoTone;
+  const text = overrides?.text ?? autoText;
+  const textCta = overrides?.textCta ?? autoTextCta;
 
   const contrastRatio = getContrastRatio(text, background);
 

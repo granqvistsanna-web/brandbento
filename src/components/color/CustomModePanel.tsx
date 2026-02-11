@@ -3,8 +3,8 @@
  *
  * Inspotype-style 3-column color editor. Each column shows a
  * PreviewCard with its color roles listed below it (BACKGROUND,
- * TONE, TEXT, TEXT-CTA, CTA, CONTRAST). Editable roles open an
- * inline color picker. Auto-derived roles are read-only.
+ * TONE, TEXT, TEXT-CTA, CTA, CONTRAST). All roles are editable;
+ * auto-derived roles can be overridden per-column and reset back.
  */
 import { memo, useCallback, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -16,11 +16,15 @@ import { isValidHex } from '@/utils/colorDefaults';
 import { ColorColumn } from './ColorColumn';
 
 type ColorKey = 'bg' | 'text' | 'primary' | 'accent' | 'surface';
+type ColumnVariant = 'primary' | 'surface' | 'accent';
+type OverrideRole = 'tone' | 'text' | 'textCta';
 
 export const CustomModePanel = memo(() => {
   const colors = useBrandStore((s) => s.brand.colors);
   const updateBrand = useBrandStore((s) => s.updateBrand);
   const [editingSurfaceIdx, setEditingSurfaceIdx] = useState<number | null>(null);
+
+  const overrides = colors.columnOverrides;
 
   const handleColorChange = useCallback((key: ColorKey, hex: string) => {
     if (!isValidHex(hex)) return;
@@ -34,6 +38,43 @@ export const CustomModePanel = memo(() => {
       next.surfaces = surfaces;
     }
     updateBrand({ colors: { ...colors, ...next } }, false);
+  }, [colors, updateBrand]);
+
+  const handleOverrideChange = useCallback((
+    column: ColumnVariant,
+    role: OverrideRole,
+    hex: string,
+  ) => {
+    if (!isValidHex(hex)) return;
+    const current = colors.columnOverrides ?? {};
+    const columnOverrides = {
+      ...current,
+      [column]: {
+        ...(current[column] ?? {}),
+        [role]: hex,
+      },
+    };
+    updateBrand({ colors: { ...colors, columnOverrides } }, false);
+  }, [colors, updateBrand]);
+
+  const handleClearOverride = useCallback((
+    column: ColumnVariant,
+    role: OverrideRole,
+  ) => {
+    const current = colors.columnOverrides ?? {};
+    const colOverrides = { ...(current[column] ?? {}) };
+    delete colOverrides[role];
+    const hasKeys = Object.keys(colOverrides).length > 0;
+    const columnOverrides = {
+      ...current,
+      [column]: hasKeys ? colOverrides : undefined,
+    };
+    // Clean up if all empty
+    if (!columnOverrides.primary && !columnOverrides.surface && !columnOverrides.accent) {
+      updateBrand({ colors: { ...colors, columnOverrides: undefined } }, false);
+    } else {
+      updateBrand({ colors: { ...colors, columnOverrides } }, false);
+    }
   }, [colors, updateBrand]);
 
   const handleSurfaceChange = useCallback((idx: number, hex: string) => {
@@ -50,21 +91,21 @@ export const CustomModePanel = memo(() => {
     if (!palette || palette.length === 0) return;
     const raw = mapPaletteToBrand(palette);
     const mapped = enforceContrast(raw);
-    updateBrand({ colors: mapped as Colors });
+    updateBrand({ colors: { ...(mapped as Colors), columnOverrides: undefined } });
   }, [colors.paletteColors, updateBrand]);
 
-  // Derive roles for each column
+  // Derive roles for each column (with overrides)
   const primaryRoles = useMemo(
-    () => deriveColumnRoles(colors.primary, colors.bg),
-    [colors.primary, colors.bg],
+    () => deriveColumnRoles(colors.primary, colors.bg, overrides?.primary),
+    [colors.primary, colors.bg, overrides?.primary],
   );
   const surfaceRoles = useMemo(
-    () => deriveColumnRoles(colors.surface, colors.primary),
-    [colors.surface, colors.primary],
+    () => deriveColumnRoles(colors.surface, colors.primary, overrides?.surface),
+    [colors.surface, colors.primary, overrides?.surface],
   );
   const accentRoles = useMemo(
-    () => deriveColumnRoles(colors.accent, colors.bg),
-    [colors.accent, colors.bg],
+    () => deriveColumnRoles(colors.accent, colors.bg, overrides?.accent),
+    [colors.accent, colors.bg, overrides?.accent],
   );
 
   // Overall WCAG check: text on bg
@@ -75,6 +116,7 @@ export const CustomModePanel = memo(() => {
   const passesAA = textBgContrast >= 4.5;
 
   const hasPalette = colors.paletteColors && colors.paletteColors.length > 0;
+  const paletteColors = colors.paletteColors ?? [];
   const surfaceCount = colors.surfaces?.length ?? 0;
 
   return (
@@ -117,22 +159,40 @@ export const CustomModePanel = memo(() => {
           variant="primary"
           colors={colors}
           roles={primaryRoles}
+          overrides={overrides?.primary}
+          paletteColors={paletteColors}
           onBackgroundChange={(hex) => handleColorChange('primary', hex)}
+          onToneChange={(hex) => handleOverrideChange('primary', 'tone', hex)}
+          onTextChange={(hex) => handleOverrideChange('primary', 'text', hex)}
+          onTextCtaChange={(hex) => handleOverrideChange('primary', 'textCta', hex)}
           onCtaChange={(hex) => handleColorChange('bg', hex)}
+          onClearOverride={(role) => handleClearOverride('primary', role)}
         />
         <ColorColumn
           variant="surface"
           colors={colors}
           roles={surfaceRoles}
+          overrides={overrides?.surface}
+          paletteColors={paletteColors}
           onBackgroundChange={(hex) => handleColorChange('surface', hex)}
+          onToneChange={(hex) => handleOverrideChange('surface', 'tone', hex)}
+          onTextChange={(hex) => handleOverrideChange('surface', 'text', hex)}
+          onTextCtaChange={(hex) => handleOverrideChange('surface', 'textCta', hex)}
           onCtaChange={(hex) => handleColorChange('primary', hex)}
+          onClearOverride={(role) => handleClearOverride('surface', role)}
         />
         <ColorColumn
           variant="accent"
           colors={colors}
           roles={accentRoles}
+          overrides={overrides?.accent}
+          paletteColors={paletteColors}
           onBackgroundChange={(hex) => handleColorChange('accent', hex)}
+          onToneChange={(hex) => handleOverrideChange('accent', 'tone', hex)}
+          onTextChange={(hex) => handleOverrideChange('accent', 'text', hex)}
+          onTextCtaChange={(hex) => handleOverrideChange('accent', 'textCta', hex)}
           onCtaChange={(hex) => handleColorChange('bg', hex)}
+          onClearOverride={(role) => handleClearOverride('accent', role)}
         />
       </div>
 
@@ -207,6 +267,25 @@ export const CustomModePanel = memo(() => {
                     onChange={(hex) => handleSurfaceChange(editingSurfaceIdx, hex)}
                     style={{ width: '100%', height: '130px' }}
                   />
+                  {/* Palette swatches for surface picker */}
+                  {paletteColors.length > 0 && (
+                    <div className="flex gap-1 flex-wrap mt-2">
+                      {paletteColors.map((pc, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleSurfaceChange(editingSurfaceIdx, pc)}
+                          className="w-5 h-5 rounded-[3px] ring-1 ring-inset transition-all hover:scale-110"
+                          style={{
+                            backgroundColor: pc,
+                            '--tw-ring-color': colors.surfaces[editingSurfaceIdx]?.toUpperCase() === pc.toUpperCase()
+                              ? 'var(--accent)'
+                              : 'var(--sidebar-border-subtle)',
+                          } as React.CSSProperties}
+                          title={pc.toUpperCase()}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}

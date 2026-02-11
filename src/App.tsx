@@ -22,8 +22,6 @@ import {
   RiDownloadFill as Download,
   RiShareForwardFill as Share2,
   RiShuffleFill as Shuffle,
-  RiPaletteFill as Palette,
-  RiFontSize2 as FontSize,
   RiFullscreenFill as Maximize2,
 } from "react-icons/ri";
 import { motion, AnimatePresence } from "motion/react";
@@ -366,6 +364,71 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement |
   );
 };
 
+// Save moodboard to JSON file (all persisted state)
+function saveMoodboard() {
+  const state = useBrandStore.getState();
+  const data = JSON.stringify({
+    version: 1,
+    brand: state.brand,
+    tiles: state.tiles,
+    tileSurfaces: state.tileSurfaces,
+    placementContent: state.placementContent,
+    activePreset: state.activePreset,
+    theme: state.theme,
+    activeCollectionId: state.activeCollectionId,
+    collectionImagePool: state.collectionImagePool,
+  }, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "moodboard.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("Moodboard saved!");
+}
+
+// Open moodboard from JSON file (backward-compatible)
+function openMoodboard() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+  input.onchange = (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (data.brand) {
+          const { brand, tiles, tileSurfaces, placementContent, history } = useBrandStore.getState();
+          useBrandStore.setState({
+            brand: data.brand,
+            ...(data.tiles ? { tiles: data.tiles } : {}),
+            ...(data.tileSurfaces ? { tileSurfaces: data.tileSurfaces } : {}),
+            ...(data.placementContent ? { placementContent: data.placementContent } : {}),
+            ...(data.activePreset ? { activePreset: data.activePreset } : {}),
+            ...(data.theme ? { theme: data.theme } : {}),
+            ...(data.activeCollectionId !== undefined ? { activeCollectionId: data.activeCollectionId } : {}),
+            ...(data.collectionImagePool ? { collectionImagePool: data.collectionImagePool } : {}),
+            history: {
+              past: [...history.past, { brand, tiles, tileSurfaces, placementContent }],
+              future: [],
+            },
+          });
+          toast.success("Moodboard loaded!");
+        } else {
+          toast.error("Invalid moodboard file");
+        }
+      } catch {
+        toast.error("Failed to parse file");
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 // File menu dropdown
 const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -399,53 +462,6 @@ const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => vo
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleSave = () => {
-    const state = useBrandStore.getState();
-    const data = JSON.stringify({ brand: state.brand, tiles: state.tiles }, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "moodboard.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Moodboard saved!");
-  };
-
-  const handleOpen = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const data = JSON.parse(ev.target?.result as string);
-          if (data.brand) {
-            const { brand, tiles, tileSurfaces, placementContent, history } = useBrandStore.getState();
-            useBrandStore.setState({
-              brand: data.brand,
-              ...(data.tiles ? { tiles: data.tiles } : {}),
-              history: {
-                past: [...history.past, { brand, tiles, tileSurfaces, placementContent }],
-                future: [],
-              },
-            });
-            toast.success("Moodboard loaded!");
-          } else {
-            toast.error("Invalid moodboard file");
-          }
-        } catch {
-          toast.error("Failed to parse file");
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
   };
 
   return (
@@ -486,9 +502,9 @@ const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => vo
           >
             {[
               { label: "New Moodboard", shortcut: "N", action: onReset },
-              { label: "Open...", shortcut: "O", action: handleOpen },
+              { label: "Open...", shortcut: "O", action: openMoodboard },
               { divider: true },
-              { label: "Save", shortcut: "S", action: handleSave },
+              { label: "Save", shortcut: "S", action: saveMoodboard },
               { label: "Export as CSS", action: () => handleExportFile("css") },
               { label: "Export as JSON", action: () => handleExportFile("json") },
               { divider: true },
@@ -566,6 +582,18 @@ function AppContent() {
       if (mod && e.shiftKey && e.key === 'd') {
         e.preventDefault();
         toggleDevTools();
+      }
+
+      // Save: Cmd+S
+      if (mod && !e.shiftKey && e.key === 's') {
+        e.preventDefault();
+        saveMoodboard();
+      }
+
+      // Open: Cmd+O
+      if (mod && !e.shiftKey && e.key === 'o') {
+        e.preventDefault();
+        openMoodboard();
       }
 
       // Undo: Cmd+Z
@@ -683,21 +711,9 @@ function AppContent() {
 
             <ToolbarButton
               icon={Shuffle}
-              label="Shuffle All"
+              label="Shuffle"
               shortcut="Space"
               onClick={shuffleBrand}
-            />
-            <ToolbarButton
-              icon={Palette}
-              label="Shuffle Colors"
-              shortcut="C"
-              onClick={shuffleColors}
-            />
-            <ToolbarButton
-              icon={FontSize}
-              label="Shuffle Type"
-              shortcut="T"
-              onClick={shuffleTypography}
             />
 
             <ToolbarDivider />

@@ -25,6 +25,11 @@ interface Colors {
   surface: string;
   surfaces: string[];
   paletteColors: string[];
+  columnOverrides?: {
+    primary?: { tone?: string; text?: string; textCta?: string };
+    surface?: { tone?: string; text?: string; textCta?: string };
+    accent?: { tone?: string; text?: string; textCta?: string };
+  };
 }
 
 interface Logo {
@@ -71,6 +76,11 @@ export const DEFAULT_BRAND: Brand = {
     weightHeadline: "700",
     weightBody: "400",
     letterSpacing: "normal",
+    trackingHeadline: 0,
+    trackingBody: 0,
+    lineHeightHeadline: 1.1,
+    lineHeightBody: 1.5,
+    transformHeadline: "none",
   },
   colors: {
     bg: "#FFFFFF",
@@ -119,6 +129,11 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       weightHeadline: "700",
       weightBody: "400",
       letterSpacing: "normal",
+      trackingHeadline: 0,
+      trackingBody: 0,
+      lineHeightHeadline: 1.1,
+      lineHeightBody: 1.55,
+      transformHeadline: "none",
     },
     colors: {
       bg: "#F5F7FA",
@@ -148,6 +163,11 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       weightHeadline: "700",
       weightBody: "400",
       letterSpacing: "wide",
+      trackingHeadline: 0,
+      trackingBody: 0,
+      lineHeightHeadline: 1.05,
+      lineHeightBody: 1.6,
+      transformHeadline: "uppercase",
     },
     colors: {
       bg: "#FDFCFA",
@@ -177,6 +197,11 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       weightHeadline: "700",
       weightBody: "400",
       letterSpacing: "normal",
+      trackingHeadline: 0,
+      trackingBody: 0,
+      lineHeightHeadline: 1.1,
+      lineHeightBody: 1.5,
+      transformHeadline: "none",
     },
     colors: {
       bg: "#FFFFFF",
@@ -206,6 +231,11 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       weightHeadline: "700",
       weightBody: "400",
       letterSpacing: "normal",
+      trackingHeadline: 0,
+      trackingBody: 0,
+      lineHeightHeadline: 1.05,
+      lineHeightBody: 1.5,
+      transformHeadline: "none",
     },
     colors: {
       bg: "#FAFAFA",
@@ -235,6 +265,11 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       weightHeadline: "700",
       weightBody: "400",
       letterSpacing: "wide",
+      trackingHeadline: 0,
+      trackingBody: 0,
+      lineHeightHeadline: 1.1,
+      lineHeightBody: 1.55,
+      transformHeadline: "uppercase",
     },
     colors: {
       bg: "#F7F2EA",

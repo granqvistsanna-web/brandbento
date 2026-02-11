@@ -18,12 +18,18 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight } from '@/utils/typography';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
+  ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarTextInput,
+  ToolbarTextArea,
+  ToolbarLabel,
 } from './FloatingToolbar';
 
 interface EditorialTileProps {
@@ -64,6 +70,9 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
     }))
   );
   const activePreset = useBrandStore((state) => state.activePreset);
+  const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -104,6 +113,47 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
 
   // Floating toolbar
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
+
+  const toolbar = isFocused && anchorRect && (
+    <FloatingToolbar anchorRect={anchorRect}>
+      <ToolbarActions onShuffle={() => {}} />
+      <ToolbarDivider />
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || 'editorial'}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
+      <ToolbarDivider />
+      <ToolbarSurfaceSwatches
+        surfaces={surfaces}
+        bgColor={bg}
+        currentIndex={tileSurfaceIndex}
+        onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+      />
+      <ToolbarDivider />
+      <ToolbarLabel>Content</ToolbarLabel>
+      <ToolbarTextInput
+        label="Pretitle"
+        value={pretitle as string}
+        onChange={(v) => tile?.id && updateTile(tile.id, { subcopy: v }, false)}
+        onCommit={(v) => tile?.id && updateTile(tile.id, { subcopy: v }, true)}
+        placeholder="Category..."
+      />
+      <ToolbarTextInput
+        label="Headline"
+        value={title as string}
+        onChange={(v) => tile?.id && updateTile(tile.id, { headline: v }, false)}
+        onCommit={(v) => tile?.id && updateTile(tile.id, { headline: v }, true)}
+        placeholder="Headline..."
+      />
+      <ToolbarTextArea
+        label="Body"
+        value={body as string}
+        onChange={(v) => tile?.id && updateTile(tile.id, { body: v }, false)}
+        onCommit={(v) => tile?.id && updateTile(tile.id, { body: v }, true)}
+        placeholder="Body text..."
+      />
+    </FloatingToolbar>
+  );
 
   // Landscape: two-column layout with pretitle+headline left, body right
   if (isLandscape) {
@@ -153,12 +203,12 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
               {copy.pretitle}
             </span>
             <h1
-              className="leading-[1.08]"
               style={{
                 fontFamily: headlineFont,
                 fontWeight: parseInt(weightHeadline) || 700,
                 fontSize: `${clampFontSize(typeScale.step2)}px`,
-                letterSpacing: spacing,
+                lineHeight: getHeadlineLineHeight(typography),
+                letterSpacing: getHeadlineTracking(typography),
                 color: adaptiveTextColor,
                 textWrap: 'balance',
               }}
@@ -169,12 +219,12 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
 
           {/* Right: body text */}
           <p
-            className="leading-[1.5]"
             style={{
               fontFamily: bodyFont,
               fontWeight: parseInt(weightBody) || 400,
               fontSize: `${clampFontSize(typeScale.stepMinus1, 11, 15)}px`,
-              letterSpacing: spacing,
+              lineHeight: getBodyLineHeight(typography),
+              letterSpacing: getBodyTracking(typography),
               color: adaptiveTextColor,
               opacity: 0.5,
               maxWidth: '26ch',
@@ -184,14 +234,7 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
           </p>
         </div>
 
-        {/* Floating toolbar when focused */}
-        {isFocused && anchorRect && (
-          <FloatingToolbar anchorRect={anchorRect}>
-            <ToolbarActions
-              onShuffle={() => {}}
-            />
-          </FloatingToolbar>
-        )}
+        {toolbar}
       </div>
     );
   }
@@ -245,12 +288,12 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
 
         {/* Headline — the star */}
         <h1
-          className="leading-[1.08]"
           style={{
             fontFamily: headlineFont,
             fontWeight: parseInt(weightHeadline) || 700,
             fontSize: `${clampFontSize(typeScale.step2)}px`,
-            letterSpacing: spacing,
+            lineHeight: getHeadlineLineHeight(typography),
+            letterSpacing: getHeadlineTracking(typography),
             color: adaptiveTextColor,
             textWrap: 'balance',
             marginBottom: `${clampFontSize(typeScale.base * 0.55, 6, 14)}px`,
@@ -261,12 +304,12 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
 
         {/* Body — restrained, with limited measure */}
         <p
-          className="leading-[1.55]"
           style={{
             fontFamily: bodyFont,
             fontWeight: parseInt(weightBody) || 400,
             fontSize: `${clampFontSize(typeScale.stepMinus1, 11, 16)}px`,
-            letterSpacing: spacing,
+            lineHeight: getBodyLineHeight(typography),
+            letterSpacing: getBodyTracking(typography),
             color: adaptiveTextColor,
             opacity: 0.55,
             maxWidth: '28ch',
@@ -276,14 +319,7 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
         </p>
       </div>
 
-      {/* Floating toolbar when focused */}
-      {isFocused && anchorRect && (
-        <FloatingToolbar anchorRect={anchorRect}>
-          <ToolbarActions
-            onShuffle={() => {}}
-          />
-        </FloatingToolbar>
-      )}
+      {toolbar}
     </div>
   );
 }

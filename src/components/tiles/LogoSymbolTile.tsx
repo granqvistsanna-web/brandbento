@@ -19,6 +19,8 @@ import {
   ToolbarLabel,
   ToolbarSlider,
   ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
 } from './FloatingToolbar';
 
 interface LogoSymbolTileProps {
@@ -34,6 +36,11 @@ export const LogoSymbolTile = memo(function LogoSymbolTile({ placementId }: Logo
   );
   const updateBrand = useBrandStore((s) => s.updateBrand);
   const brand = useBrandStore((s) => s.brand);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
+  const tile = useBrandStore((state) =>
+    state.tiles.find((t) => t.type === 'logo-symbol')
+  );
   const tileSurfaceIndex = useBrandStore((state) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
@@ -64,6 +71,18 @@ export const LogoSymbolTile = memo(function LogoSymbolTile({ placementId }: Logo
         onShuffle={() => {/* no-op */}}
         hasImage
         onImageUpload={(dataUrl) => handleLogoChange('image', dataUrl)}
+      />
+      <ToolbarDivider />
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || 'logo-symbol'}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
+      <ToolbarDivider />
+      <ToolbarSurfaceSwatches
+        surfaces={surfaces}
+        bgColor={bg}
+        currentIndex={tileSurfaceIndex}
+        onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
       />
       <ToolbarDivider />
       <ToolbarLabel>Symbol</ToolbarLabel>

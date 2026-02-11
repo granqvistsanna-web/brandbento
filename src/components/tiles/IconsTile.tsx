@@ -32,6 +32,8 @@ import {
   ToolbarActions,
   ToolbarLabel,
   ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
 } from './FloatingToolbar';
 
 interface IconsTileProps {
@@ -63,6 +65,11 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
     useShallow((state) => ({
       colors: state.brand.colors,
     }))
+  );
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
+  const tile = useBrandStore((state) =>
+    state.tiles.find((t) => t.type === 'icons')
   );
   const tileSurfaceIndex = useBrandStore((state) =>
     placementId ? state.tileSurfaces[placementId] : undefined
@@ -121,6 +128,18 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
       <ToolbarActions onShuffle={handleShuffle} />
+      <ToolbarDivider />
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || 'icons'}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
+      <ToolbarDivider />
+      <ToolbarSurfaceSwatches
+        surfaces={surfaces}
+        bgColor={bg}
+        currentIndex={tileSurfaceIndex}
+        onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+      />
       <ToolbarDivider />
       <ToolbarLabel>Icons</ToolbarLabel>
     </FloatingToolbar>

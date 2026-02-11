@@ -12,13 +12,19 @@ import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { IMAGE_OVERLAY_TEXT, imageOverlayTextMuted } from '@/utils/colorDefaults';
+import { getImageFilter } from '@/utils/imagery';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
+  ToolbarTextInput,
+  ToolbarTextArea,
+  ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarLabel,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -56,14 +62,17 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
     return () => ro.disconnect();
   }, [isOverlay]);
 
-  const { typography, colors } = useBrandStore(
+  const { typography, colors, imagery } = useBrandStore(
     useShallow((state: BrandStore) => ({
       typography: state.brand.typography,
       colors: state.brand.colors,
+      imagery: state.brand.imagery,
     }))
   );
+  const imageFilter = getImageFilter(imagery.style, imagery.overlay);
   const activePreset = useBrandStore((state: BrandStore) => state.activePreset);
   const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -138,6 +147,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
             initial={{ opacity: 0, scale: 1.02 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            style={{ filter: imageFilter }}
           />
         ) : (
           <div
@@ -180,12 +190,13 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
           </span>
 
           <h1
-            className="leading-[1.02]"
             style={{
               fontFamily: headlineFont,
               fontWeight: parseInt(typography.weightHeadline) || 700,
               fontSize: `${clampFontSize(typeScale.step3, 26, 50)}px`,
-              letterSpacing: spacing,
+              lineHeight: getHeadlineLineHeight(typography),
+              letterSpacing: getHeadlineTracking(typography),
+              textTransform: getHeadlineTransform(typography) as React.CSSProperties['textTransform'],
               color: IMAGE_OVERLAY_TEXT,
               textWrap: 'balance',
               maxWidth: '16ch',
@@ -196,12 +207,12 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
           </h1>
 
           <p
-            className="leading-[1.45]"
             style={{
               fontFamily: bodyFont,
               fontWeight: parseInt(typography.weightBody) || 400,
               fontSize: `${clampFontSize(typeScale.stepMinus1, 11, 15)}px`,
-              letterSpacing: spacing,
+              lineHeight: getBodyLineHeight(typography),
+              letterSpacing: getBodyTracking(typography),
               color: imageOverlayTextMuted(0.6),
               maxWidth: '38ch',
             }}
@@ -210,9 +221,37 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
           </p>
         </div>
 
-        {isFocused && anchorRect && (
+        {isFocused && anchorRect && tile?.id && (
           <FloatingToolbar anchorRect={anchorRect}>
             {toolbarActions}
+            <ToolbarDivider />
+            <ToolbarTileTypeGrid
+              currentType={tile?.type || 'overlay'}
+              onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+            />
+            <ToolbarDivider />
+            <ToolbarLabel>Content</ToolbarLabel>
+            <ToolbarTextInput
+              label="Label"
+              value={content.label || content.subcopy || ''}
+              onChange={(v) => updateTile(tile!.id, { label: v }, false)}
+              onCommit={(v) => updateTile(tile!.id, { label: v }, true)}
+              placeholder="Label"
+            />
+            <ToolbarTextInput
+              label="Headline"
+              value={content.headline || ''}
+              onChange={(v) => updateTile(tile!.id, { headline: v }, false)}
+              onCommit={(v) => updateTile(tile!.id, { headline: v }, true)}
+              placeholder="Headline"
+            />
+            <ToolbarTextArea
+              label="Body"
+              value={content.body || ''}
+              onChange={(v) => updateTile(tile!.id, { body: v }, false)}
+              onCommit={(v) => updateTile(tile!.id, { body: v }, true)}
+              placeholder="Body text"
+            />
           </FloatingToolbar>
         )}
       </div>
@@ -230,6 +269,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
           initial={{ opacity: 0, scale: 1.02 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          style={{ filter: imageFilter }}
         />
       ) : (
         <div
@@ -254,14 +294,14 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
         style={{ padding: 'clamp(14px, 5%, 28px)', gap: 'clamp(4px, 1.5%, 10px)' }}
       >
         <h1
-          className="leading-[1.08]"
           style={{
             fontFamily: headlineFont,
             fontWeight: parseInt(typography.weightHeadline) || 700,
             fontSize: `${clampFontSize(typeScale.step3, 24, 48)}px`,
-            letterSpacing: isSpread ? '0.06em' : spacing,
+            lineHeight: getHeadlineLineHeight(typography),
+            letterSpacing: getHeadlineTracking(typography),
+            textTransform: getHeadlineTransform(typography) as React.CSSProperties['textTransform'],
             color: IMAGE_OVERLAY_TEXT,
-            textTransform: isSpread ? 'uppercase' : 'none',
             textWrap: 'balance',
           }}
         >
@@ -270,14 +310,14 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
 
         {subcopy && (
           <p
-            className="leading-relaxed max-w-[34ch]"
+            className="max-w-[34ch]"
             style={{
               fontFamily: bodyFont,
               fontWeight: parseInt(typography.weightBody) || 400,
               fontSize: `${clampFontSize(typeScale.stepMinus1, 11, 15)}px`,
-              letterSpacing: isSpread ? '0.04em' : spacing,
+              lineHeight: getBodyLineHeight(typography),
+              letterSpacing: getBodyTracking(typography),
               color: imageOverlayTextMuted(0.68),
-              textTransform: isSpread ? 'uppercase' : 'none',
             }}
           >
             {subcopy}
@@ -285,9 +325,30 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
         )}
       </div>
 
-      {isFocused && anchorRect && (
+      {isFocused && anchorRect && tile?.id && (
         <FloatingToolbar anchorRect={anchorRect}>
           {toolbarActions}
+          <ToolbarDivider />
+          <ToolbarTileTypeGrid
+            currentType={tile?.type || 'hero'}
+            onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Headline"
+            value={content.headline || ''}
+            onChange={(v) => updateTile(tile!.id, { headline: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { headline: v }, true)}
+            placeholder="Headline"
+          />
+          <ToolbarTextInput
+            label="Subcopy"
+            value={content.subcopy || ''}
+            onChange={(v) => updateTile(tile!.id, { subcopy: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { subcopy: v }, true)}
+            placeholder="Supporting text"
+          />
         </FloatingToolbar>
       )}
     </div>

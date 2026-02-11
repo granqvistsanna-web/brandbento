@@ -138,6 +138,39 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
     label: "Happy Humans",
     body: "And counting, every single day",
   },
+  messaging: {
+    headline: "Your brand has a voice. Use it before someone else does.",
+    label: "Messaging",
+  },
+  specimen: {
+    headline: "AäBbCcĐdEè\nFfGgHhIiJjKkLl\nMmNnØoPp\nQqRrSsTtŨuVv\nWwXxYyZż",
+    label: "Typography",
+  },
+  personality: {
+    items: ["Friendly", "Witty", "Confident", "Playful", "Human", "Enthusiastic", "Energetic", "Curious"],
+    label: "Personality",
+  },
+  "color-blocks": {
+    label: "Colour",
+  },
+  "business-card": {
+    headline: "Jessica Smith",
+    subcopy: "Marketing Manager",
+    label: "jessica@studio.co",
+    price: "+1 (555) 234-5678",
+    body: "10/349 Edward Street\nNorth Melbourne VIC 3051",
+    cta: "studio.co",
+  },
+  "app-icon": {
+    label: "Iconography",
+  },
+  story: {
+    headline: "Start With Why Not",
+    body: "Great brands start with a question nobody thought to ask. This is yours.",
+    cta: "Learn More",
+    label: "Sponsored",
+    image: "/images/visualelectric-1740667020762.png",
+  },
 };
 
 /**

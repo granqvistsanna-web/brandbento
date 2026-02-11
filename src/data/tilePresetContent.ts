@@ -36,12 +36,39 @@ export interface SplitListPresetContent {
   items: string[];
 }
 
+export interface MessagingPresetContent {
+  headline: string;
+}
+
+export interface PersonalityPresetContent {
+  items: string[];
+}
+
+export interface BusinessCardPresetContent {
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+  address: string;
+  website: string;
+}
+
+export interface StoryPresetContent {
+  headline: string;
+  body: string;
+  cta: string;
+}
+
 interface PresetContent {
   editorial: EditorialPresetContent;
   overlay: OverlayPresetContent;
   splitHero: SplitHeroPresetContent;
   menu: MenuPresetContent;
   splitList: SplitListPresetContent;
+  messaging: MessagingPresetContent;
+  personality: PersonalityPresetContent;
+  businessCard: BusinessCardPresetContent;
+  story: StoryPresetContent;
 }
 
 const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
@@ -73,6 +100,25 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       listHeading: 'Our Craft',
       items: ['Brand Identity Systems', 'Digital Experience Design', 'Creative Direction'],
     },
+    messaging: {
+      headline: 'Your brand has a voice. Use it before someone else does.',
+    },
+    personality: {
+      items: ['Friendly', 'Witty', 'Confident', 'Playful', 'Human', 'Enthusiastic', 'Energetic', 'Curious'],
+    },
+    businessCard: {
+      name: 'Jessica Smith',
+      title: 'Marketing Manager',
+      email: 'jessica@studio.co',
+      phone: '+1 (555) 234-5678',
+      address: '10/349 Edward Street\nNorth Melbourne VIC 3051',
+      website: 'studio.co',
+    },
+    story: {
+      headline: 'Start With Why Not',
+      body: 'Great brands start with a question nobody thought to ask. This is yours.',
+      cta: 'Learn More',
+    },
   },
   techStartup: {
     editorial: {
@@ -101,6 +147,25 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       headline: 'Under\nthe Hood',
       listHeading: 'Core Stack',
       items: ['Distributed Computing', 'Real-time Analytics', 'Edge Deployment'],
+    },
+    messaging: {
+      headline: 'We build the infrastructure so you can build what matters.',
+    },
+    personality: {
+      items: ['Direct', 'Smart', 'Precise', 'Confident', 'Forward', 'Clear', 'Curious', 'Pragmatic'],
+    },
+    businessCard: {
+      name: 'Kai Chen',
+      title: 'Head of Product',
+      email: 'kai@linear.dev',
+      phone: '+1 (415) 555-0142',
+      address: '548 Market Street\nSan Francisco CA 94104',
+      website: 'linear.dev',
+    },
+    story: {
+      headline: 'Your workflow, automated.',
+      body: 'Set it up once. Let it run forever. No code required.',
+      cta: 'Try Free',
     },
   },
   luxuryRetail: {
@@ -131,6 +196,25 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       listHeading: 'How It\u2019s Made',
       items: ['Small-Batch Production', 'Natural Dyes Only', 'Transparent Sourcing'],
     },
+    messaging: {
+      headline: 'True luxury is the freedom to choose less.',
+    },
+    personality: {
+      items: ['Refined', 'Quiet', 'Considered', 'Timeless', 'Elegant', 'Restrained', 'Intentional', 'Warm'],
+    },
+    businessCard: {
+      name: 'Élodie Laurent',
+      title: 'Creative Director',
+      email: 'elodie@maisonverre.com',
+      phone: '+33 1 42 56 78 90',
+      address: '24 Rue du Faubourg\nSaint-Honoré, Paris 75008',
+      website: 'maisonverre.com',
+    },
+    story: {
+      headline: 'The new collection is here.',
+      body: 'Crafted by hand, designed to last. Limited availability.',
+      cta: 'Shop Now',
+    },
   },
   communityNonprofit: {
     editorial: {
@@ -159,6 +243,25 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       headline: 'Where\nIt Counts',
       listHeading: 'Focus Areas',
       items: ['Youth Mentorship', 'Neighborhood Health', 'Learning Access'],
+    },
+    messaging: {
+      headline: 'Every neighborhood deserves a seat at the table.',
+    },
+    personality: {
+      items: ['Warm', 'Inclusive', 'Honest', 'Grounded', 'Caring', 'Approachable', 'Joyful', 'Authentic'],
+    },
+    businessCard: {
+      name: 'Maya Johnson',
+      title: 'Program Director',
+      email: 'maya@openground.org',
+      phone: '+1 (312) 555-0198',
+      address: '1440 W. Division Street\nChicago IL 60642',
+      website: 'openground.org',
+    },
+    story: {
+      headline: 'Real change starts here.',
+      body: 'Join 2,000+ neighbors building something that lasts.',
+      cta: 'Get Involved',
     },
   },
   creativeStudio: {
@@ -189,6 +292,25 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       listHeading: 'Disciplines',
       items: ['Brand Strategy', 'Motion & Film', 'Art Direction'],
     },
+    messaging: {
+      headline: 'We don\u2019t make pretty things. We make things that move people.',
+    },
+    personality: {
+      items: ['Bold', 'Playful', 'Irreverent', 'Sharp', 'Passionate', 'Curious', 'Provocative', 'Human'],
+    },
+    businessCard: {
+      name: 'Jordan Reeves',
+      title: 'Co-Founder / ECD',
+      email: 'jordan@commonera.co',
+      phone: '+1 (646) 555-0177',
+      address: '87 Richardson Street\nBrooklyn NY 11249',
+      website: 'commonera.co',
+    },
+    story: {
+      headline: 'This one took six months.',
+      body: 'Behind every overnight success is a studio that didn\u2019t sleep.',
+      cta: 'See Work',
+    },
   },
   spread: {
     editorial: {
@@ -217,6 +339,25 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       headline: 'Where It\nComes From',
       listHeading: 'Our Sourcing',
       items: ['Local Farm Partners', 'Organic Everything', 'Zero-Waste Kitchen'],
+    },
+    messaging: {
+      headline: 'Good food starts with good people. Everything else follows.',
+    },
+    personality: {
+      items: ['Warm', 'Honest', 'Inviting', 'Earthy', 'Generous', 'Lively', 'Grounded', 'Real'],
+    },
+    businessCard: {
+      name: 'Rosa Martínez',
+      title: 'Head Chef & Owner',
+      email: 'rosa@terratable.co',
+      phone: '+61 3 9555 1234',
+      address: '18 Hardware Lane\nMelbourne VIC 3000',
+      website: 'terratable.co',
+    },
+    story: {
+      headline: 'Come hungry. Leave happy.',
+      body: 'Seasonal plates, zero fuss. Close-your-eyes-on-the-first-bite good.',
+      cta: 'See Menu',
     },
   },
 };

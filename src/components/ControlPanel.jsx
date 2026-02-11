@@ -1,11 +1,11 @@
 /**
  * Control Panel - Sidebar shell.
- * Delegates to GlobalControls (brand editing) or TileControls (tile editing).
+ * Always shows GlobalControls (brand-level settings).
+ * Tile-specific editing lives in each tile's FloatingToolbar.
  */
 import React, { useState, useEffect } from "react";
 import {
   useBrandStore,
-  selectFocusedTile,
 } from "../store/useBrandStore";
 import {
   RiSidebarFoldFill as PanelLeftClose,
@@ -16,14 +16,12 @@ import {
   RiMagicFill as Wand2,
   RiSparklingFill as Sparkles,
 } from "react-icons/ri";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Tooltip } from "./controls";
 import GlobalControls from "./GlobalControls";
-import TileControls from "./TileControls";
 
 const ControlPanel = () => {
   const focusedTileId = useBrandStore((s) => s.focusedTileId);
-  const focusedTile = useBrandStore(selectFocusedTile);
   const undo = useBrandStore((s) => s.undo);
   const redo = useBrandStore((s) => s.redo);
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
@@ -144,7 +142,7 @@ const ControlPanel = () => {
             <span
               style={{ color: "var(--sidebar-text)", fontSize: 20, fontWeight: 600, letterSpacing: "-0.025em" }}
             >
-              {focusedTileId ? "Tile" : "Design"}
+              Design
             </span>
             <div className="flex items-center gap-2 mr-8" />
             <div
@@ -155,29 +153,7 @@ const ControlPanel = () => {
 
           {/* Panel content */}
           <div className="flex-1 overflow-y-auto scrollbar-dark">
-            <AnimatePresence mode="wait">
-              {focusedTileId ? (
-                <motion.div
-                  key="tile"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <TileControls tile={focusedTile} placementId={focusedTileId} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="global"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <GlobalControls />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <GlobalControls />
           </div>
 
           {/* Panel footer */}

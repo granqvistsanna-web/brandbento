@@ -15,6 +15,13 @@ import { LogoSymbolTile } from './tiles/LogoSymbolTile';
 import { IconsTile } from './tiles/IconsTile';
 import { PatternTile } from './tiles/PatternTile';
 import { StatsTile } from './tiles/StatsTile';
+import { MessagingTile } from './tiles/MessagingTile';
+import { SpecimenTile } from './tiles/SpecimenTile';
+import { PersonalityTile } from './tiles/PersonalityTile';
+import { ColorBlocksTile } from './tiles/ColorBlocksTile';
+import { BusinessCardTile } from './tiles/BusinessCardTile';
+import { AppIconTile } from './tiles/AppIconTile';
+import { StoryTile } from './tiles/StoryTile';
 
 /* Variant wrappers so previews render the correct variant */
 function OverlayTile({ placementId }: { placementId?: string }) {
@@ -324,6 +331,113 @@ const TILE_CATALOG: CatalogEntry[] = [
     sizes: [
       { w: 200, h: 200, label: '1x1' },
       { w: 200, h: 300, label: '1x2' },
+    ],
+  },
+  {
+    type: 'messaging',
+    label: 'MessagingTile',
+    component: MessagingTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'headline', contentKey: 'headline', type: 'text' },
+    ],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+      { w: 150, h: 300, label: '1x2' },
+    ],
+  },
+  {
+    type: 'specimen',
+    label: 'SpecimenTile',
+    component: SpecimenTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'headline (chars)', contentKey: 'headline', type: 'text' },
+    ],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+      { w: 150, h: 300, label: '1x2' },
+    ],
+  },
+  {
+    type: 'personality',
+    label: 'PersonalityTile',
+    component: PersonalityTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'items', contentKey: 'items', type: 'items' },
+    ],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+    ],
+  },
+  {
+    type: 'color-blocks',
+    label: 'ColorBlocksTile',
+    component: ColorBlocksTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+      { w: 150, h: 300, label: '1x2' },
+    ],
+  },
+  {
+    type: 'business-card',
+    label: 'BusinessCardTile',
+    component: BusinessCardTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'name', contentKey: 'headline', type: 'text' },
+      { name: 'title', contentKey: 'subcopy', type: 'text' },
+      { name: 'email', contentKey: 'label', type: 'text' },
+      { name: 'phone', contentKey: 'price', type: 'text' },
+      { name: 'address', contentKey: 'body', type: 'text' },
+      { name: 'website', contentKey: 'cta', type: 'text' },
+    ],
+    sizes: [
+      { w: 300, h: 200, label: '2x1' },
+      { w: 200, h: 200, label: '1x1' },
+    ],
+  },
+  {
+    type: 'app-icon',
+    label: 'AppIconTile',
+    component: AppIconTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'app name', contentKey: 'headerTitle', type: 'text' },
+    ],
+    sizes: [
+      { w: 200, h: 250, label: '1x1' },
+      { w: 200, h: 300, label: '1x2' },
+    ],
+  },
+  {
+    type: 'story',
+    label: 'StoryTile',
+    component: StoryTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'headline', contentKey: 'headline', type: 'text' },
+      { name: 'body', contentKey: 'body', type: 'text' },
+      { name: 'cta', contentKey: 'cta', type: 'text' },
+      { name: 'image', contentKey: 'image', type: 'image' },
+    ],
+    sizes: [
+      { w: 200, h: 300, label: '1x2' },
+      { w: 200, h: 200, label: '1x1' },
     ],
   },
 ];

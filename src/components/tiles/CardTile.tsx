@@ -1,10 +1,11 @@
 /**
  * Card Tile Component
  *
- * Versatile card with image, title, subtitle, badge, and detail.
- * Works for products, services, features, or any branded content.
+ * Product card with image, title, subtitle, and price.
+ * Stacks vertically in portrait, side-by-side in landscape.
  */
 
+import { useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getAdaptiveTextColor } from '@/utils/color';
@@ -13,25 +14,37 @@ import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { getImageFilter } from '@/utils/imagery';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
+  ToolbarTextInput,
+  ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarLabel,
   getRandomShuffleImage,
 } from './FloatingToolbar';
+
+type TileShape = 'portrait' | 'square' | 'landscape';
 
 interface CardTileProps {
   placementId?: string;
 }
 
 export function CardTile({ placementId }: CardTileProps) {
-  const { colors, typography } = useBrandStore(
+  const { colors, typography, imagery } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       typography: state.brand.typography,
+      imagery: state.brand.imagery,
     }))
   );
+  const imageFilter = getImageFilter(imagery.style, imagery.overlay);
   const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -58,27 +71,56 @@ export function CardTile({ placementId }: CardTileProps) {
 
   const content = tile?.content || {};
   const imageUrl = content.image;
-  const title = content.label || 'Title';
-  const subtitle = content.subcopy || 'Subtitle';
-  const badge = content.body || 'Badge';
-  const detail = content.price || 'Detail';
+  const title = content.label || 'The Classic';
+  const subtitle = content.subcopy || 'Hand-finished acetate frame';
+  const detail = content.price || '$128';
 
   const { isFocused, containerRef, anchorRect } = useTileToolbar(placementId);
 
+  const [shape, setShape] = useState<TileShape>('landscape');
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (!width || !height) return;
+      const ratio = width / height;
+      if (ratio < 0.75) setShape('portrait');
+      else if (ratio > 1.4) setShape('landscape');
+      else setShape('square');
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const isPortrait = shape === 'portrait';
 
   return (
     <div
       ref={containerRef}
       className="w-full h-full flex transition-colors duration-300"
-      style={{ backgroundColor: surfaceBg, padding: 'clamp(10px, 4%, 20px)', gap: 'clamp(8px, 3%, 16px)' }}
+      style={{
+        backgroundColor: surfaceBg,
+        padding: 'clamp(10px, 4%, 20px)',
+        gap: 'clamp(8px, 3%, 16px)',
+        flexDirection: isPortrait ? 'column' : 'row',
+      }}
     >
-      <div className="relative w-[44%] min-w-[36%] max-w-[50%] overflow-hidden rounded-lg">
+      <div
+        className="relative overflow-hidden rounded-lg"
+        style={{
+          ...(isPortrait
+            ? { width: '100%', height: '55%', flexShrink: 0 }
+            : { width: '44%', minWidth: '36%', maxWidth: '50%' }),
+        }}
+      >
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={title}
             className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: imageFilter }}
           />
         ) : (
           <div
@@ -116,22 +158,6 @@ export function CardTile({ placementId }: CardTileProps) {
           >
             {subtitle}
           </div>
-          <span
-            className="self-start rounded-full"
-            style={{
-              backgroundColor: `color-mix(in srgb, ${primary} 12%, transparent)`,
-              border: `1px solid color-mix(in srgb, ${primary} 20%, transparent)`,
-              color: primary,
-              fontFamily: bodyFont,
-              fontWeight: 600,
-              fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 12)}px`,
-              padding: 'clamp(1px, 0.5%, 3px) clamp(6px, 2%, 12px)',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase' as const,
-            }}
-          >
-            {badge}
-          </span>
         </div>
         <div
           style={{
@@ -146,7 +172,7 @@ export function CardTile({ placementId }: CardTileProps) {
         </div>
       </div>
 
-      {isFocused && anchorRect && (
+      {isFocused && anchorRect && tile?.id && (
         <FloatingToolbar anchorRect={anchorRect}>
           <ToolbarActions
             onShuffle={() => {
@@ -162,6 +188,41 @@ export function CardTile({ placementId }: CardTileProps) {
             onImageUpload={(dataUrl) => {
               if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
             }}
+          />
+          <ToolbarDivider />
+          <ToolbarTileTypeGrid
+            currentType={tile?.type || 'product'}
+            onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+          />
+          <ToolbarDivider />
+          <ToolbarSurfaceSwatches
+            surfaces={surfaces}
+            bgColor={bg}
+            currentIndex={tileSurfaceIndex}
+            onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Title"
+            value={content.label || ''}
+            onChange={(v) => updateTile(tile!.id, { label: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { label: v }, true)}
+            placeholder="Product name"
+          />
+          <ToolbarTextInput
+            label="Subtitle"
+            value={content.subcopy || ''}
+            onChange={(v) => updateTile(tile!.id, { subcopy: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { subcopy: v }, true)}
+            placeholder="Description"
+          />
+          <ToolbarTextInput
+            label="Price"
+            value={content.price || ''}
+            onChange={(v) => updateTile(tile!.id, { price: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { price: v }, true)}
+            placeholder="$0.00"
           />
         </FloatingToolbar>
       )}

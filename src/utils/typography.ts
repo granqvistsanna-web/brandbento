@@ -54,3 +54,40 @@ export const clampFontSize = (value: number, min = 10, max?: number): number => 
   }
   return Math.max(min, value);
 };
+
+/** Get headline letter-spacing: global baseline + per-role offset */
+export const getHeadlineTracking = (typography?: Typography): string => {
+  const base = getLetterSpacing(typography?.letterSpacing);
+  const offset = typography?.trackingHeadline ?? 0;
+  if (offset === 0) return base;
+  const baseNum = parseFloat(base) || 0;
+  const result = baseNum + offset;
+  if (Math.abs(result) < 0.001) return '0';
+  return `${result}em`;
+};
+
+/** Get body letter-spacing: global baseline + per-role offset */
+export const getBodyTracking = (typography?: Typography): string => {
+  const base = getLetterSpacing(typography?.letterSpacing);
+  const offset = typography?.trackingBody ?? 0;
+  if (offset === 0) return base;
+  const baseNum = parseFloat(base) || 0;
+  const result = baseNum + offset;
+  if (Math.abs(result) < 0.001) return '0';
+  return `${result}em`;
+};
+
+/** Get headline line-height */
+export const getHeadlineLineHeight = (typography?: Typography): number => {
+  return typography?.lineHeightHeadline ?? 1.1;
+};
+
+/** Get body line-height */
+export const getBodyLineHeight = (typography?: Typography): number => {
+  return typography?.lineHeightBody ?? 1.5;
+};
+
+/** Get headline text-transform */
+export const getHeadlineTransform = (typography?: Typography): string => {
+  return typography?.transformHeadline ?? 'none';
+};

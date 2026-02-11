@@ -51,6 +51,13 @@ import { SwatchTile } from "./tiles/SwatchTile";
 import { SplitHeroTile } from "./tiles/SplitHeroTile";
 import { PatternTile } from "./tiles/PatternTile";
 import { StatsTile } from "./tiles/StatsTile";
+import { MessagingTile } from "./tiles/MessagingTile";
+import { SpecimenTile } from "./tiles/SpecimenTile";
+import { PersonalityTile } from "./tiles/PersonalityTile";
+import { ColorBlocksTile } from "./tiles/ColorBlocksTile";
+import { BusinessCardTile } from "./tiles/BusinessCardTile";
+import { AppIconTile } from "./tiles/AppIconTile";
+import { StoryTile } from "./tiles/StoryTile";
 import { getPlacementTileId, getPlacementTileType } from "../config/placements";
 const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
@@ -193,6 +200,20 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
         return <PatternTile placementId={id} />;
       case 'stats':
         return <StatsTile placementId={id} />;
+      case 'messaging':
+        return <MessagingTile placementId={id} />;
+      case 'specimen':
+        return <SpecimenTile placementId={id} />;
+      case 'personality':
+        return <PersonalityTile placementId={id} />;
+      case 'color-blocks':
+        return <ColorBlocksTile placementId={id} />;
+      case 'business-card':
+        return <BusinessCardTile placementId={id} />;
+      case 'app-icon':
+        return <AppIconTile placementId={id} />;
+      case 'story':
+        return <StoryTile placementId={id} />;
       case 'colors':
         return activePreset === 'spread'
           ? <SwatchTile placementId={id} />

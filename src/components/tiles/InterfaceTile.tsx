@@ -22,6 +22,11 @@ import {
   ToolbarActions,
   ToolbarSlider,
   ToolbarSegmented,
+  ToolbarTextInput,
+  ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarLabel,
 } from './FloatingToolbar';
 
 /** Design-space dimensions for the button specimen card (px).
@@ -44,6 +49,9 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
   );
 
   const updateBrand = useBrandStore((s) => s.updateBrand);
+  const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const brand = useBrandStore((s) => s.brand);
 
   const placementTileId = getPlacementTileId(placementId);
@@ -233,6 +241,35 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
               handleUiChange('buttonStyle', next, true);
             }}
           />
+          <ToolbarDivider />
+          <ToolbarTileTypeGrid
+            currentType={tile?.type || 'interface'}
+            onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+          />
+          <ToolbarDivider />
+          <ToolbarSurfaceSwatches
+            surfaces={surfaces}
+            bgColor={bg}
+            currentIndex={tileSurfaceIndex}
+            onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Primary"
+            value={content.buttonLabel || ''}
+            onChange={(v) => tile?.id && updateTile(tile.id, { buttonLabel: v }, false)}
+            onCommit={(v) => tile?.id && updateTile(tile.id, { buttonLabel: v }, true)}
+            placeholder="Get Started"
+          />
+          <ToolbarTextInput
+            label="Secondary"
+            value={content.headerTitle || ''}
+            onChange={(v) => tile?.id && updateTile(tile.id, { headerTitle: v }, false)}
+            onCommit={(v) => tile?.id && updateTile(tile.id, { headerTitle: v }, true)}
+            placeholder="Learn More"
+          />
+          <ToolbarDivider />
           <ToolbarSlider
             label="Radius"
             value={btnRadius}

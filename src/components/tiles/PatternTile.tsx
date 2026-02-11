@@ -22,6 +22,8 @@ import {
   ToolbarSlider,
   ToolbarLabel,
   ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
 } from './FloatingToolbar';
 
 /* ─── Types ─── */
@@ -188,6 +190,8 @@ export function PatternTile({ placementId }: PatternTileProps) {
     }))
   );
   const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -349,6 +353,18 @@ export function PatternTile({ placementId }: PatternTileProps) {
             imageLocked={patternImageLocked}
             onToggleLock={handleToggleLock}
             onImageUpload={handleImageUpload}
+          />
+          <ToolbarDivider />
+          <ToolbarTileTypeGrid
+            currentType={tile?.type || 'pattern'}
+            onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+          />
+          <ToolbarDivider />
+          <ToolbarSurfaceSwatches
+            surfaces={surfaces}
+            bgColor={bg}
+            currentIndex={tileSurfaceIndex}
+            onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
           />
           <ToolbarDivider />
 

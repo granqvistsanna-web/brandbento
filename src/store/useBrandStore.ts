@@ -69,6 +69,16 @@ export interface Typography {
   weightBody: string;
   /** Letter spacing preference for overall brand feel */
   letterSpacing: "tight" | "normal" | "wide";
+  /** Headline-specific letter-spacing in em (e.g., -0.02, 0, 0.08) */
+  trackingHeadline: number;
+  /** Body-specific letter-spacing in em */
+  trackingBody: number;
+  /** Headline line-height (e.g., 1.05) */
+  lineHeightHeadline: number;
+  /** Body line-height (e.g., 1.5) */
+  lineHeightBody: number;
+  /** Text transform for headlines */
+  transformHeadline: "none" | "uppercase" | "capitalize";
 }
 
 /**
@@ -91,6 +101,12 @@ export interface Colors {
   surfaces: string[];
   /** Original extracted palette colors before semantic mapping */
   paletteColors: string[];
+  /** Per-column overrides for auto-derived roles (tone, text, textCta) */
+  columnOverrides?: {
+    primary?: { tone?: string; text?: string; textCta?: string };
+    surface?: { tone?: string; text?: string; textCta?: string };
+    accent?: { tone?: string; text?: string; textCta?: string };
+  };
 }
 
 /**
@@ -585,6 +601,11 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         weightHeadline: "700",
         weightBody: "400",
         letterSpacing: "normal",
+        trackingHeadline: 0,
+        trackingBody: 0,
+        lineHeightHeadline: 1.1,
+        lineHeightBody: 1.55,
+        transformHeadline: "none",
       },
       colors: {
         bg: "#F5F7FA",
@@ -668,6 +689,11 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         weightHeadline: "700",
         weightBody: "400",
         letterSpacing: "wide",
+        trackingHeadline: 0,
+        trackingBody: 0,
+        lineHeightHeadline: 1.05,
+        lineHeightBody: 1.6,
+        transformHeadline: "uppercase",
       },
       colors: {
         bg: "#FDFCFA",
@@ -763,6 +789,11 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         weightHeadline: "800",
         weightBody: "400",
         letterSpacing: "normal",
+        trackingHeadline: 0,
+        trackingBody: 0,
+        lineHeightHeadline: 1.05,
+        lineHeightBody: 1.5,
+        transformHeadline: "none",
       },
       colors: {
         bg: "#0A0A0A",
@@ -860,6 +891,11 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         weightHeadline: "700",
         weightBody: "400",
         letterSpacing: "wide",
+        trackingHeadline: 0,
+        trackingBody: 0,
+        lineHeightHeadline: 1.1,
+        lineHeightBody: 1.55,
+        transformHeadline: "uppercase",
       },
       colors: {
         bg: "#F7F2EA",
@@ -960,6 +996,11 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         weightHeadline: "600",
         weightBody: "400",
         letterSpacing: "normal",
+        trackingHeadline: 0,
+        trackingBody: 0,
+        lineHeightHeadline: 1.12,
+        lineHeightBody: 1.6,
+        transformHeadline: "none",
       },
       colors: {
         bg: "#F0FDF4",
@@ -1066,6 +1107,11 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         weightHeadline: "700",
         weightBody: "400",
         letterSpacing: "tight",
+        trackingHeadline: 0,
+        trackingBody: 0,
+        lineHeightHeadline: 1.1,
+        lineHeightBody: 1.5,
+        transformHeadline: "none",
       },
       colors: {
         bg: "#FFFFFF",
@@ -1330,8 +1376,9 @@ const defaultTileContent: Record<string, TileContent> = {
   },
   editorial: { headline: "New Editorial", body: "Editorial body text" },
   product: {
-    label: "Product",
-    price: "$99",
+    label: "The Classic",
+    subcopy: "Hand-finished acetate frame",
+    price: "$128",
     image: "/images/_sagr_tight_macro_still_life_tortoiseshell_glasses_blank_conf_fd90e9cb-0e01-43ed-9b69-4cc88f03a4df_0.png",
   },
   "ui-preview": {
@@ -1355,6 +1402,39 @@ const defaultTileContent: Record<string, TileContent> = {
   social: {
     image: "/images/visualelectric-1750703676698.png",
     overlayText: "Atmosphere",
+  },
+  messaging: {
+    headline: "Your brand has a voice. Use it before someone else does.",
+    label: "Messaging",
+  },
+  specimen: {
+    headline: "AäBbCcĐdEè\nFfGgHhIiJjKkLl\nMmNnØoPp\nQqRrSsTtŨuVv\nWwXxYyZż",
+    label: "Typography",
+  },
+  personality: {
+    items: ["Friendly", "Witty", "Confident", "Playful", "Human", "Enthusiastic", "Energetic", "Curious"],
+    label: "Personality",
+  },
+  "color-blocks": {
+    label: "Colour",
+  },
+  "business-card": {
+    headline: "Jessica Smith",
+    subcopy: "Marketing Manager",
+    label: "jessica@studio.co",
+    price: "+1 (555) 234-5678",
+    body: "10/349 Edward Street\nNorth Melbourne VIC 3051",
+    cta: "studio.co",
+  },
+  "app-icon": {
+    label: "Iconography",
+  },
+  story: {
+    headline: "Start With Why Not",
+    body: "Great brands start with a question nobody thought to ask. This is yours.",
+    cta: "Learn More",
+    label: "Sponsored",
+    image: "/images/visualelectric-1740667020762.png",
   },
 };
 
@@ -1868,7 +1948,7 @@ export const useBrandStore = create<BrandStore>()(
         }
 
         const IMAGE_TILE_TYPES = new Set([
-          'hero', 'product', 'image', 'social', 'split-hero', 'overlay', 'split-list',
+          'hero', 'product', 'image', 'social', 'split-hero', 'overlay', 'split-list', 'story',
         ]);
 
         let urlIndex = 0;

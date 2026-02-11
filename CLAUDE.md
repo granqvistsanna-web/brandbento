@@ -22,6 +22,10 @@ When the user reports a visual bug (e.g., element not appearing, clipped, overla
 
 When the user provides reference images, curated lists, or specific design references, use them directly. Do not explore the codebase for alternatives or present generic options when the user has already specified what they want.
 
+## Ideas & TODO Tracking
+
+Feature ideas, things noticed during work, and improvement suggestions go in `TODO.md` at the project root. When you notice a gap, a potential improvement, or the user mentions something worth revisiting later, suggest adding it to TODO.md rather than letting it get lost in conversation. Don't add silently — always mention it so the user can approve or refine.
+
 ## Tile Design Rules
 
 BrandBento is a moodboard tool for graphic designers exploring brand identity. The goal is a board that looks like it came from a design studio — not a dashboard, not a wireframe, not a UI kit. Every tile in `src/components/tiles/` must follow these rules:

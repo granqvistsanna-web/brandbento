@@ -20,6 +20,9 @@ import {
   ToolbarLabel,
   ToolbarSlider,
   ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarTextInput,
 } from './FloatingToolbar';
 
 interface LogoTileProps {
@@ -39,6 +42,11 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
   );
   const updateBrand = useBrandStore((s) => s.updateBrand);
   const brand = useBrandStore((s) => s.brand);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
+  const tile = useBrandStore((state) =>
+    state.tiles.find((t) => t.type === 'logo')
+  );
   const tileSurfaceIndex = useBrandStore((state) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
@@ -72,7 +80,26 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
         onImageUpload={(dataUrl) => handleLogoChange('image', dataUrl)}
       />
       <ToolbarDivider />
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || 'logo'}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
+      <ToolbarDivider />
+      <ToolbarSurfaceSwatches
+        surfaces={surfaces}
+        bgColor={bg}
+        currentIndex={tileSurfaceIndex}
+        onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+      />
+      <ToolbarDivider />
       <ToolbarLabel>Logo</ToolbarLabel>
+      <ToolbarTextInput
+        label="Text"
+        value={logoText || ''}
+        onChange={(v) => handleLogoChange('text', v, false)}
+        onCommit={(v) => handleLogoChange('text', v, true)}
+        placeholder="BRAND"
+      />
       <ToolbarSlider
         label="Size"
         value={logoSize || 32}

@@ -13,10 +13,18 @@ import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 /** Instagram-like system font stack — always used for card chrome regardless of brand fonts */
 const SOCIAL_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 import { hexToHSL } from '@/utils/colorMapping';
+import { getImageFilter } from '@/utils/imagery';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
+  ToolbarTextInput,
+  ToolbarTextArea,
+  ToolbarDivider,
+  ToolbarSegmented,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarLabel,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -41,14 +49,18 @@ interface SocialPostTileProps {
 }
 
 export function SocialPostTile({ placementId }: SocialPostTileProps) {
-  const { colors, logoText } = useBrandStore(
+  const { colors, logoText, imagery } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       logoText: state.brand.logo.text,
+      imagery: state.brand.imagery,
     }))
   );
+  const imageFilter = getImageFilter(imagery.style, imagery.overlay);
   const setPlacementContent = useBrandStore((s) => s.setPlacementContent);
   const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
@@ -242,6 +254,7 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
               src={cardImage}
               alt="Social post"
               className="w-full h-full object-cover"
+              style={{ filter: imageFilter }}
             />
           ) : (
             <div
@@ -352,6 +365,61 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
             imageLocked={placementContent?.imageLocked || tile?.content?.imageLocked}
             onToggleLock={handleToggleLock}
             onImageUpload={handleImageUpload}
+          />
+          <ToolbarDivider />
+          <ToolbarTileTypeGrid
+            currentType={tile?.type || 'social'}
+            onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+          />
+          <ToolbarDivider />
+          <ToolbarSurfaceSwatches
+            surfaces={surfaces}
+            bgColor={bg}
+            currentIndex={tileSurfaceIndex}
+            onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Handle"
+            value={placementContent?.socialHandle || ''}
+            onChange={(v) => placementId && setPlacementContent(placementId, { socialHandle: v }, false)}
+            onCommit={(v) => placementId && setPlacementContent(placementId, { socialHandle: v }, true)}
+            placeholder="username"
+          />
+          <ToolbarTextArea
+            label="Caption"
+            value={placementContent?.socialCaption || ''}
+            onChange={(v) => placementId && setPlacementContent(placementId, { socialCaption: v }, false)}
+            onCommit={(v) => placementId && setPlacementContent(placementId, { socialCaption: v }, true)}
+            placeholder="Post caption"
+          />
+          <ToolbarTextInput
+            label="Likes"
+            value={placementContent?.socialLikes || ''}
+            onChange={(v) => placementId && setPlacementContent(placementId, { socialLikes: v }, false)}
+            onCommit={(v) => placementId && setPlacementContent(placementId, { socialLikes: v }, true)}
+            placeholder="1,204 likes"
+          />
+          <ToolbarDivider />
+          <ToolbarSegmented
+            label="Style"
+            options={[
+              { value: 'full', label: 'Full' },
+              { value: 'clean', label: 'Clean' },
+              { value: 'minimal', label: 'Minimal' },
+            ]}
+            value={socialStyle}
+            onChange={(v) => placementId && setPlacementContent(placementId, { socialStyle: v as 'full' | 'clean' | 'minimal' }, true)}
+          />
+          <ToolbarSegmented
+            label="Card BG"
+            options={[
+              { value: 'white', label: 'White' },
+              { value: 'surface', label: 'Surface' },
+            ]}
+            value={socialCardBg}
+            onChange={(v) => placementId && setPlacementContent(placementId, { socialCardBg: v as 'white' | 'surface' }, true)}
           />
         </FloatingToolbar>
       )}

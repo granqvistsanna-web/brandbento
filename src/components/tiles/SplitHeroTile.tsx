@@ -18,12 +18,19 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getLetterSpacing, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight, getHeadlineTransform } from '@/utils/typography';
+import { getImageFilter } from '@/utils/imagery';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
+  ToolbarTextInput,
+  ToolbarTextArea,
+  ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarLabel,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -58,13 +65,15 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
     return () => ro.disconnect();
   }, []);
 
-  const { typography, colors, ui } = useBrandStore(
+  const { typography, colors, ui, imagery } = useBrandStore(
     useShallow((state: BrandStore) => ({
       typography: state.brand.typography,
       colors: state.brand.colors,
       ui: state.brand.ui,
+      imagery: state.brand.imagery,
     }))
   );
+  const imageFilter = getImageFilter(imagery.style, imagery.overlay);
   const activePreset = useBrandStore((state: BrandStore) => state.activePreset);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
@@ -89,6 +98,8 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
   const ctaHidden = content.ctaHidden === true;
 
   const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
 
   const { bg, text, surfaces, primary } = colors;
   const surfaceBg = resolveSurfaceColor({
@@ -171,6 +182,7 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
             initial={{ opacity: 0, scale: 1.03 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            style={{ filter: imageFilter }}
           />
         ) : (
           <div
@@ -192,12 +204,13 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
         }}
       >
         <h2
-          className="leading-[1.08]"
           style={{
             fontFamily: headlineFont,
             fontWeight: parseInt(typography.weightHeadline) || 700,
             fontSize: `${clampFontSize(typeScale.step3, 22, 54)}px`,
-            letterSpacing: spacing,
+            lineHeight: getHeadlineLineHeight(typography),
+            letterSpacing: getHeadlineTracking(typography),
+            textTransform: getHeadlineTransform(typography) as React.CSSProperties['textTransform'],
             color: adaptiveText,
             textWrap: 'balance',
             marginBottom: `${clampFontSize(typeScale.base * 0.8, 10, 22)}px`,
@@ -207,12 +220,12 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
         </h2>
 
         <p
-          className="leading-[1.5]"
           style={{
             fontFamily: bodyFont,
             fontWeight: parseInt(typography.weightBody) || 400,
             fontSize: `${clampFontSize(typeScale.stepMinus1, 11, 15)}px`,
-            letterSpacing: spacing,
+            lineHeight: getBodyLineHeight(typography),
+            letterSpacing: getBodyTracking(typography),
             color: adaptiveText,
             opacity: 0.6,
             maxWidth: '32ch',
@@ -259,6 +272,41 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
             onImageUpload={(dataUrl) => {
               if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
             }}
+          />
+          <ToolbarDivider />
+          <ToolbarTileTypeGrid
+            currentType={tile?.type || 'split-hero'}
+            onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+          />
+          <ToolbarDivider />
+          <ToolbarSurfaceSwatches
+            surfaces={surfaces}
+            bgColor={bg}
+            currentIndex={tileSurfaceIndex}
+            onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+          />
+          <ToolbarDivider />
+          <ToolbarLabel>Content</ToolbarLabel>
+          <ToolbarTextInput
+            label="Headline"
+            value={content.headline || ''}
+            onChange={(v) => updateTile(tile!.id, { headline: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { headline: v }, true)}
+            placeholder="Headline"
+          />
+          <ToolbarTextArea
+            label="Body"
+            value={content.body || content.subcopy || ''}
+            onChange={(v) => updateTile(tile!.id, { body: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { body: v }, true)}
+            placeholder="Body text"
+          />
+          <ToolbarTextInput
+            label="CTA"
+            value={content.cta || content.buttonLabel || ''}
+            onChange={(v) => updateTile(tile!.id, { cta: v }, false)}
+            onCommit={(v) => updateTile(tile!.id, { cta: v }, true)}
+            placeholder="Button label"
           />
         </FloatingToolbar>
       )}

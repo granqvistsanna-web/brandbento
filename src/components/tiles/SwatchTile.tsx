@@ -9,6 +9,7 @@
  * - **bars**: Horizontal stacked bands showing surface, primary,
  *   and accent. Click any bar to copy its hex value.
  */
+import { useRef } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { useMemo, useState } from 'react';
@@ -19,6 +20,11 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
 import { RiCheckFill as Check } from 'react-icons/ri';
+import { useTileToolbar } from '@/hooks/useTileToolbar';
+import {
+  FloatingToolbar,
+  ToolbarTileTypeGrid,
+} from './FloatingToolbar';
 
 interface SwatchTileProps {
   placementId?: string;
@@ -31,15 +37,21 @@ interface SwatchItem {
 }
 
 export function SwatchTile({ placementId, variant = 'chips' }: SwatchTileProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const { colors, typography } = useBrandStore(
     useShallow((state: BrandStore) => ({
       colors: state.brand.colors,
       typography: state.brand.typography,
     }))
   );
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const tile = useBrandStore((state: BrandStore) =>
+    state.tiles.find((t) => t.type === 'swatch' || t.type === 'color-bars')
+  );
   const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
+  const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
   const { bg, surfaces, primary, accent, text } = colors;
 
@@ -85,8 +97,18 @@ export function SwatchTile({ placementId, variant = 'chips' }: SwatchTileProps) 
     { color: text || COLOR_DEFAULTS.TEXT_DARK, label: 'Text' },
   ];
 
+  const toolbar = isFocused && anchorRect && (
+    <FloatingToolbar anchorRect={anchorRect}>
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || 'swatch'}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
+    </FloatingToolbar>
+  );
+
   return (
     <div
+      ref={containerRef}
       className="w-full h-full flex flex-col overflow-hidden transition-colors duration-300"
       style={{
         backgroundColor: surfaceBg,
@@ -154,6 +176,7 @@ export function SwatchTile({ placementId, variant = 'chips' }: SwatchTileProps) 
           );
         })}
       </div>
+      {toolbar}
     </div>
   );
 }

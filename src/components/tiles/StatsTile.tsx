@@ -22,6 +22,11 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
+  ToolbarDivider,
+  ToolbarTileTypeGrid,
+  ToolbarSurfaceSwatches,
+  ToolbarTextInput,
+  ToolbarLabel,
 } from './FloatingToolbar';
 
 /* ─── Shuffle presets ─── */
@@ -73,6 +78,8 @@ export function StatsTile({ placementId }: StatsTileProps) {
     }))
   );
   const updateTile = useBrandStore((s) => s.updateTile);
+  const swapTileType = useBrandStore((s) => s.swapTileType);
+  const setTileSurface = useBrandStore((s) => s.setTileSurface);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -145,6 +152,41 @@ export function StatsTile({ placementId }: StatsTileProps) {
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
       <ToolbarActions onShuffle={handleShuffle} />
+      <ToolbarDivider />
+      <ToolbarTileTypeGrid
+        currentType={tile?.type || 'stats'}
+        onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
+      />
+      <ToolbarDivider />
+      <ToolbarSurfaceSwatches
+        surfaces={surfaces}
+        bgColor={bg}
+        currentIndex={tileSurfaceIndex}
+        onSurfaceChange={(idx) => placementId && setTileSurface(placementId, idx)}
+      />
+      <ToolbarDivider />
+      <ToolbarLabel>Content</ToolbarLabel>
+      <ToolbarTextInput
+        label="Stat"
+        value={statValue}
+        onChange={(v) => tile?.id && updateTile(tile.id, { headline: v }, false)}
+        onCommit={(v) => tile?.id && updateTile(tile.id, { headline: v }, true)}
+        placeholder="12M+"
+      />
+      <ToolbarTextInput
+        label="Label"
+        value={statLabel}
+        onChange={(v) => tile?.id && updateTile(tile.id, { label: v }, false)}
+        onCommit={(v) => tile?.id && updateTile(tile.id, { label: v }, true)}
+        placeholder="Happy Humans"
+      />
+      <ToolbarTextInput
+        label="Detail"
+        value={detail}
+        onChange={(v) => tile?.id && updateTile(tile.id, { body: v }, false)}
+        onCommit={(v) => tile?.id && updateTile(tile.id, { body: v }, true)}
+        placeholder="Supporting detail..."
+      />
     </FloatingToolbar>
   );
 
