@@ -16,7 +16,7 @@ import { motion } from 'motion/react';
 import { getAdaptiveTextColor } from '@/utils/color';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
-import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { getImageFilter } from '@/utils/imagery';
@@ -75,8 +75,7 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
   );
   const imageFilter = getImageFilter(imagery.style, imagery.overlay);
   const activePreset = useBrandStore((state: BrandStore) => state.activePreset);
-  const placementTileId = getPlacementTileId(placementId);
-  const placementTileType = getPlacementTileType(placementId);
+  const { tileId: placementTileId, tileType: placementTileType } = usePlacementTile(placementId);
   const tile = useBrandStore((state: BrandStore) => {
     if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
     if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);

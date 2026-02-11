@@ -1,7 +1,7 @@
 import { useBrandStore } from '../../store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
-import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
 import { getImageFilter } from '@/utils/imagery';
@@ -23,8 +23,7 @@ import {
  * @param {string} props.placementId - Unique ID for this tile's placement in the grid
  */
 export const ImageTile = ({ placementId }: { placementId: string }) => {
-    const placementTileId = getPlacementTileId(placementId);
-    const placementTileType = getPlacementTileType(placementId);
+    const { tileId: placementTileId, tileType: placementTileType } = usePlacementTile(placementId);
     const tile = useBrandStore((s) => {
         if (placementTileId) {
             return s.tiles.find((t) => t.id === placementTileId);

@@ -10,7 +10,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
-import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { IMAGE_OVERLAY_TEXT, imageOverlayTextMuted } from '@/utils/colorDefaults';
@@ -74,8 +74,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const fontPreview = useBrandStore((state: BrandStore) => state.fontPreview);
-  const placementTileId = getPlacementTileId(placementId);
-  const placementTileType = getPlacementTileType(placementId);
+  const { tileId: placementTileId, tileType: placementTileType } = usePlacementTile(placementId);
   const tile = useBrandStore((state: BrandStore) => {
     if (placementTileId) {
       return state.tiles.find((t) => t.id === placementTileId);

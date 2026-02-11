@@ -13,7 +13,7 @@ import { getAdaptiveTextColor } from '@/utils/color';
 import { hexToHSL } from '@/utils/colorMapping';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
-import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
@@ -154,8 +154,7 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const setTileSurface = useBrandStore((s) => s.setTileSurface);
-  const placementTileId = getPlacementTileId(placementId);
-  const placementTileType = getPlacementTileType(placementId);
+  const { tileId: placementTileId, tileType: placementTileType } = usePlacementTile(placementId);
   const tile = useBrandStore((state: BrandStore) => {
     if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
     if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);
@@ -181,7 +180,6 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
   /* ─── Content ─── */
   const tileContent = tile?.content || {};
   const appName = tileContent.headerTitle || logo.text || 'App';
-  const headline = tileContent.headline || 'Personality';
   const label = tileContent.label || 'Iconography';
 
   /* ─── Toolbar ─── */
@@ -208,13 +206,6 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
         onChange={(v) => tile?.id && updateTile(tile.id, { headerTitle: v }, false)}
         onCommit={(v) => tile?.id && updateTile(tile.id, { headerTitle: v }, true)}
         placeholder="App name"
-      />
-      <ToolbarTextInput
-        label="Category"
-        value={headline}
-        onChange={(v) => tile?.id && updateTile(tile.id, { headline: v }, false)}
-        onCommit={(v) => tile?.id && updateTile(tile.id, { headline: v }, true)}
-        placeholder="Category label"
       />
     </FloatingToolbar>
   );
@@ -270,14 +261,12 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
       className="w-full h-full relative overflow-hidden transition-colors duration-300"
       style={{ backgroundColor: surfaceBg }}
     >
-      {/* ── Top-left accent bar + category label ── */}
+      {/* ── Top-left accent bar ── */}
       <div
         className="absolute z-10"
         style={{
           top: 0,
           left: 0,
-          display: 'flex',
-          flexDirection: 'column',
         }}
       >
         <div
@@ -289,22 +278,6 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
             transition: 'background-color 0.3s ease',
           }}
         />
-        <span
-          style={{
-            fontFamily: bodyFont,
-            fontWeight: parseInt(typography.weightBody) || 400,
-            fontSize: `${clampFontSize(typeScale.step2, 16, 28)}px`,
-            fontStyle: 'italic',
-            letterSpacing: '0.01em',
-            lineHeight: 1.2,
-            color: adaptiveText,
-            opacity: 0.9,
-            paddingLeft: 'clamp(16px, 6%, 32px)',
-            paddingTop: 'clamp(8px, 2.5%, 14px)',
-          }}
-        >
-          {headline}
-        </span>
       </div>
 
       {/* ── Phone mockup — offset right, partially cropped ── */}

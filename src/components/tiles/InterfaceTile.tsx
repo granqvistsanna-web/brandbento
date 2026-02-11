@@ -12,7 +12,7 @@ import { HexColorPicker } from 'react-colorful';
 import { getAdaptiveTextColor } from '@/utils/color';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
-import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { getFontCategory } from '@/utils/typography';
 import { hexToHSL } from '@/utils/colorMapping';
@@ -58,8 +58,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
   // Apply font preview if active
   const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : bodyFont;
 
-  const placementTileId = getPlacementTileId(placementId);
-  const placementTileType = getPlacementTileType(placementId);
+  const { tileId: placementTileId, tileType: placementTileType } = usePlacementTile(placementId);
   const tile = useBrandStore((state: BrandStore) => {
     if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
     if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);

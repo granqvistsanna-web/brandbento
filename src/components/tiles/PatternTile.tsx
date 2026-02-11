@@ -14,7 +14,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { hexToHSL } from '@/utils/colorMapping';
 
-import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -192,8 +192,7 @@ export function PatternTile({ placementId }: PatternTileProps) {
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const setTileSurface = useBrandStore((s) => s.setTileSurface);
-  const placementTileId = getPlacementTileId(placementId);
-  const placementTileType = getPlacementTileType(placementId);
+  const { tileId: placementTileId, tileType: placementTileType } = usePlacementTile(placementId);
   const tile = useBrandStore((state: BrandStore) => {
     if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
     if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);

@@ -9,7 +9,7 @@ import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { RiHeartFill as Heart, RiChat1Fill as MessageCircle, RiSendPlaneFill as Send, RiBookmarkFill as Bookmark, RiMoreFill as MoreHorizontal } from 'react-icons/ri';
 import { resolveSurfaceColor } from '@/utils/surface';
-import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
+import { usePlacementTile } from '@/hooks/usePlacementTile';
 /** Instagram-like system font stack — always used for card chrome regardless of brand fonts */
 const SOCIAL_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 import { hexToHSL } from '@/utils/colorMapping';
@@ -64,8 +64,7 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
   const tileSurfaceIndex = useBrandStore((state: BrandStore) =>
     placementId ? state.tileSurfaces[placementId] : undefined
   );
-  const placementTileId = getPlacementTileId(placementId);
-  const placementTileType = getPlacementTileType(placementId);
+  const { tileId: placementTileId, tileType: placementTileType } = usePlacementTile(placementId);
   const tile = useBrandStore((state: BrandStore) => {
     if (placementTileId) return state.tiles.find((t) => t.id === placementTileId);
     if (placementTileType) return state.tiles.find((t) => t.type === placementTileType);
