@@ -13,7 +13,7 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 Phase: Phase 7 (Polish) - not started
 Plan: None created yet
 Status: In progress (working on todos)
-Last activity: 2026-02-11 - Completed quick/001-font-search-improvements
+Last activity: 2026-02-11 - Completed quick-002: tile reordering drag-and-drop
 
 Progress: [███████████░] 8/9 phases complete
 
@@ -137,9 +137,16 @@ None currently blocking.
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed quick/001-font-search-improvements
+Stopped at: Completed quick-002: tile reordering drag-and-drop
 Resume file: None
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 001 | Font search improvements | 2026-02-11 | - | [001-font-search-improvements](./quick/001-font-search-improvements/) |
+| 002 | Tile reordering via drag-and-drop | 2026-02-11 | 87fcd84 | [002-tile-reordering-drag-and-drop](./quick/002-tile-reordering-drag-and-drop/) |
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-11 after quick-001 font search improvements*
+*Last updated: 2026-02-11 after quick-002 tile reordering drag-and-drop*
