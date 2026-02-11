@@ -184,23 +184,47 @@ export const FontSelector = ({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!isOpen) return;
+
+      // Typing while not in input should focus search
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (e.target !== searchInputRef.current) {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+          // The input will handle the character
+        }
+        return;
+      }
+
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setHighlightIdx((i) => Math.min(i + 1, filteredFonts.length - 1));
+        // If we're in search input and have no highlight, start highlighting first item
+        if (e.target === searchInputRef.current && highlightIdx < 0) {
+          setHighlightIdx(0);
+        } else {
+          setHighlightIdx((i) => Math.min(i + 1, filteredFonts.length - 1));
+        }
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setHighlightIdx((i) => Math.max(i - 1, 0));
       } else if (e.key === "Enter" && highlightIdx >= 0) {
         e.preventDefault();
+        addRecentFont(filteredFonts[highlightIdx].family);
         onChange(filteredFonts[highlightIdx].family);
-        setIsOpen(false);
-      } else if (e.key === "Escape") {
         setIsOpen(false);
         setSearchQuery('');
         setCategoryFilter(null);
+      } else if (e.key === "Escape") {
+        // First Escape clears search, second closes dropdown
+        if (searchQuery) {
+          e.preventDefault();
+          setSearchQuery('');
+        } else {
+          setIsOpen(false);
+          setCategoryFilter(null);
+        }
       }
     },
-    [isOpen, highlightIdx, filteredFonts, onChange, setSearchQuery, setCategoryFilter]
+    [isOpen, highlightIdx, filteredFonts, onChange, addRecentFont, setSearchQuery, setCategoryFilter, searchQuery]
   );
 
   useEffect(() => {
