@@ -48,46 +48,45 @@ import {
 import { mapPaletteToBrand, enforceContrast } from "../utils/colorMapping";
 import { COLOR_DEFAULTS } from "../utils/colorDefaults";
 import {
-  Download,
-  ChevronRight,
-  ChevronDown,
-  Type,
-  Droplet,
-  Sparkles,
-  Layers,
-  Image,
-  FileText,
-  Box,
-  List,
-  LayoutGrid,
-  Wand2,
-  Check,
-  X,
-  Pipette,
-  PanelLeftClose,
-  PanelLeft,
-  Palette,
-  Settings,
-  Sliders,
-  Hash,
-  Columns,
-  Square,
-  Rows,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Bold,
-  MessageCircle,
-  Minus,
-  Plus,
-  Info,
-  Star,
-  Grid2X2,
-  Fingerprint,
-  Grid3X3,
-  TrendingUp,
-  Smartphone,
-} from "lucide-react";
+  RiDownloadFill as Download,
+  RiArrowRightSLine as ChevronRight,
+  RiArrowDownSLine as ChevronDown,
+  RiFontSize as Type,
+  RiDropFill as Droplet,
+  RiSparklingFill as Sparkles,
+  RiStackFill as Layers,
+  RiImageFill as Image,
+  RiFileTextFill as FileText,
+  RiBox3Fill as Box,
+  RiListUnordered as List,
+  RiLayoutGridFill as LayoutGrid,
+  RiMagicFill as Wand2,
+  RiCheckFill as Check,
+  RiCloseFill as X,
+  RiContrastDropFill as Pipette,
+  RiSidebarFoldFill as PanelLeftClose,
+  RiSidebarUnfoldFill as PanelLeft,
+  RiPaletteFill as Palette,
+  RiSettings4Fill as Settings,
+  RiEqualizerFill as Sliders,
+  RiHashtag as Hash,
+  RiLayoutColumnFill as Columns,
+  RiCheckboxBlankFill as Square,
+  RiLayoutRowFill as Rows,
+  RiAlignLeft as AlignLeft,
+  RiAlignCenter as AlignCenter,
+  RiAlignRight as AlignRight,
+  RiBold as Bold,
+  RiChat1Fill as MessageCircle,
+  RiSubtractFill as Minus,
+  RiAddFill as Plus,
+  RiInformationFill as Info,
+  RiStarFill as Star,
+  RiGridFill as Grid2X2,
+  RiFingerprintFill as Fingerprint,
+  RiLayoutGrid2Fill as Grid3X3,
+  RiLineChartFill as TrendingUp,
+} from "react-icons/ri";
 import { motion, AnimatePresence } from "motion/react";
 import { getPlacementKind, getPlacementTileType } from "../config/placements";
 import { ColorPalettePanel } from "./color/ColorPalettePanel";
@@ -144,11 +143,11 @@ const Tooltip = ({ children, content, position = "right" }) => {
 // ============================================
 
 const PropRow = ({ label, children, hint }) => (
-  <div className="flex items-center gap-3 min-h-[32px]">
-    <span className="text-11 min-w-[72px] flex-shrink-0" style={{ color: "var(--sidebar-text-muted)" }}>{label}</span>
+  <div className="flex items-center gap-3 min-h-[36px]">
+    <span className="text-12 min-w-[72px] flex-shrink-0" style={{ color: "var(--sidebar-text-secondary)" }}>{label}</span>
     <div className="flex-1 flex items-center gap-1">{children}</div>
     {hint && (
-      <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+      <span className="text-11" style={{ color: "var(--sidebar-text-muted)" }}>
         {hint}
       </span>
     )}
@@ -185,11 +184,11 @@ const Slider = ({ value, onChange, onBlur, min, max, step = 1, label, unit = "" 
   return (
     <div className="space-y-2 py-1">
       <div className="flex items-center justify-between">
-        <span className="text-11" style={{ color: "var(--sidebar-text-muted)" }}>
+        <span className="text-12" style={{ color: "var(--sidebar-text-secondary)" }}>
           {label}
         </span>
         <span
-          className="text-11 font-mono"
+          className="text-12 font-mono"
           style={{ color: "var(--sidebar-text-secondary)" }}
         >
           {typeof value === "number" ? value.toFixed(step < 1 ? 2 : 0) : value}
@@ -246,7 +245,7 @@ const SegmentedControl = ({ options, value, onChange }) => (
       <button
         key={opt.value}
         onClick={() => onChange(opt.value)}
-        className="flex-1 h-7 text-11 font-medium transition-fast rounded-md"
+        className="flex-1 h-8 text-12 font-medium transition-fast rounded-md"
         style={{
           background:
             value === opt.value ? "var(--sidebar-bg)" : "transparent",
@@ -278,28 +277,28 @@ const Section = ({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div
-      className="group"
-      style={{
-        borderBottom: "1px solid var(--sidebar-border-subtle)",
-      }}
-    >
+    <div className="group">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-3 transition-colors hover:bg-[var(--sidebar-bg-hover)]"
-        style={{ background: "transparent", border: "none", cursor: "pointer" }}
+        className="w-full flex items-center gap-3 transition-colors hover:bg-[var(--sidebar-bg-hover)] sticky top-0 z-10"
+        style={{ background: "var(--sidebar-bg)", border: "none", cursor: "pointer", paddingBlock: 14, paddingInline: 24 }}
       >
         <motion.div
           animate={{ rotate: isOpen ? 90 : 0 }}
           transition={{ duration: 0.15 }}
           style={{ color: "var(--sidebar-text-muted)" }}
         >
-          <ChevronRight size={10} />
+          <ChevronRight size={11} />
         </motion.div>
 
         <span
-          className="flex-1 text-left text-12 font-medium select-none tracking-wide"
-          style={{ color: "var(--sidebar-text)" }}
+          className="flex-1 text-left select-none"
+          style={{
+            color: "var(--sidebar-text)",
+            fontSize: 13,
+            fontWeight: 500,
+            letterSpacing: "-0.01em",
+          }}
         >
           {title}
         </span>
@@ -314,13 +313,16 @@ const Section = ({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            style={{ overflow: "hidden" }}
           >
-            <div className={noPadding ? "" : "px-4 pb-4 space-y-3"}>
+            <div className={noPadding ? "" : "pb-6 space-y-5"} style={noPadding ? {} : { paddingInline: 24 }}>
               {children}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div style={{ height: 1, background: "var(--sidebar-border-subtle)", opacity: 0.3 }} />
     </div>
   );
 };
@@ -503,16 +505,18 @@ const FontSelector = ({ label, value, onChange }) => {
         <button
           ref={buttonRef}
           onClick={() => setIsOpen(!isOpen)}
-          className="flex-1 h-8 px-3 rounded-xl flex items-center gap-2 transition-fast"
+          className="flex-1 px-3 flex items-center gap-2 transition-fast"
           style={{
+            height: 34,
+            borderRadius: 12,
             background: isOpen ? "var(--sidebar-bg-hover)" : "transparent",
-            border: `1px solid ${isOpen ? "var(--accent)" : "var(--sidebar-border)"}`,
+            border: `1px solid ${isOpen ? "var(--accent)" : "var(--sidebar-border-subtle)"}`,
             color: "var(--sidebar-text)",
             boxShadow: isOpen ? "var(--sidebar-focus-ring)" : "none",
           }}
         >
           <span
-            className="text-10 shrink-0"
+            className="text-11 shrink-0"
             style={{ color: "var(--sidebar-text-muted)", fontFamily: `"${value}", sans-serif` }}
           >
             Aa
@@ -615,7 +619,7 @@ const FontSelector = ({ label, value, onChange }) => {
                   <React.Fragment key={font.family}>
                     {idx === 0 && font.curated && (
                       <div
-                        className="px-3 pt-1.5 pb-1 text-10 font-semibold uppercase tracking-wider flex items-center gap-1.5"
+                        className="px-3 pt-1.5 pb-1 text-11 font-semibold uppercase tracking-wider flex items-center gap-1.5"
                         style={{ color: "var(--sidebar-text-muted)" }}
                       >
                         <Star size={8} style={{ opacity: 0.5 }} />
@@ -631,7 +635,7 @@ const FontSelector = ({ label, value, onChange }) => {
                           }}
                         />
                         <div
-                          className="px-3 pt-0.5 pb-1 text-10 font-semibold uppercase tracking-wider"
+                          className="px-3 pt-0.5 pb-1 text-11 font-semibold uppercase tracking-wider"
                           style={{ color: "var(--sidebar-text-muted)" }}
                         >
                           More fonts
@@ -665,7 +669,7 @@ const FontSelector = ({ label, value, onChange }) => {
 
             {/* Footer */}
             <div
-              className="px-3 py-1.5 flex items-center justify-between text-10"
+              className="px-3 py-1.5 flex items-center justify-between text-11"
               style={{
                 borderTop: "1px solid var(--sidebar-border)",
                 color: "var(--sidebar-text-muted)",
@@ -725,7 +729,7 @@ const PaletteCard = React.memo(({ palette, onSelectPalette }) => {
         ))}
         {palette.colors.length > 6 && (
           <div
-            className="w-4 h-4 rounded-full flex items-center justify-center text-10 font-medium"
+            className="w-4 h-4 rounded-full flex items-center justify-center text-11 font-medium"
             style={{
               background: "var(--sidebar-bg-active)",
               color: "var(--sidebar-text-muted)",
@@ -736,7 +740,7 @@ const PaletteCard = React.memo(({ palette, onSelectPalette }) => {
         )}
       </div>
       <span
-        className="text-10 flex-1 text-left truncate group-hover:text-accent transition-fast"
+        className="text-11 flex-1 text-left truncate group-hover:text-accent transition-fast"
         style={{ color: "var(--sidebar-text-secondary)" }}
       >
         {palette.name}
@@ -781,7 +785,7 @@ const PaletteSection = React.memo(({ section, onSelectPalette }) => {
           {section.name}
         </span>
         <span
-          className="text-10 px-2 py-1 rounded"
+          className="text-11 px-2 py-1 rounded"
           style={{
             background: "var(--sidebar-bg-active)",
             color: "var(--sidebar-text-muted)",
@@ -803,7 +807,7 @@ const PaletteSection = React.memo(({ section, onSelectPalette }) => {
             <div className="px-3 pb-2 space-y-1">
               {/* Personality tag */}
               <div
-                className="text-10 italic mb-2"
+                className="text-11 italic mb-2"
                 style={{ color: "var(--sidebar-text-muted)" }}
               >
                 {section.personality}
@@ -855,7 +859,7 @@ const ComplexitySelector = ({ value, onChange }) => (
   >
     <div className="flex items-center justify-between">
       <span
-        className="text-10 font-medium"
+        className="text-11 font-medium"
         style={{ color: "var(--sidebar-text-secondary)" }}
       >
         Palette Complexity
@@ -910,7 +914,7 @@ const ComplexitySelector = ({ value, onChange }) => (
                 )}
               </div>
               <span
-                className="text-10 font-medium"
+                className="text-11 font-medium"
                 style={{ color: isActive ? "var(--accent)" : "var(--sidebar-text-secondary)" }}
               >
                 {option.label}
@@ -966,7 +970,7 @@ const PaletteCustomizer = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span
-            className="text-10 font-medium"
+            className="text-11 font-medium"
             style={{ color: "var(--sidebar-text)" }}
           >
             {palette.name}
@@ -993,7 +997,7 @@ const PaletteCustomizer = ({
       >
         <button
           onClick={() => onModeChange('subtract')}
-          className="flex-1 h-7 text-10 font-medium transition-fast flex items-center justify-center gap-1"
+          className="flex-1 h-7 text-11 font-medium transition-fast flex items-center justify-center gap-1"
           style={{
             background: mode === 'subtract' ? "var(--accent-muted)" : "transparent",
             color: mode === 'subtract' ? "var(--accent)" : "var(--sidebar-text-secondary)",
@@ -1004,7 +1008,7 @@ const PaletteCustomizer = ({
         </button>
         <button
           onClick={() => onModeChange('assign')}
-          className="flex-1 h-7 text-10 font-medium transition-fast flex items-center justify-center gap-1"
+          className="flex-1 h-7 text-11 font-medium transition-fast flex items-center justify-center gap-1"
           style={{
             background: mode === 'assign' ? "var(--accent-muted)" : "transparent",
             color: mode === 'assign' ? "var(--accent)" : "var(--sidebar-text-secondary)",
@@ -1062,7 +1066,7 @@ const PaletteCustomizer = ({
                 );
               })}
             </div>
-            <p className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>
+            <p className="text-11" style={{ color: "var(--sidebar-text-muted)" }}>
               Click colors to include/exclude
             </p>
           </motion.div>
@@ -1076,7 +1080,7 @@ const PaletteCustomizer = ({
           >
             {/* Available Colors */}
             <div>
-              <p className="text-10 mb-2" style={{ color: "var(--sidebar-text-muted)" }}>
+              <p className="text-11 mb-2" style={{ color: "var(--sidebar-text-muted)" }}>
                 Available Colors
               </p>
               <div className="flex flex-wrap gap-1">
@@ -1114,7 +1118,7 @@ const PaletteCustomizer = ({
 
             {/* Role Slots */}
             <div>
-              <p className="text-10 mb-2" style={{ color: "var(--sidebar-text-muted)" }}>
+              <p className="text-11 mb-2" style={{ color: "var(--sidebar-text-muted)" }}>
                 Assign to Roles {selectedRole && <span style={{ color: "var(--accent)" }}>• Select a color above</span>}
               </p>
               <div className="space-y-1">
@@ -1141,7 +1145,7 @@ const PaletteCustomizer = ({
                           style={{ color: isSelected ? "var(--accent)" : "var(--sidebar-text-muted)" }}
                         />
                         <span
-                          className="text-10 font-medium"
+                          className="text-11 font-medium"
                           style={{ color: isSelected ? "var(--accent)" : "var(--sidebar-text)" }}
                         >
                           {role.label}
@@ -1193,7 +1197,7 @@ const PaletteCustomizer = ({
       <motion.button
         onClick={onApply}
         disabled={mode === 'subtract' ? includedCount === 0 : assignedCount < 2}
-        className="w-full h-7 rounded-md text-10 font-medium transition-fast flex items-center justify-center gap-2"
+        className="w-full h-7 rounded-md text-11 font-medium transition-fast flex items-center justify-center gap-2"
         style={{
           background: (mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? "var(--accent)" : "var(--sidebar-bg-active)",
           color: (mode === 'subtract' ? includedCount > 0 : assignedCount >= 2) ? "white" : "var(--sidebar-text-muted)",
@@ -1389,44 +1393,99 @@ PaletteBrowser.displayName = 'PaletteBrowser';
 // PRESET CARDS
 // ============================================
 
-const PresetCard = ({ name, brand, isActive, onClick }) => (
+const PresetCard = ({ name, brand, isActive, onClick, font, word, tagline }) => (
   <motion.button
     onClick={onClick}
-    className="w-full flex items-center justify-between"
+    className="w-full text-left relative overflow-hidden"
     style={{
-      height: "var(--control-height-md)",
-      padding: "0 var(--space-2)",
-      borderRadius: "var(--radius-sm)",
-      background: isActive ? "var(--accent-subtle)" : "transparent",
-      border: "none",
+      borderRadius: 10,
+      border: isActive ? "2px solid var(--accent)" : "1px solid var(--sidebar-border)",
+      padding: 0,
+      transition: "border-color 0.2s, box-shadow 0.2s",
+      background: "transparent",
     }}
-    whileHover={{ background: isActive ? "var(--accent-muted)" : "var(--sidebar-bg-hover)" }}
+    whileHover={{
+      borderColor: isActive ? undefined : "var(--sidebar-text-muted)",
+      boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+    }}
   >
-    <span
-      className="text-11 text-left truncate flex-1"
+    {/* Brand preview area - uses the brand's own bg/text colors */}
+    <div
       style={{
-        color: isActive ? "var(--sidebar-text)" : "var(--sidebar-text-secondary)",
-        transition: "color var(--transition-fast)",
+        background: brand.colors.bg,
+        padding: "14px 14px 12px",
+        borderRadius: "9px 9px 0 0",
+        position: "relative",
       }}
     >
-      {name}
-    </span>
-    <div className="flex shrink-0">
-      {[brand.colors.primary, brand.colors.text, brand.colors.bg].map(
-        (color, i) => (
-          <div
-            key={i}
-            className="rounded-full"
-            style={{
-              width: 10,
-              height: 10,
-              background: color,
-              border: "1px solid var(--sidebar-bg)",
-              marginLeft: i > 0 ? -3 : 0,
-            }}
-          />
-        )
-      )}
+      {/* Brand word rendered in brand's own font + primary color */}
+      <div
+        style={{
+          fontFamily: `"${font}", sans-serif`,
+          fontSize: 18,
+          fontWeight: 700,
+          letterSpacing: "0.02em",
+          color: brand.colors.text,
+          lineHeight: 1.1,
+        }}
+      >
+        {word}
+      </div>
+      <div
+        style={{
+          fontFamily: `"${font}", sans-serif`,
+          fontSize: 10,
+          color: brand.colors.text,
+          opacity: 0.45,
+          marginTop: 3,
+          letterSpacing: "0.06em",
+        }}
+      >
+        {tagline}
+      </div>
+    </div>
+
+    {/* Color strip - full-width surface bands */}
+    <div className="flex w-full" style={{ height: 4 }}>
+      {brand.surfaces.map((color, i) => (
+        <div key={i} className="flex-1" style={{ background: color }} />
+      ))}
+    </div>
+
+    {/* Bottom info bar */}
+    <div
+      className="flex items-center justify-between"
+      style={{
+        padding: "7px 12px",
+        background: "var(--sidebar-bg)",
+      }}
+    >
+      <span
+        className="text-[10px] uppercase tracking-wider"
+        style={{
+          color: isActive ? "var(--sidebar-text)" : "var(--sidebar-text-secondary)",
+          fontWeight: 500,
+        }}
+      >
+        {name}
+      </span>
+      {/* Color palette dots */}
+      <div className="flex items-center gap-0.5">
+        {[brand.colors.primary, brand.colors.accent, brand.colors.text, brand.colors.bg].map(
+          (color, i) => (
+            <div
+              key={i}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 3,
+                background: color,
+                border: "1px solid rgba(0,0,0,0.06)",
+              }}
+            />
+          )
+        )}
+      </div>
     </div>
   </motion.button>
 );
@@ -1536,48 +1595,38 @@ const LayoutSelector = () => {
   const setPreset = useLayoutStore((s) => s.setPreset);
 
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-1">
-        {LAYOUT_PRESETS_CONFIG.map((p) => {
-          const isActive = preset === p.key;
-          return (
-            <motion.button
-              key={p.key}
-              onClick={() => setPreset(p.key)}
-              className="flex flex-col items-center gap-1 py-1.5 px-0.5 rounded-lg transition-fast relative overflow-hidden"
+    <div className="grid grid-cols-4 gap-2">
+      {LAYOUT_PRESETS_CONFIG.map((p) => {
+        const isActive = preset === p.key;
+        return (
+          <motion.button
+            key={p.key}
+            onClick={() => setPreset(p.key)}
+            className="flex flex-col items-center gap-2 py-2.5 px-1 rounded-lg transition-fast"
+            style={{
+              background: isActive
+                ? "var(--accent-subtle)"
+                : "transparent",
+              border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border-subtle)"}`,
+            }}
+            whileHover={{
+              background: isActive ? "var(--accent-subtle)" : "var(--sidebar-bg-hover)",
+            }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <LayoutPreview preset={p.key} isActive={isActive} displaySize={28} />
+            <span
+              className="text-11"
               style={{
-                background: isActive
-                  ? "var(--accent-subtle)"
-                  : "transparent",
-                border: `1px solid ${isActive ? "var(--accent)" : "var(--sidebar-border-subtle)"}`,
-                boxShadow: isActive ? "0 1px 4px var(--accent-muted)" : "none",
+                color: isActive ? "var(--accent)" : "var(--sidebar-text-muted)",
+                fontWeight: isActive ? 500 : 400,
               }}
-              whileHover={{
-                y: -1,
-                boxShadow: "var(--shadow-float)",
-                background: isActive ? "var(--accent-subtle)" : "var(--sidebar-bg-hover)",
-              }}
-              whileTap={{ scale: 0.96 }}
             >
-              <LayoutPreview preset={p.key} isActive={isActive} displaySize={26} />
-              <span
-                className="text-10 font-medium"
-                style={{
-                  color: isActive ? "var(--accent)" : "var(--sidebar-text-muted)",
-                }}
-              >
-                {p.label}
-              </span>
-              {isActive && (
-                <div
-                  className="w-1 h-1 rounded-full"
-                  style={{ background: "var(--accent)" }}
-                />
-              )}
-            </motion.button>
-          );
-        })}
-      </div>
+              {p.label}
+            </span>
+          </motion.button>
+        );
+      })}
     </div>
   );
 };
@@ -1589,11 +1638,11 @@ const CanvasBgPicker = () => {
   return (
     <div className="pt-2 border-t" style={{ borderColor: "var(--sidebar-border-subtle)" }}>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-10 font-semibold uppercase tracking-widest" style={{ color: "var(--sidebar-text-muted)" }}>Canvas Background</span>
+        <span className="text-12 font-medium" style={{ color: "var(--sidebar-text-secondary)" }}>Canvas Background</span>
         {canvasBg && (
           <button
             type="button"
-            className="text-10 font-medium px-1.5 py-0.5 rounded hover:opacity-80 transition-fast"
+            className="text-11 font-medium px-1.5 py-0.5 rounded hover:opacity-80 transition-fast"
             style={{ color: "var(--sidebar-text-muted)" }}
             onClick={() => setCanvasBg(null)}
           >
@@ -1617,11 +1666,11 @@ const CanvasRatioPicker = () => {
   return (
     <div className="pt-2 border-t" style={{ borderColor: "var(--sidebar-border-subtle)" }}>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-10 font-semibold uppercase tracking-widest" style={{ color: "var(--sidebar-text-muted)" }}>Canvas Ratio</span>
+        <span className="text-12 font-medium" style={{ color: "var(--sidebar-text-secondary)" }}>Canvas Ratio</span>
         {canvasRatio !== 'auto' && (
           <button
             type="button"
-            className="text-10 font-medium px-1.5 py-0.5 rounded hover:opacity-80 transition-fast"
+            className="text-11 font-medium px-1.5 py-0.5 rounded hover:opacity-80 transition-fast"
             style={{ color: "var(--sidebar-text-muted)" }}
             onClick={() => setCanvasRatio('auto')}
           >
@@ -1629,16 +1678,20 @@ const CanvasRatioPicker = () => {
           </button>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-1">
+      <div
+        className="flex rounded-lg overflow-hidden"
+        style={{ background: "var(--sidebar-bg-hover)", padding: 3, gap: 2 }}
+      >
         {CANVAS_RATIOS.map((r) => (
           <button
             key={r.key}
             type="button"
-            className="px-2 py-1.5 rounded-md text-11 font-medium transition-fast text-center"
+            className="flex-1 rounded-md text-11 font-medium transition-fast text-center"
             style={{
-              backgroundColor: canvasRatio === r.key ? "var(--sidebar-bg-hover)" : "transparent",
+              padding: "5px 0",
+              backgroundColor: canvasRatio === r.key ? "var(--sidebar-bg)" : "transparent",
               color: canvasRatio === r.key ? "var(--sidebar-text)" : "var(--sidebar-text-muted)",
-              border: `1px solid ${canvasRatio === r.key ? "var(--sidebar-border)" : "transparent"}`,
+              boxShadow: canvasRatio === r.key ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
             }}
             onClick={() => setCanvasRatio(r.key)}
           >
@@ -1655,32 +1708,38 @@ const CanvasRatioPicker = () => {
 // ============================================
 
 const PRESET_OPTIONS = [
-  { key: "default", name: "General Brand" },
-  { key: "techStartup", name: "Tech SaaS" },
-  { key: "luxuryRetail", name: "Luxury Retail" },
-  { key: "communityNonprofit", name: "Community Nonprofit" },
-  { key: "creativeStudio", name: "Creative Studio" },
-  { key: "spread", name: "Food & Drink" },
+  { key: "default", name: "General Brand", tagline: "Clean & minimal", font: "Inter", word: "BENTO" },
+  { key: "techStartup", name: "Tech SaaS", tagline: "Fast & precise", font: "Sora", word: "TECH" },
+  { key: "luxuryRetail", name: "Luxury Retail", tagline: "Refined & timeless", font: "Playfair Display", word: "LUXE" },
+  { key: "communityNonprofit", name: "Community", tagline: "Warm & inviting", font: "Plus Jakarta Sans", word: "UNITE" },
+  { key: "creativeStudio", name: "Creative Studio", tagline: "Bold & expressive", font: "Bricolage Grotesque", word: "STUDIO" },
+  { key: "spread", name: "Food & Drink", tagline: "Earthy & editorial", font: "Oswald", word: "SAVOR" },
 ];
 
 const PRESET_BRANDS = {
   default: {
-    colors: { bg: "#FFFFFF", text: "#1A1A1A", primary: "#000000" },
+    colors: { bg: "#FFFFFF", text: "#1A1A1A", primary: "#000000", accent: "#555555" },
+    surfaces: ["#F5F5F5", "#EBEBEB", "#D4D4D4", "#000000", "#555555"],
   },
   techStartup: {
-    colors: { bg: "#F5F7FA", text: "#0F172A", primary: "#3B82F6" },
+    colors: { bg: "#F5F7FA", text: "#0F172A", primary: "#3B82F6", accent: "#64748B" },
+    surfaces: ["#FFFFFF", "#F1F5F9", "#E2E8F0", "#3B82F6", "#64748B"],
   },
   luxuryRetail: {
-    colors: { bg: "#FDFCFA", text: "#1C1917", primary: "#78716C" },
+    colors: { bg: "#FDFCFA", text: "#1C1917", primary: "#78716C", accent: "#A8A29E" },
+    surfaces: ["#F5F5F4", "#FAFAF9", "#E7E5E4", "#78716C", "#A8A29E"],
   },
   communityNonprofit: {
-    colors: { bg: "#FFFFFF", text: "#0C4A6E", primary: "#0EA5E9" },
+    colors: { bg: "#FFFFFF", text: "#0C4A6E", primary: "#0EA5E9", accent: "#7DD3FC" },
+    surfaces: ["#F0F9FF", "#E0F2FE", "#BAE6FD", "#0EA5E9", "#7DD3FC"],
   },
   creativeStudio: {
-    colors: { bg: "#FAFAFA", text: "#171717", primary: "#F97316" },
+    colors: { bg: "#FAFAFA", text: "#171717", primary: "#F97316", accent: "#D946EF" },
+    surfaces: ["#FFFFFF", "#FFF7ED", "#FEFCE8", "#F97316", "#D946EF"],
   },
   spread: {
-    colors: { bg: "#F7F2EA", text: "#1E1C2E", primary: "#2D2A57" },
+    colors: { bg: "#F7F2EA", text: "#1E1C2E", primary: "#2D2A57", accent: "#9A79E8" },
+    surfaces: ["#E3DBC8", "#F2EDE4", "#2D2A57", "#9A79E8", "#E3DBC8"],
   },
 };
 
@@ -1795,7 +1854,7 @@ const GlobalControls = React.memo(() => {
                 className="w-7 h-7 rounded-md ring-1 ring-inset ring-white/10 transition-transform group-hover:scale-110"
                 style={{ backgroundColor: brand.colors[key] || brand.colors.bg }}
               />
-              <span className="text-[9px] uppercase tracking-wide" style={{ color: "var(--sidebar-text-muted)" }}>{label}</span>
+              <span className="text-[10px] uppercase tracking-wide" style={{ color: "var(--sidebar-text-muted)" }}>{label}</span>
             </button>
           ))}
         </div>
@@ -1806,7 +1865,7 @@ const GlobalControls = React.memo(() => {
         title="Industry Themes"
         defaultOpen={false}
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
           {PRESET_OPTIONS.map((preset) => (
             <PresetCard
               key={preset.key}
@@ -1814,6 +1873,9 @@ const GlobalControls = React.memo(() => {
               brand={PRESET_BRANDS[preset.key]}
               isActive={activePreset === preset.key}
               onClick={() => loadPreset(preset.key)}
+              font={preset.font}
+              word={preset.word}
+              tagline={preset.tagline}
             />
           ))}
         </div>
@@ -1982,7 +2044,6 @@ const TileControls = ({ tile, placementId }) => {
     { value: "split-list", label: "Split List", icon: Rows, desc: "Split layout with list content" },
     { value: "pattern", label: "Pattern", icon: Grid3X3, desc: "Geometric pattern from brand colors" },
     { value: "stats", label: "Stats", icon: TrendingUp, desc: "Big number with label and detail" },
-    { value: "app-screen", label: "App Screen", icon: Smartphone, desc: "Phone mockup with branded app screen" },
   ];
 
   // Get tile type from placement ID mapping (fallback for when tile object is undefined)
@@ -2039,7 +2100,7 @@ const TileControls = ({ tile, placementId }) => {
                     color: isSelected ? "var(--sidebar-text)" : "var(--sidebar-text-muted)",
                   }}
                 >
-                  <TypeIcon size={13} strokeWidth={isSelected ? 2 : 1.5} style={{ flexShrink: 0 }} />
+                  <TypeIcon size={13} style={{ flexShrink: 0 }} />
                   <span className="text-11 truncate">{type.label}</span>
                 </button>
               );
@@ -2064,7 +2125,7 @@ const TileControls = ({ tile, placementId }) => {
             }}
           >
             <div
-              className="w-7 h-7 rounded-md flex items-center justify-center text-10 font-medium"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-11 font-medium"
               style={{
                 background: `linear-gradient(135deg, ${surfaces?.[0] || bg} 50%, ${surfaces?.[1] || bg} 50%)`,
                 boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.06)",
@@ -2073,7 +2134,7 @@ const TileControls = ({ tile, placementId }) => {
               <span style={{ color: "var(--sidebar-text-muted)", fontSize: "9px" }}>A</span>
             </div>
             <span
-              className="text-10"
+              className="text-11"
               style={{
                 color: currentSurfaceIndex === undefined
                   ? "var(--accent)"
@@ -2108,7 +2169,7 @@ const TileControls = ({ tile, placementId }) => {
                   }}
                 />
                 <span
-                  className="text-10"
+                  className="text-11"
                   style={{
                     color: isSelected
                       ? "var(--accent)"
@@ -2207,7 +2268,7 @@ const TileControls = ({ tile, placementId }) => {
 
             {/* Per-post editing */}
             <div className="flex items-center justify-between mt-1 mb-1">
-              <span className="text-11 font-medium uppercase tracking-wider" style={{ color: "var(--sidebar-text-secondary)" }}>
+              <span className="text-12 font-medium" style={{ color: "var(--sidebar-text-secondary)" }}>
                 Posts ({posts.length})
               </span>
               {posts.length < 3 && (
@@ -2475,7 +2536,6 @@ const TileControls = ({ tile, placementId }) => {
 const ControlPanel = () => {
   // Selective subscriptions - only re-render when these specific values change
   const focusedTileId = useBrandStore((s) => s.focusedTileId);
-  const history = useBrandStore((s) => s.history);
   const focusedTile = useBrandStore(selectFocusedTile);
 
   // Actions don't change, so select them individually (stable references)
@@ -2560,7 +2620,7 @@ const ControlPanel = () => {
 
       {isCollapsed ? (
         /* Collapsed state - icon shortcuts */
-        <div className="flex flex-col items-center pt-12 gap-1">
+        <div className="flex flex-col items-center pt-14 gap-1.5">
           {[
             { icon: Layers, label: "Layout" },
             { icon: Type, label: "Typography" },
@@ -2571,7 +2631,7 @@ const ControlPanel = () => {
             <Tooltip key={item.label} content={item.label} position="right">
               <button
                 onClick={() => setIsCollapsed(false)}
-                className="w-8 h-8 rounded-md flex items-center justify-center transition-fast"
+                className="w-9 h-9 rounded-md flex items-center justify-center transition-fast"
                 style={{
                   color: "var(--sidebar-text-muted)",
                   background: "transparent",
@@ -2597,33 +2657,19 @@ const ControlPanel = () => {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Panel header */}
           <div
-            className="px-4 py-3.5 flex items-center justify-between flex-shrink-0 relative"
+            className="flex items-center justify-between flex-shrink-0 relative"
+            style={{ paddingBlock: 20, paddingInline: 24 }}
           >
             <span
-              className="text-13 font-medium tracking-wide"
-              style={{ color: "var(--sidebar-text)" }}
+              style={{ color: "var(--sidebar-text)", fontSize: 20, fontWeight: 600, letterSpacing: "-0.025em" }}
             >
               {focusedTileId ? "Tile" : "Design"}
             </span>
-            <div className="flex items-center gap-2 mr-8">
-              {history.past.length > 0 && (
-                <span
-                  className="text-10 px-2 py-0.5 rounded-full font-medium"
-                  style={{
-                    background: "var(--accent-muted)",
-                    color: "var(--accent)",
-                  }}
-                >
-                  {history.past.length}
-                </span>
-              )}
-            </div>
-            {/* Subtle bottom fade */}
+            <div className="flex items-center gap-2 mr-8" />
+            {/* Subtle bottom border */}
             <div
               className="absolute bottom-0 left-0 right-0 h-px"
-              style={{
-                background: "linear-gradient(90deg, transparent, var(--sidebar-border-subtle) 20%, var(--sidebar-border-subtle) 80%, transparent)",
-              }}
+              style={{ background: "var(--sidebar-border-subtle)", opacity: 0.3 }}
             />
           </div>
 
@@ -2656,19 +2702,20 @@ const ControlPanel = () => {
 
           {/* Panel footer */}
           <div
-            className="px-4 py-2.5 flex items-center justify-center gap-4 flex-shrink-0"
+            className="py-3.5 flex items-center justify-center gap-5 flex-shrink-0"
             style={{
+              paddingInline: 24,
               borderTop: "1px solid var(--sidebar-border-subtle)",
             }}
           >
             <div className="flex items-center gap-1.5" style={{ opacity: 0.7 }}>
               <span className="kbd">⌘Z</span>
-              <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>Undo</span>
+              <span className="text-11" style={{ color: "var(--sidebar-text-muted)" }}>Undo</span>
             </div>
             <div className="w-px h-3" style={{ background: "var(--sidebar-border-subtle)" }} />
             <div className="flex items-center gap-1.5" style={{ opacity: 0.7 }}>
               <span className="kbd">⌘\</span>
-              <span className="text-10" style={{ color: "var(--sidebar-text-muted)" }}>Toggle</span>
+              <span className="text-11" style={{ color: "var(--sidebar-text-muted)" }}>Toggle</span>
             </div>
           </div>
         </div>

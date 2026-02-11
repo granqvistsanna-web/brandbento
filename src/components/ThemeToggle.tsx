@@ -17,7 +17,7 @@
  * <ThemeToggle />
  */
 import { useState, useRef, useEffect } from 'react';
-import { Sun, Moon, Monitor, Check } from 'lucide-react';
+import { RiSunFill as Sun, RiMoonFill as Moon, RiComputerFill as Monitor, RiCheckFill as Check } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../hooks/useTheme';
 

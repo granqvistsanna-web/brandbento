@@ -44,6 +44,10 @@ interface UISettings {
   buttonRadius: number;
   buttonStyle: 'filled' | 'outline' | 'soft';
   buttonColor: string | null;
+  buttonSize: 'compact' | 'default' | 'large';
+  buttonWeight: 400 | 500 | 600 | 700;
+  buttonUppercase: boolean;
+  buttonLetterSpacing: number;
 }
 
 interface Brand {
@@ -74,7 +78,7 @@ export const DEFAULT_BRAND: Brand = {
     primary: "#000000",
     accent: "#555555",
     surface: "#F5F5F5",
-    surfaces: ["#FFFFFF", "#F5F5F5", "#FAFAFA", "#F0F0F0"],
+    surfaces: ["#FFFFFF", "#F5F5F5", "#EBEBEB", "#E0E0E0", "#D4D4D4", "#1A1A1A", "#000000", "#555555"],
     paletteColors: ["#000000", "#555555", "#171717", "#525252", "#A1A1A1", "#D4D4D4", "#F5F5F5", "#FFFFFF"],
   },
   logo: {
@@ -92,6 +96,10 @@ export const DEFAULT_BRAND: Brand = {
     buttonRadius: 10,
     buttonStyle: 'filled',
     buttonColor: null,
+    buttonSize: 'default',
+    buttonWeight: 600,
+    buttonUppercase: false,
+    buttonLetterSpacing: 0,
   },
 };
 

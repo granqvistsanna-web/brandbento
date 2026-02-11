@@ -7,7 +7,7 @@
  */
 import { memo, useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Pencil } from 'lucide-react';
+import { RiPencilFill as Pencil } from 'react-icons/ri';
 import { HexColorPicker } from 'react-colorful';
 import { getContrastRatio } from '@/utils/colorMapping';
 import { isValidHex } from '@/utils/colorDefaults';

@@ -18,7 +18,7 @@ import { hexToHSL } from '@/utils/colorMapping';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
-import { Check } from 'lucide-react';
+import { RiCheckFill as Check } from 'react-icons/ri';
 
 interface SwatchTileProps {
   placementId?: string;
@@ -224,7 +224,7 @@ function BarsLayout({
             className="font-medium uppercase tracking-wider flex items-center gap-1.5"
             style={{ color: getTextColor(color), opacity: 0.4, fontFamily: uiFont, fontSize: labelSize }}
           >
-            {copied === color ? <Check size={10} strokeWidth={2.5} /> : null}
+            {copied === color ? <Check size={10} /> : null}
             {color}
           </span>
         </motion.button>

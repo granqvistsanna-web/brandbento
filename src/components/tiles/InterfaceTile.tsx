@@ -8,7 +8,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
-import { ArrowRight } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import { getAdaptiveTextColor } from '@/utils/color';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
@@ -66,6 +65,17 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
   const btnColor = ui?.buttonColor || primary;
   const btnRadius = ui?.buttonRadius ?? 10;
   const btnStyle = ui?.buttonStyle ?? 'filled';
+  const btnSize = ui?.buttonSize ?? 'default';
+  const btnWeight = ui?.buttonWeight ?? 600;
+  const btnUppercase = ui?.buttonUppercase ?? false;
+  const btnLetterSpacing = ui?.buttonLetterSpacing ?? 0;
+
+  const sizeMap: Record<string, { height: number; fontSize: number; px: number }> = {
+    compact: { height: 36, fontSize: 12, px: 16 },
+    default: { height: 46, fontSize: 14, px: 22 },
+    large: { height: 54, fontSize: 15, px: 28 },
+  };
+  const sizeConfig = sizeMap[btnSize] || sizeMap.default;
   const content = tile?.content || {};
   const primaryLabel = content.buttonLabel || 'Get Started';
   const secondaryLabel = content.headerTitle || 'Learn More';
@@ -114,7 +124,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
           backgroundColor: btnColor,
           color: btnTextOnFilled,
           border: 'none',
-          boxShadow: 'var(--shadow-float)',
+          boxShadow: 'none',
         };
     }
   })();
@@ -183,18 +193,19 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
           className="flex items-center justify-center"
           style={{
             width: '100%',
-            height: 46,
+            height: sizeConfig.height,
+            padding: `0 ${sizeConfig.px}px`,
             borderRadius: btnRadius,
             fontFamily: uiFont,
-            fontWeight: 600,
-            fontSize: 14,
+            fontWeight: btnWeight,
+            fontSize: sizeConfig.fontSize,
+            textTransform: btnUppercase ? 'uppercase' : 'none',
+            letterSpacing: btnUppercase ? `${Math.max(btnLetterSpacing, 0.04)}em` : btnLetterSpacing ? `${btnLetterSpacing}em` : undefined,
             cursor: 'default',
-            gap: 6,
             ...primaryBtnStyles,
           }}
         >
-          <span>{primaryLabel}</span>
-          <ArrowRight size={14} strokeWidth={2.2} />
+          {primaryLabel}
         </button>
 
         {/* Secondary — outline */}
@@ -202,13 +213,16 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
           className="flex items-center justify-center"
           style={{
             width: '100%',
-            height: 46,
+            height: sizeConfig.height,
+            padding: `0 ${sizeConfig.px}px`,
             borderRadius: btnRadius,
             backgroundColor: 'transparent',
             color: cardText,
             fontFamily: uiFont,
-            fontWeight: 500,
-            fontSize: 14,
+            fontWeight: Math.min(btnWeight, 500) as number,
+            fontSize: sizeConfig.fontSize,
+            textTransform: btnUppercase ? 'uppercase' : 'none',
+            letterSpacing: btnUppercase ? `${Math.max(btnLetterSpacing, 0.04)}em` : btnLetterSpacing ? `${btnLetterSpacing}em` : undefined,
             border: `1.5px solid ${isLight
               ? `color-mix(in srgb, ${text} 18%, transparent)`
               : `color-mix(in srgb, ${text} 14%, transparent)`
@@ -216,7 +230,7 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
             cursor: 'default',
           }}
         >
-          <span>{secondaryLabel}</span>
+          {secondaryLabel}
         </button>
       </div>
 
@@ -250,6 +264,46 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
             onChange={(v) => handleUiChange('buttonStyle', v, true)}
           />
 
+          <ToolbarSegmented
+            label="Size"
+            options={[
+              { value: 'compact', label: 'S' },
+              { value: 'default', label: 'M' },
+              { value: 'large', label: 'L' },
+            ]}
+            value={btnSize}
+            onChange={(v) => handleUiChange('buttonSize', v, true)}
+          />
+          <ToolbarSegmented
+            label="Weight"
+            options={[
+              { value: '400', label: 'Regular' },
+              { value: '500', label: 'Medium' },
+              { value: '600', label: 'Semi' },
+              { value: '700', label: 'Bold' },
+            ]}
+            value={String(btnWeight)}
+            onChange={(v) => handleUiChange('buttonWeight', Number(v), true)}
+          />
+          <ToolbarSegmented
+            label="Case"
+            options={[
+              { value: 'false', label: 'Default' },
+              { value: 'true', label: 'ABC' },
+            ]}
+            value={String(btnUppercase)}
+            onChange={(v) => handleUiChange('buttonUppercase', v === 'true', true)}
+          />
+          <ToolbarSlider
+            label="Spacing"
+            value={btnLetterSpacing}
+            min={0}
+            max={0.2}
+            displayValue={`${btnLetterSpacing.toFixed(2)}em`}
+            onChange={(v) => handleUiChange('buttonLetterSpacing', Math.round(v * 100) / 100, false)}
+            onCommit={(v) => handleUiChange('buttonLetterSpacing', Math.round(v * 100) / 100, true)}
+          />
+          <ToolbarDivider />
           {/* Color picker (unique to InterfaceTile) */}
           <div>
             <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>Color</span>

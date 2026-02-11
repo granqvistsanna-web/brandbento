@@ -26,6 +26,7 @@ import {
   ToolbarActions,
   ToolbarLabel,
   ToolbarTextInput,
+  ToolbarSegmented,
   ToolbarDivider,
   getRandomShuffleImage,
 } from './FloatingToolbar';
@@ -61,10 +62,11 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
     return () => ro.disconnect();
   }, []);
 
-  const { typography, colors } = useBrandStore(
+  const { typography, colors, ui } = useBrandStore(
     useShallow((state: BrandStore) => ({
       typography: state.brand.typography,
       colors: state.brand.colors,
+      ui: state.brand.ui,
     }))
   );
   const activePreset = useBrandStore((state: BrandStore) => state.activePreset);
@@ -88,10 +90,11 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
   const headline = content.headline || industryCopy.headline;
   const body = content.body || content.subcopy || industryCopy.body;
   const cta = content.cta || content.buttonLabel || industryCopy.cta;
+  const ctaHidden = content.ctaHidden === true;
 
   const updateTile = useBrandStore((s) => s.updateTile);
 
-  const { bg, text, surfaces } = colors;
+  const { bg, text, surfaces, primary } = colors;
   const surfaceBg = resolveSurfaceColor({
     placementId,
     tileSurfaceIndex,
@@ -100,6 +103,43 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
     defaultIndex: 0,
   });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, text, COLOR_DEFAULTS.TEXT_LIGHT);
+
+  // Button styling from UI store (matches InterfaceTile)
+  const btnColor = ui?.buttonColor || primary;
+  const btnRadius = ui?.buttonRadius ?? 10;
+  const btnStyle = ui?.buttonStyle ?? 'filled';
+  const btnWeight = ui?.buttonWeight ?? 600;
+  const btnUppercase = ui?.buttonUppercase ?? false;
+  const btnLetterSpacing = ui?.buttonLetterSpacing ?? 0;
+
+  const btnTextOnFilled = getAdaptiveTextColor(
+    btnColor,
+    COLOR_DEFAULTS.TEXT_DARK,
+    COLOR_DEFAULTS.WHITE
+  );
+
+  const ctaBtnStyles = (() => {
+    switch (btnStyle) {
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          color: btnColor,
+          border: `1.5px solid ${btnColor}`,
+        };
+      case 'soft':
+        return {
+          backgroundColor: `color-mix(in srgb, ${btnColor} 12%, transparent)`,
+          color: btnColor,
+          border: 'none',
+        };
+      default:
+        return {
+          backgroundColor: btnColor,
+          color: btnTextOnFilled,
+          border: 'none',
+        };
+    }
+  })();
   const { fontFamily: headlineFont } = useGoogleFonts(typography.primary, getFontCategory(typography.primary));
   const { fontFamily: bodyFont } = useGoogleFonts(typography.secondary, getFontCategory(typography.secondary));
   const typeScale = getTypeScale(typography);
@@ -168,11 +208,11 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
           style={{
             fontFamily: headlineFont,
             fontWeight: parseInt(typography.weightHeadline) || 700,
-            fontSize: `${clampFontSize(typeScale.step2)}px`,
+            fontSize: `${clampFontSize(typeScale.step3, 22, 54)}px`,
             letterSpacing: spacing,
             color: adaptiveText,
             textWrap: 'balance',
-            marginBottom: `${clampFontSize(typeScale.base * 0.6, 8, 18)}px`,
+            marginBottom: `${clampFontSize(typeScale.base * 0.8, 10, 22)}px`,
           }}
         >
           {headline}
@@ -188,29 +228,36 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
             color: adaptiveText,
             opacity: 0.6,
             maxWidth: '32ch',
-            marginBottom: `${clampFontSize(typeScale.base * 0.8, 10, 24)}px`,
+            marginBottom: `${clampFontSize(typeScale.base * 0.6, 8, 18)}px`,
           }}
         >
           {body}
         </p>
 
-        <span
-          className="uppercase tracking-widest self-start"
-          style={{
-            fontFamily: bodyFont,
-            fontWeight: 500,
-            fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 12)}px`,
-            letterSpacing: '0.14em',
-            color: adaptiveText,
-            opacity: 0.55,
-          }}
-        >
-          {cta}
-        </span>
+        {!ctaHidden && (
+          <button
+            className="self-start flex items-center justify-center"
+            style={{
+              fontFamily: bodyFont,
+              fontWeight: btnWeight,
+              fontSize: `${clampFontSize(typeScale.stepMinus1, 11, 14)}px`,
+              textTransform: btnUppercase ? 'uppercase' : 'none',
+              letterSpacing: btnUppercase
+                ? `${Math.max(btnLetterSpacing, 0.04)}em`
+                : btnLetterSpacing ? `${btnLetterSpacing}em` : undefined,
+              borderRadius: btnRadius,
+              padding: `${clampFontSize(typeScale.stepMinus1 * 0.55, 6, 10)}px ${clampFontSize(typeScale.step1 * 0.9, 14, 24)}px`,
+              cursor: 'default',
+              ...ctaBtnStyles,
+            }}
+          >
+            {cta}
+          </button>
+        )}
       </div>
 
       {/* Floating toolbar when focused */}
-      {isFocused && anchorRect && (
+      {isFocused && anchorRect && tile?.id && (
         <FloatingToolbar anchorRect={anchorRect}>
           <ToolbarActions
             onShuffle={() => {
@@ -241,13 +288,26 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
             onCommit={(v) => handleTextCommit('body', v)}
             placeholder={industryCopy.body}
           />
-          <ToolbarTextInput
-            label="CTA"
-            value={content.cta || content.buttonLabel || ''}
-            onChange={(v) => handleTextChange('cta', v)}
-            onCommit={(v) => handleTextCommit('cta', v)}
-            placeholder={industryCopy.cta}
+          <ToolbarSegmented
+            label="Button"
+            options={[
+              { value: 'show', label: 'Show' },
+              { value: 'hide', label: 'Hide' },
+            ]}
+            value={ctaHidden ? 'hide' : 'show'}
+            onChange={(v) => {
+              if (tile?.id) updateTile(tile.id, { ctaHidden: v === 'hide' }, true);
+            }}
           />
+          {!ctaHidden && (
+            <ToolbarTextInput
+              label="CTA"
+              value={content.cta || content.buttonLabel || ''}
+              onChange={(v) => handleTextChange('cta', v)}
+              onCommit={(v) => handleTextCommit('cta', v)}
+              placeholder={industryCopy.cta}
+            />
+          )}
         </FloatingToolbar>
       )}
     </div>

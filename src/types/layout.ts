@@ -40,8 +40,7 @@ export type TileType =
   | 'card'
   | 'logo-symbol'
   | 'pattern'
-  | 'stats'
-  | 'app-screen';
+  | 'stats';
 
 /** Current layout state managed by the layout store. */
 export interface LayoutState {

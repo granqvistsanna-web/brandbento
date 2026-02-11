@@ -21,7 +21,8 @@
  */
 import { useRef, useCallback, useState, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Shuffle, ImagePlus, Lock, Unlock } from 'lucide-react';
+import { RiShuffleFill as Shuffle, RiImageAddFill as ImagePlus, RiLockFill as Lock, RiLockUnlockFill as Unlock } from 'react-icons/ri';
+import { useBrandStore } from '@/store/useBrandStore';
 
 /* ─── Image pool for shuffle ───
  * Curated stock images used when the user clicks "Shuffle" on an
@@ -84,6 +85,17 @@ interface FloatingToolbarProps {
 export function FloatingToolbar({ anchorRect, children, width = 220 }: FloatingToolbarProps) {
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
+  // Close toolbar on Escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        useBrandStore.getState().setFocusedTile(null);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
   useEffect(() => {
     const gap = 8;
     const spaceRight = window.innerWidth - anchorRect.right;
@@ -106,10 +118,10 @@ export function FloatingToolbar({ anchorRect, children, width = 220 }: FloatingT
         width,
         zIndex: 50,
         background: 'var(--sidebar-bg)',
-        border: '1px solid var(--sidebar-border)',
-        borderRadius: 12,
-        padding: 12,
-        boxShadow: 'var(--shadow-xl)',
+        border: '1px solid var(--sidebar-border-subtle)',
+        borderRadius: 14,
+        padding: 14,
+        boxShadow: 'var(--shadow-toolbar)',
         display: 'flex',
         flexDirection: 'column' as const,
         gap: 10,
@@ -180,7 +192,7 @@ export function ToolbarActions({
       {/* Shuffle */}
       <button
         onClick={onShuffle}
-        title="Shuffle"
+        aria-label="Shuffle content"
         style={{
           ...iconBtnStyle,
           background: 'var(--sidebar-bg-hover)',
@@ -203,7 +215,7 @@ export function ToolbarActions({
         <>
           <button
             onClick={() => fileRef.current?.click()}
-            title="Upload image"
+            aria-label="Upload image"
             style={{
               ...iconBtnStyle,
               background: 'var(--sidebar-bg-hover)',
@@ -234,7 +246,7 @@ export function ToolbarActions({
       {hasImage && onToggleLock && (
         <button
           onClick={onToggleLock}
-          title={imageLocked ? 'Unlock image' : 'Lock image'}
+          aria-label={imageLocked ? 'Unlock image' : 'Lock image'}
           style={{
             ...iconBtnStyle,
             background: imageLocked ? 'var(--accent)' : 'var(--sidebar-bg-hover)',
@@ -432,6 +444,7 @@ export function ToolbarSegmented({ label, options, value, onChange }: ToolbarSeg
           <button
             key={o.value}
             onClick={() => onChange(o.value)}
+            aria-pressed={value === o.value}
             style={{
               flex: 1,
               height: 26,

@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from "react";
-import { Upload, X } from "lucide-react";
+import { RiUploadFill as Upload, RiCloseFill as X } from "react-icons/ri";
 
 interface ImageDropZoneProps {
   value: string | null | undefined;

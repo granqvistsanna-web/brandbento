@@ -195,7 +195,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
             style={{
               fontFamily: headlineFont,
               fontWeight: parseInt(typography.weightHeadline) || 700,
-              fontSize: `${clampFontSize(typeScale.step2, 20, 36)}px`,
+              fontSize: `${clampFontSize(typeScale.step3, 26, 50)}px`,
               letterSpacing: spacing,
               color: IMAGE_OVERLAY_TEXT,
               textWrap: 'balance',
@@ -292,7 +292,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
           style={{
             fontFamily: headlineFont,
             fontWeight: parseInt(typography.weightHeadline) || 700,
-            fontSize: `${clampFontSize(typeScale.step2, 18, 34)}px`,
+            fontSize: `${clampFontSize(typeScale.step3, 24, 48)}px`,
             letterSpacing: isSpread ? '0.06em' : spacing,
             color: IMAGE_OVERLAY_TEXT,
             textTransform: isSpread ? 'uppercase' : 'none',

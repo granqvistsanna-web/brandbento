@@ -670,3 +670,43 @@ export const enforceContrast = (mapping: BrandColorMapping): BrandColorMapping =
 
   return result;
 };
+
+// ── Column role derivation (for Inspotype-style custom modal) ──────────
+
+export interface ColumnRoles {
+  background: string;
+  tone: string;
+  text: string;
+  textCta: string;
+  cta: string;
+  contrastRatio: number;
+}
+
+/**
+ * Derive all 6 display roles for a single color column.
+ * Background and CTA are pass-through (editable by user).
+ * Tone, text, textCta, and contrastRatio are auto-derived.
+ */
+export const deriveColumnRoles = (background: string, cta: string): ColumnRoles => {
+  const bgHsl = hexToHSL(background);
+  const isLight = bgHsl.l > LIGHTNESS_THRESHOLD;
+
+  // Tone: subtle lightness shift from background
+  const toneL = isLight
+    ? Math.max(bgHsl.l - 10, 5)
+    : Math.min(bgHsl.l + 10, 95);
+  const tone = hslToHex(bgHsl.h, bgHsl.s, toneL);
+
+  // Text: high-contrast color on the background
+  const text = isLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.TEXT_LIGHT;
+
+  // Text-CTA: high-contrast color on the CTA button
+  const ctaHsl = hexToHSL(cta);
+  const textCta = ctaHsl.l > LIGHTNESS_THRESHOLD
+    ? COLOR_DEFAULTS.TEXT_DARK
+    : COLOR_DEFAULTS.TEXT_LIGHT;
+
+  const contrastRatio = getContrastRatio(text, background);
+
+  return { background, tone, text, textCta, cta, contrastRatio };
+};

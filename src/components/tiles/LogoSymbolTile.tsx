@@ -11,7 +11,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { hexToHSL } from '@/utils/colorMapping';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
-import { Fingerprint } from 'lucide-react';
+import { RiFingerprintFill as Fingerprint } from 'react-icons/ri';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -105,7 +105,6 @@ export const LogoSymbolTile = memo(function LogoSymbolTile({ placementId }: Logo
         ) : (
           <Fingerprint
             size={clamp(logoSize * 1.5, 32, 80)}
-            strokeWidth={1}
             color={placeholderColor}
             style={{ opacity: 0.15 }}
           />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { RiCloseFill as X, RiArrowDownSLine as ChevronDown } from 'react-icons/ri';
 import { useBrandStore } from '../store/useBrandStore';
 import { HeroTile } from './tiles/HeroTile';
 import { EditorialTile } from './tiles/EditorialTile';
@@ -11,6 +11,21 @@ import { ListTile } from './tiles/ListTile';
 import { SwatchTile } from './tiles/SwatchTile';
 import { ImageTile } from './tiles/ImageTile';
 import { SplitHeroTile } from './tiles/SplitHeroTile';
+import { LogoSymbolTile } from './tiles/LogoSymbolTile';
+import { IconsTile } from './tiles/IconsTile';
+import { PatternTile } from './tiles/PatternTile';
+import { StatsTile } from './tiles/StatsTile';
+
+/* Variant wrappers so previews render the correct variant */
+function OverlayTile({ placementId }: { placementId?: string }) {
+  return <HeroTile placementId={placementId} variant="overlay" />;
+}
+function ColorBarsTile({ placementId }: { placementId?: string }) {
+  return <SwatchTile placementId={placementId} variant="bars" />;
+}
+function MenuTile({ placementId }: { placementId?: string }) {
+  return <ListTile placementId={placementId} />;
+}
 
 /* ─── Types ─── */
 
@@ -209,6 +224,106 @@ const TILE_CATALOG: CatalogEntry[] = [
     sizes: [
       { w: 300, h: 200, label: '2x1' },
       { w: 300, h: 300, label: '2x2' },
+    ],
+  },
+  {
+    type: 'logo-symbol',
+    label: 'LogoSymbolTile',
+    component: LogoSymbolTile,
+    placementId: 'logo',
+    tileId: '',
+    fields: [],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+    ],
+  },
+  {
+    type: 'overlay',
+    label: 'HeroTile (overlay)',
+    component: OverlayTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'headline', contentKey: 'headline', type: 'text' },
+      { name: 'body', contentKey: 'body', type: 'text' },
+      { name: 'label', contentKey: 'label', type: 'text' },
+      { name: 'image', contentKey: 'image', type: 'image' },
+    ],
+    sizes: [
+      { w: 300, h: 200, label: '2x1' },
+      { w: 200, h: 300, label: '1x2' },
+      { w: 300, h: 300, label: '2x2' },
+    ],
+  },
+  {
+    type: 'stats',
+    label: 'StatsTile',
+    component: StatsTile,
+    placementId: 'f',
+    tileId: 'slot-f',
+    fields: [
+      { name: 'headline (value)', contentKey: 'headline', type: 'text' },
+      { name: 'label', contentKey: 'label', type: 'text' },
+      { name: 'body (detail)', contentKey: 'body', type: 'text' },
+    ],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+    ],
+  },
+  {
+    type: 'icons',
+    label: 'IconsTile',
+    component: IconsTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+    ],
+  },
+  {
+    type: 'pattern',
+    label: 'PatternTile',
+    component: PatternTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'patternVariant', contentKey: 'patternVariant', type: 'segmented' },
+      { name: 'patternScale', contentKey: 'patternScale', type: 'slider' },
+      { name: 'patternImage', contentKey: 'patternImage', type: 'image' },
+    ],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+    ],
+  },
+  {
+    type: 'menu',
+    label: 'ListTile (menu)',
+    component: MenuTile,
+    placementId: 'hero',
+    tileId: '',
+    fields: [
+      { name: 'headline', contentKey: 'headline', type: 'text' },
+      { name: 'items', contentKey: 'items', type: 'items' },
+    ],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 300, h: 200, label: '2x1' },
+    ],
+  },
+  {
+    type: 'colors',
+    label: 'SwatchTile (bars)',
+    component: ColorBarsTile,
+    placementId: 'e',
+    tileId: '',
+    fields: [],
+    sizes: [
+      { w: 200, h: 200, label: '1x1' },
+      { w: 200, h: 300, label: '1x2' },
     ],
   },
 ];

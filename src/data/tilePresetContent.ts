@@ -88,7 +88,7 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     },
     splitHero: {
       headline: 'Built for Builders',
-      body: 'Clean APIs, zero hand-holding. The kind of developer experience that makes you forget to take lunch.',
+      body: 'Clean APIs, zero hand-holding. The DX you\u2019ve been waiting for.',
       cta: 'Try It',
     },
     menu: {
@@ -107,17 +107,17 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     editorial: {
       pretitle: 'Atelier',
       title: 'Quality you feel before you see.',
-      body: 'Some things don\u2019t need explaining. You pick them up, and you just know.',
+      body: 'You pick it up, and you just know.',
       detail: 'SS 26',
     },
     overlay: {
       label: 'New Season',
       headline: 'Quiet Luxury, Loud Confidence',
-      body: 'The kind of pieces you reach for every morning without thinking. That\u2019s the whole point.',
+      body: 'Pieces you reach for every morning without thinking.',
     },
     splitHero: {
       headline: 'Made to Last',
-      body: 'Not trend-proof. Trend-irrelevant. Designed for the people who stopped chasing and started choosing.',
+      body: 'Not trend-proof. Trend-irrelevant. For people who choose.',
       cta: 'Explore',
     },
     menu: {
@@ -142,11 +142,11 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     overlay: {
       label: 'Our Story',
       headline: 'Neighbors First',
-      body: 'Every big change started as something small. A knock on a door. A seat at the table.',
+      body: 'Big change starts small. A knock on a door. A seat at the table.',
     },
     splitHero: {
       headline: 'People Over Presentations',
-      body: 'We skip the jargon. We show up where it matters. And we stick around long after the grant cycle ends.',
+      body: 'No jargon. We show up, and we stick around.',
       cta: 'Get Involved',
     },
     menu: {
@@ -171,11 +171,11 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     overlay: {
       label: 'Case Study',
       headline: 'The Messy Middle',
-      body: 'Every portfolio shows the finish line. We\u2019re more interested in the all-nighter that got us there.',
+      body: 'Every portfolio shows the finish line. We\u2019re here for the all-nighter.',
     },
     splitHero: {
       headline: 'Less Deck, More Doing',
-      body: 'Strategy is great. Shipping is better. We like clients who want to make things, not just talk about them.',
+      body: 'Strategy is great. Shipping is better.',
       cta: 'See Work',
     },
     menu: {
@@ -194,17 +194,17 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
     editorial: {
       pretitle: 'From the Pass',
       title: 'Every plate has a point of view.',
-      body: 'Good food doesn\u2019t need a story. But ours has a pretty great one.',
+      body: 'Good food doesn\u2019t need a story. Ours has one anyway.',
       detail: 'Pg. 12',
     },
     overlay: {
       label: 'The Kitchen',
       headline: 'Ingredient-First, Always',
-      body: 'We let the produce do the talking. Turns out, a perfectly ripe tomato has a lot to say.',
+      body: 'We let the produce do the talking.',
     },
     splitHero: {
       headline: 'Come Hungry',
-      body: 'Seasonal plates, zero fuss. The kind of food that makes you close your eyes on the first bite.',
+      body: 'Seasonal plates, zero fuss. Close-your-eyes-on-the-first-bite good.',
       cta: 'See Menu',
     },
     menu: {

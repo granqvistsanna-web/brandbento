@@ -42,7 +42,7 @@ import { getPaletteById, getAllPalettes } from "../data/colorPalettes";
 import { mapPaletteToBrand, enforceContrast, hexToHSL, hslToHex } from "../utils/colorMapping";
 import { DEFAULT_BRAND, BRAND_PRESETS } from "../data/brandPresets";
 import { INITIAL_TILES } from "../data/tileDefaults";
-import { getPlacementTileId, getPlacementTileType } from "../config/placements";
+import { getPlacementTileId, getPlacementTileType, INITIAL_TILE_SURFACES } from "../config/placements";
 
 // ============================================
 // TYPE DEFINITIONS
@@ -129,6 +129,10 @@ export interface UISettings {
   buttonRadius: number;
   buttonStyle: 'filled' | 'outline' | 'soft';
   buttonColor: string | null;
+  buttonSize: 'compact' | 'default' | 'large';
+  buttonWeight: 400 | 500 | 600 | 700;
+  buttonUppercase: boolean;
+  buttonLetterSpacing: number;
 }
 
 /**
@@ -206,8 +210,8 @@ export interface TileContent {
   patternImage?: string;
   /** Whether the custom pattern image is locked from shuffle */
   patternImageLocked?: boolean;
-  /** App screen variant for app-screen tiles */
-  screenVariant?: string;
+  /** Whether the CTA button is hidden (split-hero tiles) */
+  ctaHidden?: boolean;
 }
 
 /**
@@ -489,6 +493,10 @@ export interface BrandStore {
   loadRandomTemplate: () => void;
   /** Shuffles color palette + typography randomly (keeps layout) */
   shuffleBrand: () => void;
+  /** Shuffles only color palette (keeps typography + layout) */
+  shuffleColors: () => void;
+  /** Shuffles only typography (keeps colors + layout) */
+  shuffleTypography: () => void;
   /** Loads a named brand preset (typography + colors only) */
   loadPreset: (presetName: string) => void;
   /** Applies a color palette, mapping to semantic roles */
@@ -622,7 +630,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "editorial",
         content: {
           headline: "Tools, not slideware",
-          body: "We build things people actually use. Then we make them better.",
+          body: "We build things people actually use. Then we iterate.",
         },
         colSpan: 1,
         rowSpan: 2,
@@ -704,7 +712,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "editorial",
         content: {
           headline: "Less is the whole point",
-          body: "The best pieces don\u2019t announce themselves. You just reach for them every morning.",
+          body: "The best pieces don\u2019t announce themselves.",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -714,7 +722,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "split-hero",
         content: {
           headline: "Made to Last",
-          body: "Not trend-proof. Trend-irrelevant. For the people who stopped chasing and started choosing.",
+          body: "Not trend-proof. Trend-irrelevant. For people who choose.",
           cta: "Explore",
           image: "/images/visualelectric-1751915506477.png",
         },
@@ -771,7 +779,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "hero",
         content: {
           headline: "We make things people actually remember",
-          subcopy: "Big ideas. Small egos. Zero mood boards with the word \u2018synergy.\u2019",
+          subcopy: "Big ideas. Small egos. Zero synergy decks.",
           cta: "See Work",
           image: "/images/20250622_2048_Candid Office Consultation_simple_compose_01jycfdk73fj1az74wv8n0rgwt.png",
         },
@@ -790,7 +798,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "overlay",
         content: {
           headline: "The Messy Middle",
-          body: "Every portfolio shows the finish line. We\u2019re more interested in the all-nighter that got us there.",
+          body: "Every portfolio shows the finish line. We\u2019re here for the all-nighter.",
           label: "Case Study",
           image: "/images/visualelectric-1750703676698.png",
         },
@@ -997,7 +1005,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "editorial",
         content: {
           headline: "Wellness, minus the woo",
-          body: "Science-backed, plant-powered, and surprisingly easy to stick with.",
+          body: "Science-backed, plant-powered, easy to stick with.",
         },
         colSpan: 1,
         rowSpan: 1,
@@ -1017,7 +1025,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "split-hero",
         content: {
           headline: "Back to Basics",
-          body: "Ancient practices meet modern research. Your body already knows what to do\u2014we just help it remember.",
+          body: "Ancient practices, modern research. Your body already knows.",
           cta: "Learn More",
           image: "/images/visualelectric-1753860116187.png",
         },
@@ -1029,7 +1037,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "overlay",
         content: {
           headline: "Start Where You Are",
-          body: "You don\u2019t need a retreat. You need five minutes and a little intention.",
+          body: "You don\u2019t need a retreat. Just five minutes.",
           label: "Philosophy",
           image: "/images/visualelectric-1753860134138.png",
         },
@@ -1074,7 +1082,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "hero",
         content: {
           headline: "I design things people use",
-          subcopy: "Clean interfaces, clear thinking, zero unnecessary meetings.",
+          subcopy: "Clean interfaces. Clear thinking. No fluff.",
           cta: "Say Hello",
           image: "/images/visualelectric-1740667024491.png",
         },
@@ -1103,7 +1111,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
         type: "editorial",
         content: {
           headline: "The Short Version",
-          body: "10+ years making interfaces people actually enjoy. Based in SF, online everywhere.",
+          body: "10+ years making interfaces people enjoy. Based in SF.",
         },
         colSpan: 2,
         rowSpan: 1,
@@ -1410,7 +1418,7 @@ export const useBrandStore = create<BrandStore>()(
         past: [],
         future: [],
       },
-      tileSurfaces: {},
+      tileSurfaces: { ...INITIAL_TILE_SURFACES },
       placementContent: defaultPlacementContent,
 
       setFocusedTile: (id) => set({ focusedTileId: id }),
@@ -1447,7 +1455,7 @@ export const useBrandStore = create<BrandStore>()(
           brand: randomTemplate.brand,
           tiles: dedupedTiles,
           activePreset: "custom",
-          tileSurfaces: {},
+          tileSurfaces: { ...INITIAL_TILE_SURFACES },
           placementContent: defaultPlacementContent,
           history: {
             past: [],
@@ -1526,6 +1534,91 @@ export const useBrandStore = create<BrandStore>()(
               letterSpacing: fontPairing.spacing,
             },
             colors: colorMapping,
+          },
+          activePreset: "custom",
+          history: {
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            future: [],
+          },
+        });
+      },
+
+      shuffleColors: () => {
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+        const allPalettes = getAllPalettes();
+
+        // Weighted random palette selection (same logic as shuffleBrand)
+        const weights = allPalettes.map((p) => {
+          const colorCount = Math.min(p.colors.length, 7);
+          const colorWeight = colorCount / 7;
+          const hueBuckets = new Set<number>();
+          for (const hex of p.colors) {
+            const rgb = hex.replace('#', '');
+            if (rgb.length !== 6) continue;
+            const r = parseInt(rgb.slice(0, 2), 16) / 255;
+            const g = parseInt(rgb.slice(2, 4), 16) / 255;
+            const b = parseInt(rgb.slice(4, 6), 16) / 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            if (max === min) return 0.4;
+            let h = 0;
+            const d = max - min;
+            if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+            else if (max === g) h = ((b - r) / d + 2) / 6;
+            else h = ((r - g) / d + 4) / 6;
+            hueBuckets.add(Math.floor(h * 6));
+          }
+          const hueWeight = Math.min(hueBuckets.size, 4) / 4;
+          return 0.4 + 0.3 * colorWeight + 0.3 * hueWeight;
+        });
+
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+        let r = Math.random() * totalWeight;
+        let pIdx = 0;
+        for (let i = 0; i < weights.length; i++) {
+          r -= weights[i];
+          if (r <= 0) { pIdx = i; break; }
+        }
+        if (allPalettes.length > 1 && pIdx === _lastShufflePaletteIdx) {
+          pIdx = (pIdx + 1) % allPalettes.length;
+        }
+        _lastShufflePaletteIdx = pIdx;
+
+        const palette = allPalettes[pIdx];
+        const rawMapping = mapPaletteToBrand(palette.colors);
+        const colorMapping = enforceContrast(rawMapping);
+
+        set({
+          brand: { ...brand, colors: colorMapping },
+          activePreset: "custom",
+          history: {
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            future: [],
+          },
+        });
+      },
+
+      shuffleTypography: () => {
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+
+        let fIdx = Math.floor(Math.random() * FONT_PAIRINGS.length);
+        if (FONT_PAIRINGS.length > 1 && fIdx === _lastShuffleFontIdx) {
+          fIdx = (fIdx + 1) % FONT_PAIRINGS.length;
+        }
+        _lastShuffleFontIdx = fIdx;
+
+        const fontPairing = FONT_PAIRINGS[fIdx];
+
+        set({
+          brand: {
+            ...brand,
+            typography: {
+              ...brand.typography,
+              primary: fontPairing.primary,
+              secondary: fontPairing.secondary,
+              ui: fontPairing.secondary,
+              weightHeadline: fontPairing.weight,
+              letterSpacing: fontPairing.spacing,
+            },
           },
           activePreset: "custom",
           history: {
@@ -1727,7 +1820,7 @@ export const useBrandStore = create<BrandStore>()(
           brand: DEFAULT_BRAND,
           tiles: INITIAL_TILES,
           activePreset: "default",
-          tileSurfaces: {},
+          tileSurfaces: { ...INITIAL_TILE_SURFACES },
           placementContent: defaultPlacementContent,
           history: {
             past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
@@ -1803,7 +1896,10 @@ export const useBrandStore = create<BrandStore>()(
           brand: mergeBrand(persistedState.brand),
           tiles,
           theme: persistedState.theme ?? current.theme,
-          tileSurfaces: persistedState.tileSurfaces ?? current.tileSurfaces,
+          tileSurfaces: {
+            ...INITIAL_TILE_SURFACES,
+            ...(persistedState.tileSurfaces ?? current.tileSurfaces),
+          },
           activePreset: persistedState.activePreset ?? current.activePreset,
           placementContent: {
             ...defaultPlacementContent,

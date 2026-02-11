@@ -16,6 +16,7 @@
  * <BentoTileEmpty slotId="hero" onClick={() => setFocusedTile('hero')} />
  */
 import type { MouseEvent } from 'react';
+import { RiAddFill as Plus } from 'react-icons/ri';
 import { twMerge } from 'tailwind-merge';
 import { useBrandStore } from '@/store/useBrandStore';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
@@ -53,13 +54,14 @@ export function BentoTileEmpty({ slotId, label, hint, isFocused, className, onCl
     <Component
       type={onClick ? 'button' : undefined}
       onClick={onClick}
+      aria-label={hint || displayLabel}
       className={twMerge(
         'h-full w-full rounded-xl',
-        'flex flex-col items-center justify-center gap-1',
+        'flex flex-col items-center justify-center gap-2',
         'border border-dashed',
         'transition-all duration-150',
         'min-h-0 min-w-0 overflow-hidden',
-        onClick && 'cursor-pointer text-left hover:opacity-80 active:scale-[0.98]',
+        onClick && 'cursor-pointer text-left active:scale-[0.98]',
         isFocused && 'ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--canvas-bg)]',
         className
       )}
@@ -69,6 +71,12 @@ export function BentoTileEmpty({ slotId, label, hint, isFocused, className, onCl
       }}
       data-slot-id={slotId}
     >
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center opacity-30"
+        style={{ backgroundColor: 'var(--canvas-border)' }}
+      >
+        <Plus size={16} style={{ color: 'var(--canvas-text)' }} />
+      </div>
       <span
         className="text-10 font-medium uppercase tracking-wider opacity-50"
         style={{
@@ -81,7 +89,7 @@ export function BentoTileEmpty({ slotId, label, hint, isFocused, className, onCl
       </span>
       {hint ? (
         <span
-          className="text-10 font-medium opacity-35"
+          className="text-10 font-medium opacity-30"
           style={{
             color: 'var(--canvas-text-secondary)',
             fontFamily: uiFont,

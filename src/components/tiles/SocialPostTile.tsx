@@ -7,7 +7,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react';
+import { RiHeartFill as Heart, RiChat1Fill as MessageCircle, RiSendPlaneFill as Send, RiBookmarkFill as Bookmark, RiMoreFill as MoreHorizontal } from 'react-icons/ri';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { getPlacementTileId, getPlacementTileType } from '@/config/placements';
 /** Instagram-like system font stack — always used for card chrome regardless of brand fonts */
@@ -240,7 +240,6 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
             </div>
             <MoreHorizontal
               style={{ width: 15, height: 15, color: cardTextMuted }}
-              strokeWidth={1.5}
             />
           </div>
         )}
@@ -288,13 +287,11 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
                   {[Heart, MessageCircle, Send].map((Icon, i) => (
                     <Icon
                       key={i}
-                      strokeWidth={1.5}
                       style={{ width: 16, height: 16, color: iconColor, display: 'block' }}
                     />
                   ))}
                 </div>
                 <Bookmark
-                  strokeWidth={1.5}
                   style={{ width: 16, height: 16, color: iconColor, display: 'block' }}
                 />
               </div>

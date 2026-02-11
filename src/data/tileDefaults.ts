@@ -57,8 +57,10 @@ interface TileContent {
   patternImage?: string;
   /** Whether the custom pattern image is locked from shuffle — reserved for pattern tile */
   patternImageLocked?: boolean;
-  /** App screen variant identifier — reserved for app-screen tile */
-  screenVariant?: string;
+  /** App screen image URL (for feed variant) */
+  screenImage?: string;
+  /** Whether the screen image is locked from shuffle */
+  screenImageLocked?: boolean;
 }
 
 interface Tile {
@@ -75,13 +77,13 @@ interface Tile {
  */
 export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
   hero: {
-    headline: "Tell your story here",
-    subcopy: "The best brands start with a single sentence.",
-    cta: "Let\u2019s Go",
+    headline: "Nothing Extra",
+    subcopy: "A point of view, distilled to its essentials.",
+    cta: "Explore",
   },
   editorial: {
-    headline: "Say something worth reading",
-    body: "Your audience is smart. Talk to them like it.",
+    headline: "The Details Are the Design",
+    body: "The best work doesn\u2019t announce itself. It makes everything else make sense.",
   },
   product: {
     label: "The Essential",
@@ -90,12 +92,12 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
   },
   "ui-preview": {
     headerTitle: "Overview",
-    buttonLabel: "Get Started",
-    inputPlaceholder: "Search...",
+    buttonLabel: "Continue",
+    inputPlaceholder: "Search anything...",
   },
   image: {
     image: "/images/visualelectric-1740667020762.png",
-    overlayText: "Mood",
+    overlayText: "Texture",
   },
   utility: {},
   menu: {
@@ -103,24 +105,24 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
     items: ["Breakfast", "Brunch", "Seasonal"],
   },
   logo: {
-    label: "Brand",
+    label: "Studio",
   },
   icons: {},
   "logo-symbol": {},
   swatch: {},
   social: {
     image: "/images/visualelectric-1750703676698.png",
-    overlayText: "Vibes",
+    overlayText: "Process",
   },
   "split-hero": {
     headline: "Start With Why Not",
-    body: "The best brand systems begin with a question nobody thought to ask. Then they answer it beautifully.",
+    body: "Great brands start with a question nobody thought to ask.",
     cta: "See How",
     image: "/images/20250622_2048_Candid Office Consultation_simple_compose_01jycfdk73fj1az74wv8n0rgwt.png",
   },
   overlay: {
     headline: "Less, But Better",
-    body: "The things worth keeping are the ones that feel like they were always there.",
+    body: "The things worth keeping feel like they were always there.",
     label: "The Edit",
     image: "/images/visualelectric-1751915506477.png",
   },
@@ -136,7 +138,6 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
     label: "Happy Humans",
     body: "And counting, every single day",
   },
-  "app-screen": {},
 };
 
 /**
@@ -163,9 +164,9 @@ export const INITIAL_TILES: Tile[] = [
     id: "hero-1",
     type: "hero",
     content: {
-      headline: "Your brand, on its best day",
-      subcopy: "Build a visual world that feels unmistakably you.",
-      cta: "Get Started",
+      headline: "Nothing Extra",
+      subcopy: "A point of view, distilled to its essentials.",
+      cta: "Explore",
       image: "/images/visualelectric-1740667024491.png",
     },
     colSpan: 2,
@@ -176,7 +177,7 @@ export const INITIAL_TILES: Tile[] = [
     type: "social",
     content: {
       image: "/images/visualelectric-1750703676698.png",
-      overlayText: "Atmosphere",
+      overlayText: "Process",
     },
     colSpan: 1,
     rowSpan: 2,
@@ -185,8 +186,8 @@ export const INITIAL_TILES: Tile[] = [
     id: "editorial-1",
     type: "editorial",
     content: {
-      headline: "Design on purpose",
-      body: "When every piece knows its role, your brand stops explaining itself and starts being remembered.",
+      headline: "Precision Is a Point of View",
+      body: "Every decision compounds. Get the small ones right and the big picture takes care of itself.",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -206,9 +207,9 @@ export const INITIAL_TILES: Tile[] = [
     id: "ui-preview-1",
     type: "ui-preview",
     content: {
-      headerTitle: "Dashboard",
-      buttonLabel: "Submit",
-      inputPlaceholder: "Search...",
+      headerTitle: "Overview",
+      buttonLabel: "Continue",
+      inputPlaceholder: "Search anything...",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -224,7 +225,7 @@ export const INITIAL_TILES: Tile[] = [
     id: "logo-1",
     type: "logo",
     content: {
-      label: "Brand Identity",
+      label: "Studio",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -242,7 +243,7 @@ export const INITIAL_TILES: Tile[] = [
     id: "slot-a",
     type: "logo",
     content: {
-      label: "Brand Identity",
+      label: "Studio",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -251,8 +252,8 @@ export const INITIAL_TILES: Tile[] = [
     id: "slot-b",
     type: "editorial",
     content: {
-      headline: "Design on purpose",
-      body: "When every piece knows its role, your brand stops explaining itself and starts being remembered.",
+      headline: "Precision Is a Point of View",
+      body: "Every decision compounds. Get the small ones right and the big picture takes care of itself.",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -261,9 +262,9 @@ export const INITIAL_TILES: Tile[] = [
     id: "slot-c",
     type: "ui-preview",
     content: {
-      headerTitle: "Dashboard",
-      buttonLabel: "Submit",
-      inputPlaceholder: "Search...",
+      headerTitle: "Overview",
+      buttonLabel: "Continue",
+      inputPlaceholder: "Search anything...",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -273,7 +274,7 @@ export const INITIAL_TILES: Tile[] = [
     type: "social",
     content: {
       image: "/images/visualelectric-1750703676698.png",
-      overlayText: "Atmosphere",
+      overlayText: "Process",
     },
     colSpan: 1,
     rowSpan: 1,
@@ -287,8 +288,12 @@ export const INITIAL_TILES: Tile[] = [
   },
   {
     id: "slot-f",
-    type: "utility",
-    content: {},
+    type: "stats",
+    content: {
+      headline: "12M+",
+      label: "Happy Humans",
+      body: "And counting, every single day",
+    },
     colSpan: 1,
     rowSpan: 1,
   },

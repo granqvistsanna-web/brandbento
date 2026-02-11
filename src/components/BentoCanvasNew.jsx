@@ -26,13 +26,15 @@
  * @example
  * <BentoCanvasNew ref={canvasRef} />
  */
-import React from "react";
+import React, { useEffect, useCallback } from "react";
 import { BentoGridNew } from "./BentoGridNew";
 import { BentoTileEmpty } from "./BentoTileEmpty";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { DebugGrid } from "./DebugGrid";
 import { useBrandStore } from "../store/useBrandStore";
 import { useLayoutStore } from "../store/useLayoutStore";
 import { getPlacementKind } from "../config/placements";
+import { BENTO_LAYOUTS } from "../config/bentoLayouts";
 
 // Tile Imports
 import { IconsTile } from "./tiles/IconsTile";
@@ -49,7 +51,6 @@ import { SwatchTile } from "./tiles/SwatchTile";
 import { SplitHeroTile } from "./tiles/SplitHeroTile";
 import { PatternTile } from "./tiles/PatternTile";
 import { StatsTile } from "./tiles/StatsTile";
-import { AppScreenTile } from "./tiles/AppScreenTile";
 import { getPlacementTileId, getPlacementTileType } from "../config/placements";
 const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
@@ -58,8 +59,61 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
   const tiles = useBrandStore((s) => s.tiles);
   const activePreset = useBrandStore((s) => s.activePreset);
   const canvasBg = useLayoutStore((s) => s.canvasBg);
+  const preset = useLayoutStore((s) => s.preset);
   const zoom = typeof props.zoom === 'number' ? props.zoom : 100;
   const zoomScale = Math.max(25, Math.min(200, zoom)) / 100;
+
+  // Keyboard tile navigation
+  const getPlacementIds = useCallback(() => {
+    const config = BENTO_LAYOUTS[preset]?.desktop ?? BENTO_LAYOUTS.balanced.desktop;
+    return config.placements.map((p) => p.id);
+  }, [preset]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      // Only arrow/tab nav when a tile is focused
+      if (!focusedTileId) return;
+
+      const ids = getPlacementIds();
+      const idx = ids.indexOf(focusedTileId);
+      if (idx === -1) return;
+
+      const config = BENTO_LAYOUTS[preset]?.desktop ?? BENTO_LAYOUTS.balanced.desktop;
+      const cols = config.columns;
+      let next = idx;
+
+      switch (e.key) {
+        case 'ArrowRight':
+          e.preventDefault();
+          next = (idx + 1) % ids.length;
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          next = (idx - 1 + ids.length) % ids.length;
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          next = Math.min(idx + cols, ids.length - 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          next = Math.max(idx - cols, 0);
+          break;
+        case 'Tab':
+          e.preventDefault();
+          next = e.shiftKey
+            ? (idx - 1 + ids.length) % ids.length
+            : (idx + 1) % ids.length;
+          break;
+        default:
+          return;
+      }
+
+      setFocusedTile(ids[next]);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [focusedTileId, preset, setFocusedTile, getPlacementIds]);
 
   const getPlaceholderMeta = (id) => {
     switch (id) {
@@ -139,8 +193,6 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
         return <PatternTile placementId={id} />;
       case 'stats':
         return <StatsTile placementId={id} />;
-      case 'app-screen':
-        return <AppScreenTile placementId={id} />;
       case 'colors':
         return activePreset === 'spread'
           ? <SwatchTile placementId={id} />
@@ -180,7 +232,7 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
   return (
     <div
       ref={ref}
-      className="flex-1 h-full min-h-0 overflow-auto transition-fast relative bento-canvas"
+      className="flex-1 h-full min-h-0 overflow-auto transition-fast relative bento-canvas canvas-dots"
       style={{
         backgroundColor: canvasBg || "var(--canvas-bg)",
         "--canvas-surface": colors.surface,
@@ -197,18 +249,30 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
             const isFocused = placement.id === focusedTileId;
             return content ? (
               <div
-                className={`w-full h-full rounded-xl overflow-hidden transition-shadow duration-150 relative ${
-                  isFocused
-                    ? 'ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--canvas-bg)]'
-                    : ''
-                }`}
+                tabIndex={0}
+                role="gridcell"
+                className="w-full h-full rounded-xl overflow-hidden relative"
+                style={{
+                  boxShadow: isFocused
+                    ? '0 0 0 1.5px var(--accent), 0 0 0 4px var(--accent-muted)'
+                    : 'var(--shadow-tile)',
+                  transition: 'box-shadow 150ms ease',
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   setFocusedTile(placement.id);
                 }}
+                onFocus={() => setFocusedTile(placement.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setFocusedTile(placement.id);
+                  }
+                }}
               >
-                {content}
-
+                <ErrorBoundary>
+                  {content}
+                </ErrorBoundary>
               </div>
             ) : (
               <div className="w-full h-full relative">

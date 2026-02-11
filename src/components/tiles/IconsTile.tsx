@@ -13,19 +13,19 @@ import { hexToHSL } from '@/utils/colorMapping';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import {
-  Palette,
-  Type,
-  Layers,
-  Diamond,
-  Aperture,
-  Feather,
-  Hexagon,
-  Sparkles,
-  PenTool,
-  Droplets,
-  Gem,
-  Compass,
-} from 'lucide-react';
+  RiPaletteFill as Palette,
+  RiFontSize as Type,
+  RiStackFill as Layers,
+  RiVipDiamondFill as Diamond,
+  RiCameraLensFill as Aperture,
+  RiQuillPenFill as Feather,
+  RiHexagonFill as Hexagon,
+  RiSparklingFill as Sparkles,
+  RiBallPenFill as PenTool,
+  RiContrastDropFill as Droplets,
+  RiPokerDiamondsFill as Gem,
+  RiCompassFill as Compass,
+} from 'react-icons/ri';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -164,7 +164,6 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
               >
                 <Icon
                   size={ICON_SIZE}
-                  strokeWidth={1.5}
                   color={iconColor}
                 />
               </div>

@@ -65,7 +65,7 @@ export const PLACEMENT_KIND_BY_ID = {
   c: 'interface',
   d: 'social',
   e: 'colors',
-  f: 'colors',
+  f: 'editorial',
 } as const;
 
 /** Maps placement IDs to the component type that renders in this slot. */
@@ -82,7 +82,7 @@ export const PLACEMENT_TILE_TYPE_BY_ID = {
   c: 'ui-preview',
   d: 'social',
   e: 'swatch',
-  f: 'utility',
+  f: 'stats',
 } as const;
 
 /** Maps placement IDs to the specific tile instance ID used for store lookups.
@@ -105,6 +105,32 @@ export const PLACEMENT_TILE_ID_BY_ID = {
   e: 'slot-e',
   f: 'slot-f',
 } as const;
+
+/**
+ * Default surface index assignments for placements.
+ *
+ * The surfaces array is ordered neutral → muted → tinted → accent → contrast,
+ * so higher indices = more colorful. Most tiles use defaultIndex 0 or 1 (neutral).
+ * These overrides add visual rhythm to the board by giving some placements
+ * a tinted or accent surface out of the box.
+ *
+ * Index meanings (typical):
+ *   0-1: Neutrals (very close to bg)
+ *   2-3: Muted tints (subtle palette hue)
+ *   4:   Accent (saturated pop)
+ *   5:   Contrast (opposite lightness)
+ *   6-7: Primary/accent brand colors
+ */
+export const INITIAL_TILE_SURFACES: Record<string, number> = {
+  // Named placements (Focus, Trio, Panel, etc.)
+  editorial: 2,  // muted tint — gives editorial tile a whisper of color
+  social: 3,     // deeper muted tint — social posts pop with subtle bg
+  product: 2,    // muted tint — product cards get gentle warmth
+  // Letter placements (Grid, Spread, Mosaic, etc.)
+  b: 2,          // editorial slot — muted tint
+  d: 3,          // social slot — deeper muted tint
+  f: 4,          // stats slot — accent pop (big number can handle bold bg)
+};
 
 /** Union of all valid placement IDs (named + letter slots). */
 export type PlacementId = keyof typeof PLACEMENT_KIND_BY_ID;

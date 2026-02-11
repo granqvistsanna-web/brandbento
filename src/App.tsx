@@ -11,18 +11,21 @@ import { ReadOnlyProvider } from './components/ReadOnlyProvider';
 import { useReadOnly } from './hooks/useReadOnly';
 import { ThemeToggle } from "./components/ThemeToggle";
 import { DevToolsPanel } from "./components/DevToolsPanel";
+
 import toast, { Toaster } from 'react-hot-toast';
 import { generateShareUrl, copyToClipboard } from './utils/sharing';
 import { exportToPng } from './utils/export';
 import {
-  ChevronDown,
-  RotateCcw,
-  RotateCw,
-  Download,
-  Share2,
-  Shuffle,
-  Maximize2,
-} from "lucide-react";
+  RiArrowDownSLine as ChevronDown,
+  RiArrowGoBackFill as RotateCcw,
+  RiArrowGoForwardFill as RotateCw,
+  RiDownloadFill as Download,
+  RiShareForwardFill as Share2,
+  RiShuffleFill as Shuffle,
+  RiPaletteFill as Palette,
+  RiFontSize2 as FontSize,
+  RiFullscreenFill as Maximize2,
+} from "react-icons/ri";
 import { motion, AnimatePresence } from "motion/react";
 import "./index.css";
 
@@ -53,6 +56,7 @@ const ToolbarButton = ({
       <motion.button
         onClick={onClick}
         disabled={disabled}
+        aria-label={label}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         className="icon-btn"
@@ -97,8 +101,18 @@ const ToolbarButton = ({
   );
 };
 
-// Toolbar divider
-const ToolbarDivider = () => <div className="divider-v" />;
+// Toolbar divider — subtle warm separator
+const ToolbarDivider = () => (
+  <div
+    style={{
+      width: 1,
+      height: 14,
+      background: "var(--sidebar-border-subtle)",
+      marginInline: "var(--space-2)",
+      opacity: 0.5,
+    }}
+  />
+);
 
 // Zoom control
 const ZoomControl = ({
@@ -117,6 +131,7 @@ const ZoomControl = ({
     >
       <motion.button
         onClick={() => onZoomChange(clampZoom(zoom - 25))}
+        aria-label="Zoom out"
         className="icon-btn"
         style={{ width: 24, height: 24 }}
         whileHover={{ scale: 1.1 }}
@@ -124,20 +139,21 @@ const ZoomControl = ({
         transition={TRANSITION_FAST}
       >
         <span
-          className="text-11 font-medium"
+          className="text-12 font-medium"
           style={{ color: "var(--sidebar-text-secondary)" }}
         >
           -
         </span>
       </motion.button>
       <div
-        className="w-12 text-center text-11 font-medium"
+        className="w-12 text-center text-12 font-medium"
         style={{ color: "var(--sidebar-text)" }}
       >
         {zoom}%
       </div>
       <motion.button
         onClick={() => onZoomChange(clampZoom(zoom + 25))}
+        aria-label="Zoom in"
         className="icon-btn"
         style={{ width: 24, height: 24 }}
         whileHover={{ scale: 1.1 }}
@@ -145,7 +161,7 @@ const ZoomControl = ({
         transition={TRANSITION_FAST}
       >
         <span
-          className="text-11 font-medium"
+          className="text-12 font-medium"
           style={{ color: "var(--sidebar-text-secondary)" }}
         >
           +
@@ -155,14 +171,15 @@ const ZoomControl = ({
   );
 };
 
-// Logo/Brand mark
+// Logo/Brand mark with Osmo-style accent
 const AppLogo = () => (
-  <div className="flex items-center" style={{ paddingInline: "var(--space-3)" }}>
+  <div className="flex items-center" style={{ paddingInline: "var(--space-4)" }}>
     <span
-      className="text-13 font-semibold tracking-tight"
-      style={{ color: "var(--sidebar-text)" }}
+      className="tracking-tight"
+      style={{ color: "var(--sidebar-text)", fontSize: 17, letterSpacing: "-0.02em" }}
     >
-      Brand.Bento
+      <span style={{ fontWeight: 700 }}>Brand</span>
+      <span style={{ color: "var(--sidebar-text-secondary)", fontWeight: 400 }}>Bento</span>
     </span>
   </div>
 );
@@ -179,9 +196,18 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement |
         setIsOpen(false);
       }
     };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, []);
+
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = (format: "css" | "json") => {
     const content = format === "css" ? exportAsCSS(brand) : exportAsJSON(brand);
@@ -202,6 +228,7 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement |
       return;
     }
 
+    setIsExporting(true);
     try {
       await exportToPng(canvasRef.current, 'brandbento');
       toast.success('PNG exported!');
@@ -209,6 +236,8 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement |
     } catch (err) {
       console.error('PNG export failed:', err);
       toast.error('Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -216,14 +245,16 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement |
     <div className="relative" ref={menuRef}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="btn-figma btn-figma-primary"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        className="btn-figma btn-figma-accent"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         transition={TRANSITION_FAST}
       >
         <Download size={14} />
         <span>Export</span>
-        <ChevronDown size={14} />
+        <ChevronDown size={12} />
       </motion.button>
 
       <AnimatePresence>
@@ -244,20 +275,22 @@ const ExportMenu = ({ canvasRef }: { canvasRef: React.RefObject<HTMLDivElement |
           >
             <button
               onClick={handleExportPng}
+              disabled={isExporting}
               className="w-full flex items-center text-left transition-fast"
               style={{
                 padding: "var(--space-2) var(--space-3)",
                 gap: "var(--space-2)",
-                color: "var(--sidebar-text)",
+                color: isExporting ? "var(--sidebar-text-muted)" : "var(--sidebar-text)",
+                cursor: isExporting ? 'wait' : 'pointer',
               }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
+                !isExporting && (e.currentTarget.style.background = "var(--sidebar-bg-hover)")
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.background = "transparent")
               }
             >
-              <span className="text-11">Export as PNG</span>
+              <span className="text-11">{isExporting ? 'Exporting...' : 'Export as PNG'}</span>
               <span
                 className="text-10 rounded"
                 style={{
@@ -345,8 +378,15 @@ const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => vo
         setIsOpen(false);
       }
     };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, []);
 
   const handleExportFile = (format: "css" | "json") => {
@@ -412,6 +452,8 @@ const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => vo
     <div className="relative" ref={menuRef}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         className="flex items-center rounded-md transition-fast"
         style={{
           gap: "var(--space-1)",
@@ -422,8 +464,8 @@ const FileMenu = ({ onReset, onShare }: { onReset: () => void; onShare: () => vo
         whileHover={{ background: "var(--sidebar-bg-hover)" }}
         transition={TRANSITION_FAST}
       >
-        <span className="text-11 font-medium">File</span>
-        <ChevronDown size={14} />
+        <span className="text-12 font-medium">File</span>
+        <ChevronDown size={12} />
       </motion.button>
 
       <AnimatePresence>
@@ -499,29 +541,67 @@ function AppContent() {
   const [zoom, setZoom] = useState(100);
   const [showDevTools, setShowDevTools] = useState(false);
 
+
   const toggleDevTools = useCallback(() => setShowDevTools((v) => !v), []);
 
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'd') {
-        e.preventDefault();
-        toggleDevTools();
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [toggleDevTools]);
-
-  const { undo, redo, history, shuffleBrand, resetToDefaults } =
+  const { undo, redo, history, shuffleBrand, shuffleColors, shuffleTypography, resetToDefaults } =
     useBrandStore(
       useShallow((s) => ({
         undo: s.undo,
         redo: s.redo,
         history: s.history,
         shuffleBrand: s.shuffleBrand,
+        shuffleColors: s.shuffleColors,
+        shuffleTypography: s.shuffleTypography,
         resetToDefaults: s.resetToDefaults,
       }))
     );
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      if (mod && e.shiftKey && e.key === 'd') {
+        e.preventDefault();
+        toggleDevTools();
+      }
+
+      // Undo: Cmd+Z
+      if (mod && !e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        undo();
+      }
+
+      // Redo: Cmd+Shift+Z
+      if (mod && e.shiftKey && e.key === 'z') {
+        e.preventDefault();
+        redo();
+      }
+
+      // Shuffle shortcuts (only when not typing in an input)
+      if (!isInput && !mod) {
+        // Space: shuffle all
+        if (e.key === ' ' || e.code === 'Space') {
+          e.preventDefault();
+          shuffleBrand();
+        }
+        // C: shuffle colors only
+        if (e.key === 'c') {
+          e.preventDefault();
+          shuffleColors();
+        }
+        // T: shuffle typography only
+        if (e.key === 't') {
+          e.preventDefault();
+          shuffleTypography();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [toggleDevTools, undo, redo, shuffleBrand, shuffleColors, shuffleTypography]);
 
   const handleShare = async () => {
     const { brand, tiles } = useBrandStore.getState();
@@ -565,10 +645,10 @@ function AppContent() {
           data-export-exclude="true"
           className="flex items-center justify-between z-20 flex-shrink-0"
           style={{
-            height: "var(--space-12)",
-            paddingInline: "var(--space-2)",
+            height: 52,
+            paddingInline: "var(--space-5)",
             background: "var(--sidebar-bg)",
-            borderBottom: "1px solid var(--sidebar-border)",
+            borderBottom: "1px solid var(--sidebar-border-subtle)",
           }}
         >
           {/* Left: Logo + File Menu */}
@@ -581,7 +661,7 @@ function AppContent() {
           </div>
 
           {/* Center: Tool buttons */}
-          <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
+          <div className="flex items-center" style={{ gap: "var(--space-1-5)" }}>
             <ToolbarButton
               icon={RotateCcw}
               label="Undo"
@@ -603,8 +683,21 @@ function AppContent() {
 
             <ToolbarButton
               icon={Shuffle}
-              label="Shuffle Style"
+              label="Shuffle All"
+              shortcut="Space"
               onClick={shuffleBrand}
+            />
+            <ToolbarButton
+              icon={Palette}
+              label="Shuffle Colors"
+              shortcut="C"
+              onClick={shuffleColors}
+            />
+            <ToolbarButton
+              icon={FontSize}
+              label="Shuffle Type"
+              shortcut="T"
+              onClick={shuffleTypography}
             />
 
             <ToolbarDivider />
@@ -623,12 +716,11 @@ function AppContent() {
               whileTap={{ scale: 0.98 }}
               transition={TRANSITION_FAST}
             >
-              <Share2 size={14} />
+              <Share2 size={13} />
               <span>Share</span>
             </motion.button>
 
             <ExportMenu canvasRef={canvasRef} />
-
           </div>
         </header>
       )}
@@ -649,43 +741,23 @@ function AppContent() {
           data-export-exclude="true"
           className="flex items-center justify-between flex-shrink-0"
           style={{
-            height: "var(--space-6)",
-            paddingInline: "var(--space-3)",
+            height: 34,
+            paddingInline: "var(--space-5)",
             background: "var(--sidebar-bg)",
-            borderTop: "1px solid var(--sidebar-border)",
+            borderTop: "1px solid var(--sidebar-border-subtle)",
           }}
         >
           {/* Left: Status */}
-          <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
-            <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
-              <motion.div
-                className="w-2 h-2 rounded-full"
-                style={{ background: "var(--success)" }}
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={TRANSITION_BASE}
-                key={history.past.length}
-              />
-              <span
-                className="text-10 flex items-center"
-                style={{
-                  color: "var(--sidebar-text-muted)",
-                  gap: "var(--space-1)",
-                }}
-              >
-                All changes saved
-              </span>
-            </div>
-
+          <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
             <div
-              className="h-3 w-px"
-              style={{ background: "var(--sidebar-border)" }}
+              className="rounded-full"
+              style={{ width: 5, height: 5, background: "var(--success)", opacity: 0.7 }}
             />
-
             <span
-              className="text-10"
+              className="text-11"
               style={{ color: "var(--sidebar-text-muted)" }}
             >
-              {history.past.length} changes
+              Saved
             </span>
           </div>
 
@@ -694,7 +766,7 @@ function AppContent() {
             <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
               <span className="kbd">Esc</span>
               <span
-                className="text-10"
+                className="text-11"
                 style={{ color: "var(--sidebar-text-muted)" }}
               >
                 Deselect
@@ -703,7 +775,7 @@ function AppContent() {
             <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
               <span className="kbd">⌘Z</span>
               <span
-                className="text-10"
+                className="text-11"
                 style={{ color: "var(--sidebar-text-muted)" }}
               >
                 Undo
@@ -712,7 +784,7 @@ function AppContent() {
             <div className="flex items-center" style={{ gap: "var(--space-1)" }}>
               <span className="kbd">⇧⌘Z</span>
               <span
-                className="text-10"
+                className="text-11"
                 style={{ color: "var(--sidebar-text-muted)" }}
               >
                 Redo
@@ -721,14 +793,12 @@ function AppContent() {
           </div>
 
           {/* Right: Version */}
-          <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
-            <span
-              className="text-10"
-              style={{ color: "var(--sidebar-text-muted)" }}
-            >
-              v1.0.0
-            </span>
-          </div>
+          <span
+            className="text-11"
+            style={{ color: "var(--sidebar-text-muted)", opacity: 0.5 }}
+          >
+            v1.0.0
+          </span>
         </footer>
       )}
 
@@ -747,6 +817,7 @@ function AppContent() {
       )}
 
       {showDevTools && <DevToolsPanel onClose={() => setShowDevTools(false)} />}
+
     </div>
   );
 }

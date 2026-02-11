@@ -201,7 +201,7 @@ function StandaloneLayout({
     <div
       ref={containerRef}
       className="w-full h-full flex flex-col transition-colors duration-300 overflow-hidden"
-      style={{ backgroundColor: surfaceBg, padding: 'clamp(12px, 6%, 20px)' }}
+      style={{ backgroundColor: surfaceBg, padding: 'clamp(16px, 6%, 24px)' }}
     >
       <div
         className="uppercase tracking-widest shrink-0"
@@ -216,8 +216,8 @@ function StandaloneLayout({
         {subcopy}
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col justify-center">
-        <div>
+      <div className="flex-1 min-h-0 flex flex-col justify-center overflow-hidden">
+        <div className="shrink min-h-0">
           {items.slice(0, 4).map((item, index) => (
             <div key={`${item}-${index}`}>
               {index === 0 && (
@@ -225,7 +225,7 @@ function StandaloneLayout({
               )}
               <div
                 className="flex items-center justify-between gap-2"
-                style={{ padding: `clamp(8px, 3%, 16px) 0` }}
+                style={{ padding: `clamp(6px, 2.5%, 14px) 0` }}
               >
                 <span
                   className="uppercase truncate"
@@ -233,7 +233,7 @@ function StandaloneLayout({
                     color: adaptiveText,
                     fontFamily: headlineFont,
                     letterSpacing: '0.08em',
-                    fontSize: `${clampFontSize(typeScale.step1)}px`,
+                    fontSize: `${clampFontSize(typeScale.step1, 14, 28)}px`,
                   }}
                 >
                   {item}
@@ -244,7 +244,7 @@ function StandaloneLayout({
                     color: adaptiveText,
                     opacity: 0.45,
                     fontFamily: bodyFont,
-                    fontSize: `${clampFontSize(typeScale.stepMinus2)}px`,
+                    fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 13)}px`,
                   }}
                 >
                   {actionLabel}
