@@ -1,31 +1,85 @@
 /**
  * Icons Tile Component
  *
- * 2x2 brand icon grid with subtle tinted backgrounds.
- * Shows design-system icons on the tile surface color
- * with adaptive contrast. Scales proportionally to fill
- * any tile shape via ResizeObserver.
+ * Multi-library icon grid with configurable density.
+ * Supports 5 icon families (Remix, Feather, Lucide, Phosphor, Tabler),
+ * 3 grid sizes (single, 2x2, 3x3), and custom SVG upload.
+ * Scales proportionally via ResizeObserver.
  */
 import { memo, useRef, useState, useEffect, useCallback } from 'react';
+import type { IconType } from 'react-icons';
 import { useBrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { hexToHSL } from '@/utils/colorMapping';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
+
+// Remix Icons
 import {
-  RiPaletteFill as Palette,
-  RiFontSize as Type,
-  RiStackFill as Layers,
-  RiVipDiamondFill as Diamond,
-  RiCameraLensFill as Aperture,
-  RiQuillPenFill as Feather,
-  RiHexagonFill as Hexagon,
-  RiSparklingFill as Sparkles,
-  RiBallPenFill as PenTool,
-  RiContrastDropFill as Droplets,
-  RiPokerDiamondsFill as Gem,
-  RiCompassFill as Compass,
+  RiPaletteFill, RiStackFill, RiVipDiamondFill,
+  RiQuillPenFill, RiHexagonFill, RiSparklingFill,
+  RiCompassFill, RiDropFill, RiLeafFill,
+  RiCameraLensFill, RiBallPenFill, RiContrastDropFill,
+  RiPokerDiamondsFill, RiFireFill, RiEyeFill,
+  RiShieldFill, RiLightbulbFill, RiMagicFill,
+  RiHeartFill, RiStarFill, RiBookOpenFill,
+  RiAwardFill, RiCupFill, RiFlashlightFill,
+  RiFontSize, RiPlanetFill, RiSunFill,
 } from 'react-icons/ri';
+
+// Feather Icons (all outline)
+import {
+  FiFeather, FiCompass, FiHexagon,
+  FiDroplet, FiStar, FiSun,
+  FiTarget, FiZap, FiAperture,
+  FiGrid, FiLayers, FiPenTool,
+  FiCircle, FiTriangle, FiSquare,
+  FiAnchor, FiCrosshair, FiCommand,
+  FiGlobe, FiEye, FiHeart,
+  FiAward, FiCoffee, FiBox,
+  FiBookOpen, FiCode, FiBook,
+} from 'react-icons/fi';
+
+// Lucide Icons
+import {
+  LuPalette, LuDiamond, LuSparkles,
+  LuLeaf, LuDroplets, LuFlame,
+  LuAperture, LuHexagon, LuTriangle,
+  LuSquare, LuStar, LuSun,
+  LuMoon, LuZap, LuGem,
+  LuCompass, LuTarget, LuShield,
+  LuCrown, LuFeather, LuGlobe,
+  LuEye, LuHeart, LuLayers,
+  LuPentagon, LuCircle, LuAtom,
+} from 'react-icons/lu';
+
+// Phosphor Icons (filled)
+import {
+  PiDiamondFill, PiStarFill, PiHexagonFill,
+  PiLeafFill, PiDropFill, PiLightningFill,
+  PiSunFill, PiCompassFill, PiEyeFill,
+  PiFireFill, PiFlowerFill, PiCrownFill,
+  PiGlobeFill, PiHeartFill, PiSnowflakeFill,
+  PiTreeFill, PiPaintBrushFill, PiLightbulbFill,
+  PiMountainsFill, PiPlanetFill, PiShieldCheckFill,
+  PiCirclesFourFill, PiStarFourFill, PiSquareFill,
+  PiTriangleFill, PiButterflyFill, PiAtomFill,
+} from 'react-icons/pi';
+
+// Tabler Icons
+import {
+  TbHexagon, TbDiamond, TbStar,
+  TbDroplet, TbLeaf, TbFlame,
+  TbBolt, TbSun, TbPalette,
+  TbCompass, TbTarget, TbAtom,
+  TbPentagon, TbTriangle, TbCircle,
+  TbFeather, TbEye, TbHeart,
+  TbSnowflake, TbCrown, TbShield,
+  TbMoon, TbAward, TbGlobe,
+  TbSquare, TbCode, TbCoffee,
+} from 'react-icons/tb';
+
+import { RiUploadLine, RiCloseLine } from 'react-icons/ri';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -35,30 +89,74 @@ import {
   ToolbarSurfaceSwatches,
   ToolbarColorPicker,
   ToolbarToggle,
+  ToolbarSegmented,
+  ToolbarLabel,
 } from './FloatingToolbar';
+
+/* ─── Types ─── */
 
 interface IconsTileProps {
   placementId?: string;
 }
 
-const ICON_SETS = [
-  [Palette, Type, Layers, Diamond],
-  [Aperture, Feather, Hexagon, Sparkles],
-  [PenTool, Droplets, Gem, Compass],
-];
+type LibraryId = 'remix' | 'feather' | 'lucide' | 'phosphor' | 'tabler';
+type GridSize = '1' | '2x2' | '3x3';
 
-/** Design-space dimensions for the 2x2 icon grid.
- *  GRID_W/H define the authoring canvas. CELL is one icon cell,
- *  GAP is spacing between cells. The grid is then uniformly scaled
- *  via ResizeObserver to fit the tile with 12% proportional padding. */
-const GRID_W = 120;
-const GRID_H = 120;
-const CELL = 48;
-const GAP = 12;
-const ICON_SIZE = 22;
+/* ─── Icon Libraries ─── */
+
+/** 3 sets of 9 icons per library. Sliced to 1/4/9 based on grid size. */
+const LIBRARIES: Record<LibraryId, IconType[][]> = {
+  remix: [
+    [RiPaletteFill, RiStackFill, RiVipDiamondFill, RiHexagonFill, RiSparklingFill, RiCompassFill, RiDropFill, RiLeafFill, RiStarFill],
+    [RiCameraLensFill, RiQuillPenFill, RiBallPenFill, RiContrastDropFill, RiPokerDiamondsFill, RiFireFill, RiEyeFill, RiShieldFill, RiLightbulbFill],
+    [RiMagicFill, RiHeartFill, RiBookOpenFill, RiAwardFill, RiCupFill, RiFlashlightFill, RiFontSize, RiPlanetFill, RiSunFill],
+  ],
+  feather: [
+    [FiFeather, FiCompass, FiHexagon, FiDroplet, FiStar, FiSun, FiTarget, FiZap, FiAperture],
+    [FiGrid, FiLayers, FiPenTool, FiCircle, FiTriangle, FiSquare, FiAnchor, FiCrosshair, FiCommand],
+    [FiGlobe, FiEye, FiHeart, FiAward, FiCoffee, FiBox, FiBookOpen, FiCode, FiBook],
+  ],
+  lucide: [
+    [LuPalette, LuDiamond, LuSparkles, LuLeaf, LuDroplets, LuFlame, LuAperture, LuHexagon, LuTriangle],
+    [LuSquare, LuStar, LuSun, LuMoon, LuZap, LuGem, LuCompass, LuTarget, LuShield],
+    [LuCrown, LuFeather, LuGlobe, LuEye, LuHeart, LuLayers, LuPentagon, LuCircle, LuAtom],
+  ],
+  phosphor: [
+    [PiDiamondFill, PiStarFill, PiHexagonFill, PiLeafFill, PiDropFill, PiLightningFill, PiSunFill, PiCompassFill, PiEyeFill],
+    [PiFireFill, PiFlowerFill, PiCrownFill, PiGlobeFill, PiHeartFill, PiSnowflakeFill, PiTreeFill, PiPaintBrushFill, PiLightbulbFill],
+    [PiMountainsFill, PiPlanetFill, PiShieldCheckFill, PiCirclesFourFill, PiStarFourFill, PiSquareFill, PiTriangleFill, PiButterflyFill, PiAtomFill],
+  ],
+  tabler: [
+    [TbHexagon, TbDiamond, TbStar, TbDroplet, TbLeaf, TbFlame, TbBolt, TbSun, TbPalette],
+    [TbCompass, TbTarget, TbAtom, TbPentagon, TbTriangle, TbCircle, TbFeather, TbEye, TbHeart],
+    [TbSnowflake, TbCrown, TbShield, TbMoon, TbAward, TbGlobe, TbSquare, TbCode, TbCoffee],
+  ],
+};
+
+/* ─── Grid Configs ─── */
+
+interface GridConfig {
+  gridW: number;
+  gridH: number;
+  cell: number;
+  gap: number;
+  iconSize: number;
+  cols: number;
+  count: number;
+  radius: string;
+}
+
+const GRID_CONFIGS: Record<GridSize, GridConfig> = {
+  '1': { gridW: 60, gridH: 60, cell: 60, gap: 0, iconSize: 36, cols: 1, count: 1, radius: 'rounded-2xl' },
+  '2x2': { gridW: 120, gridH: 120, cell: 48, gap: 12, iconSize: 22, cols: 2, count: 4, radius: 'rounded-xl' },
+  '3x3': { gridW: 180, gridH: 180, cell: 48, gap: 12, iconSize: 20, cols: 3, count: 9, radius: 'rounded-lg' },
+};
+
+/* ─── Component ─── */
 
 export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [scale, setScale] = useState(1);
   const [iconSetIndex, setIconSetIndex] = useState(0);
 
@@ -79,9 +177,16 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
   const placementContent = useBrandStore((state) =>
     placementId ? state.placementContent[placementId] : undefined
   );
+
+  // Persisted state
   const iconColorOverride = placementContent?.iconColor || undefined;
   const iconShowBg = placementContent?.iconShowBg ?? true;
+  const iconLibrary: LibraryId = (placementContent?.iconLibrary as LibraryId) || 'remix';
+  const iconGridSize: GridSize = (placementContent?.iconGridSize as GridSize) || '2x2';
+  const iconCustomSvg = placementContent?.iconCustomSvg || undefined;
+
   const { primary, bg, surfaces } = colors;
+  const gridConfig = GRID_CONFIGS[iconGridSize];
 
   const surfaceBg = resolveSurfaceColor({
     placementId,
@@ -94,17 +199,14 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
   const surfaceL = hexToHSL(surfaceBg).l;
   const surfaceLight = surfaceL > 55;
   const primaryL = primary ? hexToHSL(primary).l : 50;
-  // Auto icon color: brand primary if contrast > 25 LD, else neutral
   const primaryContrast = Math.abs(surfaceL - primaryL);
   const autoIconColor = primaryContrast > 25 ? primary : (surfaceLight ? COLOR_DEFAULTS.TEXT_DARK : COLOR_DEFAULTS.TEXT_LIGHT);
   const iconColor = iconColorOverride || autoIconColor;
 
-  // Tinted cell background: same hue as the icon at 10% opacity for subtle branding
   const iconHSL = hexToHSL(iconColor);
   const tintBg = iconShowBg ? `hsla(${iconHSL.h}, ${iconHSL.s}%, ${iconHSL.l}%, 0.1)` : 'transparent';
 
-  // Scale-to-fit: the 2x2 grid is authored at GRID_W x GRID_H then
-  // uniformly scaled to fill the tile with 12% proportional padding.
+  // Scale-to-fit with dynamic grid dimensions
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -113,8 +215,8 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
       if (width === 0 || height === 0) return;
       const pad = Math.min(width, height) * 0.12;
       const s = Math.min(
-        (width - pad * 2) / GRID_W,
-        (height - pad * 2) / GRID_H
+        (width - pad * 2) / gridConfig.gridW,
+        (height - pad * 2) / gridConfig.gridH
       );
       setScale(s);
     };
@@ -122,16 +224,51 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
     ro.observe(el);
     update();
     return () => ro.disconnect();
-  }, []);
+  }, [gridConfig.gridW, gridConfig.gridH]);
+
+  const librarySets = LIBRARIES[iconLibrary];
 
   const handleShuffle = useCallback(() => {
-    setIconSetIndex((prev) => (prev + 1) % ICON_SETS.length);
-  }, []);
+    if (iconCustomSvg && placementId) {
+      // Clear custom SVG and return to library icons
+      setPlacementContent(placementId, { iconCustomSvg: '' }, true);
+      return;
+    }
+    setIconSetIndex((prev) => (prev + 1) % librarySets.length);
+  }, [iconCustomSvg, placementId, setPlacementContent, librarySets.length]);
+
+  const handleLibraryChange = useCallback((value: string) => {
+    if (!placementId) return;
+    setPlacementContent(placementId, { iconLibrary: value as LibraryId }, true);
+    setIconSetIndex(0);
+  }, [placementId, setPlacementContent]);
+
+  const handleGridSizeChange = useCallback((value: string) => {
+    if (!placementId) return;
+    setPlacementContent(placementId, { iconGridSize: value as GridSize }, true);
+  }, [placementId, setPlacementContent]);
+
+  const handleSvgUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !placementId) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setPlacementContent(placementId, { iconCustomSvg: reader.result }, true);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }, [placementId, setPlacementContent]);
+
+  const handleClearSvg = useCallback(() => {
+    if (!placementId) return;
+    setPlacementContent(placementId, { iconCustomSvg: '' }, true);
+  }, [placementId, setPlacementContent]);
 
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
-  const currentIcons = ICON_SETS[iconSetIndex];
-
+  const currentIcons = librarySets[iconSetIndex % librarySets.length].slice(0, gridConfig.count);
   const paletteColors = useBrandStore((s) => s.brand.colors.paletteColors) || [];
 
   const handleIconColorChange = useCallback((hex: string | undefined) => {
@@ -149,9 +286,94 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
     setPlacementContent(placementId, { iconShowBg: checked }, true);
   }, [placementId, setPlacementContent]);
 
+  /* ─── Toolbar ─── */
+
+  const iconBtnStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 30,
+    height: 30,
+    borderRadius: 7,
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    background: 'var(--sidebar-bg-hover)',
+    color: 'var(--sidebar-text-muted)',
+  };
+
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
       <ToolbarActions onShuffle={handleShuffle} />
+      <ToolbarDivider />
+      <ToolbarSegmented
+        label="Library"
+        options={[
+          { value: 'remix', label: 'Remix' },
+          { value: 'feather', label: 'Feather' },
+          { value: 'lucide', label: 'Lucide' },
+          { value: 'phosphor', label: 'Phosphor' },
+          { value: 'tabler', label: 'Tabler' },
+        ]}
+        value={iconLibrary}
+        onChange={handleLibraryChange}
+      />
+      <ToolbarSegmented
+        label="Grid"
+        options={[
+          { value: '1', label: 'Single' },
+          { value: '2x2', label: '2 x 2' },
+          { value: '3x3', label: '3 x 3' },
+        ]}
+        value={iconGridSize}
+        onChange={handleGridSizeChange}
+      />
+      <ToolbarDivider />
+      <ToolbarLabel>Custom SVG</ToolbarLabel>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <button
+          onClick={() => fileRef.current?.click()}
+          aria-label="Upload SVG"
+          style={iconBtnStyle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--sidebar-bg-active)';
+            e.currentTarget.style.color = 'var(--sidebar-text)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--sidebar-bg-hover)';
+            e.currentTarget.style.color = 'var(--sidebar-text-muted)';
+          }}
+        >
+          <RiUploadLine size={14} />
+        </button>
+        {iconCustomSvg && (
+          <button
+            onClick={handleClearSvg}
+            aria-label="Clear custom SVG"
+            style={iconBtnStyle}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--sidebar-bg-active)';
+              e.currentTarget.style.color = 'var(--sidebar-text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'var(--sidebar-bg-hover)';
+              e.currentTarget.style.color = 'var(--sidebar-text-muted)';
+            }}
+          >
+            <RiCloseLine size={14} />
+          </button>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".svg,image/svg+xml"
+          onChange={handleSvgUpload}
+          style={{ display: 'none' }}
+        />
+        {iconCustomSvg && (
+          <span style={{ fontSize: 10, color: 'var(--sidebar-text-muted)' }}>Active</span>
+        )}
+      </div>
       <ToolbarDivider />
       <ToolbarColorPicker
         label="Icon Color"
@@ -182,44 +404,73 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
     </FloatingToolbar>
   );
 
+  /* ─── Custom SVG render ─── */
+  if (iconCustomSvg) {
+    return (
+      <div ref={containerRef} className="w-full h-full relative overflow-hidden">
+        <div className="absolute inset-0" style={{ backgroundColor: surfaceBg }} />
+        <div className="relative h-full w-full flex items-center justify-center">
+          <div
+            className={`flex items-center justify-center ${GRID_CONFIGS['1'].radius}`}
+            style={{
+              width: 60 * scale,
+              height: 60 * scale,
+              background: tintBg,
+            }}
+          >
+            <img
+              src={iconCustomSvg}
+              alt="Custom icon"
+              style={{
+                width: 36 * scale,
+                height: 36 * scale,
+                objectFit: 'contain',
+              }}
+            />
+          </div>
+        </div>
+        {toolbar}
+      </div>
+    );
+  }
+
+  /* ─── Icon grid render ─── */
   return (
     <div ref={containerRef} className="w-full h-full relative overflow-hidden">
       <div className="absolute inset-0" style={{ backgroundColor: surfaceBg }} />
 
       <div className="relative h-full w-full flex items-center justify-center">
-        {/* Scaled wrapper — outer box shrinks to match transform */}
         <div
           style={{
-            width: GRID_W * scale,
-            height: GRID_H * scale,
+            width: gridConfig.gridW * scale,
+            height: gridConfig.gridH * scale,
             flexShrink: 0,
           }}
         >
-          {/* Design-space grid with transform scale */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: `${CELL}px ${CELL}px`,
-              gap: GAP,
-              width: GRID_W,
-              height: GRID_H,
+              gridTemplateColumns: `repeat(${gridConfig.cols}, ${gridConfig.cell}px)`,
+              gap: gridConfig.gap,
+              width: gridConfig.gridW,
+              height: gridConfig.gridH,
               transform: `scale(${scale})`,
               transformOrigin: 'top left',
             }}
           >
             {currentIcons.map((Icon, i) => (
               <div
-                key={`${iconSetIndex}-${i}`}
-                className="rounded-xl flex items-center justify-center"
+                key={`${iconLibrary}-${iconSetIndex}-${i}`}
+                className={`${gridConfig.radius} flex items-center justify-center`}
                 style={{
-                  width: CELL,
-                  height: CELL,
+                  width: gridConfig.cell,
+                  height: gridConfig.cell,
                   background: tintBg,
                   aspectRatio: '1',
                 }}
               >
                 <Icon
-                  size={ICON_SIZE}
+                  size={gridConfig.iconSize}
                   color={iconColor}
                 />
               </div>
