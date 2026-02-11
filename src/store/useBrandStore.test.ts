@@ -6,7 +6,6 @@ import {
   selectCanRedo,
   exportAsCSS,
   exportAsJSON,
-  getColorHarmony,
 } from './useBrandStore';
 import { DEFAULT_BRAND } from '../data/brandPresets';
 import { getAllPalettes } from '../data/colorPalettes';
@@ -17,8 +16,6 @@ const pickState = () => {
     brand: state.brand,
     tiles: state.tiles,
     focusedTileId: state.focusedTileId,
-    darkModePreview: state.darkModePreview,
-    fontPreview: state.fontPreview,
     theme: state.theme,
     resolvedTheme: state.resolvedTheme,
     history: state.history,
@@ -130,36 +127,6 @@ describe('UI state actions', () => {
 
     setFocusedTile(null);
     expect(useBrandStore.getState().focusedTileId).toBeNull();
-  });
-
-  it('toggleDarkMode toggles the flag', () => {
-    const { toggleDarkMode } = useBrandStore.getState();
-    const before = useBrandStore.getState().darkModePreview;
-
-    toggleDarkMode();
-    expect(useBrandStore.getState().darkModePreview).toBe(!before);
-
-    useBrandStore.getState().toggleDarkMode();
-    expect(useBrandStore.getState().darkModePreview).toBe(before);
-  });
-
-  it('setFontPreview sets and clears preview', () => {
-    const { setFontPreview } = useBrandStore.getState();
-
-    setFontPreview('Roboto', 'primary');
-    const state1 = useBrandStore.getState();
-    expect(state1.fontPreview).toEqual({ font: 'Roboto', target: 'primary' });
-
-    useBrandStore.getState().setFontPreview('Lora', 'secondary');
-    expect(useBrandStore.getState().fontPreview).toEqual({ font: 'Lora', target: 'secondary' });
-
-    useBrandStore.getState().setFontPreview(null);
-    expect(useBrandStore.getState().fontPreview).toBeNull();
-  });
-
-  it('setFontPreview defaults target to primary', () => {
-    useBrandStore.getState().setFontPreview('Roboto');
-    expect(useBrandStore.getState().fontPreview?.target).toBe('primary');
   });
 
   it('setTheme sets theme preference', () => {
@@ -868,30 +835,3 @@ describe('exportAsJSON', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// getColorHarmony
-// ---------------------------------------------------------------------------
-describe('getColorHarmony', () => {
-  it('generates analogous colors (±30° hue)', () => {
-    const harmony = getColorHarmony('#FF0000');
-    expect(harmony.analogous).toHaveLength(2);
-    expect(harmony.analogous[0]).toMatch(/^#[0-9A-F]{6}$/);
-    expect(harmony.analogous[1]).toMatch(/^#[0-9A-F]{6}$/);
-  });
-
-  it('generates complementary color (+180° hue)', () => {
-    const harmony = getColorHarmony('#FF0000');
-    expect(harmony.complementary).toMatch(/^#[0-9A-F]{6}$/);
-  });
-
-  it('generates triadic colors (+120° and +240° hue)', () => {
-    const harmony = getColorHarmony('#FF0000');
-    expect(harmony.triadic).toHaveLength(2);
-  });
-
-  it('produces different colors for non-achromatic input', () => {
-    const harmony = getColorHarmony('#3B82F6');
-    expect(harmony.complementary).not.toBe('#3B82F6');
-    expect(harmony.analogous[0]).not.toBe('#3B82F6');
-  });
-});

@@ -9,11 +9,20 @@
 import { memo, useState, useMemo, useCallback } from 'react';
 import { RiEqualizerFill as Sliders, RiClipboardLine } from 'react-icons/ri';
 import { useBrandStore } from '@/store/useBrandStore';
-import { getStyleGroups, type PaletteStyle } from '@/utils/paletteStyleClassifier';
+import { getContrastRatio } from '@/utils/colorMapping';
+import { type PaletteStyle } from '@/utils/paletteStyleClassifier';
 import { parsePaletteInput } from '@/utils/parsePaletteInput';
 import { PaletteStyleFilter } from './PaletteStyleFilter';
 import { PaletteGrid } from './PaletteGrid';
 import { CustomColorModal } from './CustomColorModal';
+
+const ROLE_PREVIEW = [
+  { key: 'bg', label: 'BG', flex: 3 },
+  { key: 'surface', label: 'Surf', flex: 2 },
+  { key: 'primary', label: 'Pri', flex: 2.5 },
+  { key: 'accent', label: 'Acc', flex: 2 },
+  { key: 'text', label: 'Text', flex: 1 },
+] as const;
 
 export const ColorPalettePanel = memo(() => {
   const [activeStyle, setActiveStyle] = useState<PaletteStyle | null>(null);
@@ -27,15 +36,12 @@ export const ColorPalettePanel = memo(() => {
 
   const applyPalette = useBrandStore((s) => s.applyPalette);
   const applyRawPalette = useBrandStore((s) => s.applyRawPalette);
+  const colors = useBrandStore((s) => s.brand.colors);
 
-  const styleCounts = useMemo(() => {
-    const groups = getStyleGroups();
-    const counts = {} as Record<PaletteStyle, number>;
-    for (const [style, palettes] of Object.entries(groups)) {
-      counts[style as PaletteStyle] = palettes.length;
-    }
-    return counts;
-  }, []);
+  const passesAA = useMemo(
+    () => getContrastRatio(colors.text, colors.bg) >= 4.5,
+    [colors.text, colors.bg]
+  );
 
   const handleSelectPalette = useCallback((paletteId: string) => {
     setSelectedPaletteId(paletteId);
@@ -66,45 +72,114 @@ export const ColorPalettePanel = memo(() => {
     setImportError(null);
   }, []);
 
-  const headerButtonClass = "flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium transition-colors duration-100";
-
-  const handleButtonEnter = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.color = 'var(--sidebar-text)';
-    e.currentTarget.style.background = 'var(--sidebar-bg-hover)';
-  }, []);
-
-  const handleButtonLeave = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.currentTarget.style.color = 'var(--sidebar-text-muted)';
-    e.currentTarget.style.background = 'transparent';
-  }, []);
-
   return (
     <div className="flex flex-col">
-      {/* Header: Edit + Import buttons */}
-      <div className="px-3 pt-2.5 pb-1.5 flex items-center gap-1">
-        <button
-          onClick={() => setCustomOpen(true)}
-          className={`${headerButtonClass} -ml-2`}
-          style={{ color: 'var(--sidebar-text-muted)' }}
-          onMouseEnter={handleButtonEnter}
-          onMouseLeave={handleButtonLeave}
+      {/* Active palette: role-mapped color bar + info row */}
+      <div className="px-3 pt-3 pb-2">
+        <div
+          className="flex h-7 rounded-lg overflow-hidden"
+          style={{ border: '1px solid var(--sidebar-border-subtle)' }}
         >
-          <Sliders size={12} />
-          Edit Colors
-        </button>
-        <button
-          onClick={() => setImportOpen(!importOpen)}
-          className={headerButtonClass}
-          style={{
-            color: importOpen ? 'var(--sidebar-text)' : 'var(--sidebar-text-muted)',
-            background: importOpen ? 'var(--sidebar-bg-hover)' : 'transparent',
-          }}
-          onMouseEnter={handleButtonEnter}
-          onMouseLeave={!importOpen ? handleButtonLeave : undefined}
-        >
-          <RiClipboardLine size={12} />
-          Import
-        </button>
+          {ROLE_PREVIEW.map(({ key, flex }) => (
+            <div
+              key={key}
+              className="transition-colors duration-200"
+              style={{
+                flex,
+                background: (colors as unknown as Record<string, string>)[key],
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Role labels + action icons */}
+        <div className="flex items-center justify-between mt-1.5">
+          <div className="flex items-center" style={{ gap: 8 }}>
+            {ROLE_PREVIEW.map(({ key, label }) => (
+              <div key={key} className="flex items-center" style={{ gap: 3 }}>
+                <div
+                  className="transition-colors duration-200"
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 2,
+                    background: (colors as unknown as Record<string, string>)[key],
+                    border: '1px solid rgba(128,128,128,0.12)',
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: 'var(--sidebar-text-muted)',
+                  }}
+                >
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center" style={{ gap: 2 }}>
+            {passesAA && (
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  color: 'var(--sidebar-text-muted)',
+                  background: 'var(--sidebar-bg-hover)',
+                  borderRadius: 4,
+                  padding: '1px 5px',
+                  marginRight: 2,
+                }}
+              >
+                AA
+              </span>
+            )}
+            <button
+              title="Edit colors"
+              onClick={() => setCustomOpen(true)}
+              className="flex items-center justify-center w-6 h-6 rounded-md transition-colors duration-100"
+              style={{ color: 'var(--sidebar-text-muted)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--sidebar-text)';
+                e.currentTarget.style.background = 'var(--sidebar-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--sidebar-text-muted)';
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <Sliders size={12} />
+            </button>
+            <button
+              title="Import palette"
+              onClick={() => setImportOpen(!importOpen)}
+              className="flex items-center justify-center w-6 h-6 rounded-md transition-colors duration-100"
+              style={{
+                color: importOpen ? 'var(--sidebar-text)' : 'var(--sidebar-text-muted)',
+                background: importOpen ? 'var(--sidebar-bg-hover)' : 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                if (!importOpen) {
+                  e.currentTarget.style.color = 'var(--sidebar-text)';
+                  e.currentTarget.style.background = 'var(--sidebar-bg-hover)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!importOpen) {
+                  e.currentTarget.style.color = 'var(--sidebar-text-muted)';
+                  e.currentTarget.style.background = 'transparent';
+                }
+              }}
+            >
+              <RiClipboardLine size={12} />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Import area */}
@@ -175,8 +250,14 @@ export const ColorPalettePanel = memo(() => {
               onClick={handleImportClose}
               className="h-7 px-3 rounded-md text-[11px] transition-colors duration-100"
               style={{ color: 'var(--sidebar-text-muted)' }}
-              onMouseEnter={handleButtonEnter}
-              onMouseLeave={handleButtonLeave}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--sidebar-text)';
+                e.currentTarget.style.background = 'var(--sidebar-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--sidebar-text-muted)';
+                e.currentTarget.style.background = 'transparent';
+              }}
             >
               Cancel
             </button>
@@ -184,19 +265,12 @@ export const ColorPalettePanel = memo(() => {
         </div>
       )}
 
-      {/* Curated content (always shown inline) */}
+      {/* Curated content */}
       <div className="flex flex-col flex-1 min-h-0">
         <PaletteStyleFilter
           activeStyle={activeStyle}
           onStyleChange={setActiveStyle}
-          styleCounts={styleCounts}
         />
-
-        <div
-          className="mx-3 h-px shrink-0"
-          style={{ background: 'var(--sidebar-border-subtle)' }}
-        />
-
         <PaletteGrid
           activeStyle={activeStyle}
           selectedPaletteId={selectedPaletteId}

@@ -20,14 +20,6 @@ export interface PaletteSection {
   palettes: Palette[];
 }
 
-export const ROLE_DESCRIPTIONS = {
-  bg: "Page backgrounds and large surfaces. Choose the lightest color for optimal readability.",
-  text: "Body copy, headings, and primary content. Should have strong contrast with background (4.5:1 minimum).",
-  primary: "Core brand color. Use for logos, hero sections, primary CTAs, and high-priority actions. Apply with discipline.",
-  accent: "Supporting color for emphasis. Use sparingly for highlights, secondary actions, and differentiation.",
-  surface: "Cards, panels, and elevated elements. Slightly different from background to create depth.",
-};
-
 export const PALETTE_SECTIONS: PaletteSection[] = [
   // ============================================
   // 01. NEUTRALS - Structural Foundation Scales

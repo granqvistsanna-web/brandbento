@@ -1,10 +1,10 @@
 /**
  * Personality / Brand Voice Tile Component
  *
- * A grid of pill-shaped tags displaying brand personality traits.
- * The kind of thing you see on brand strategy decks — "Friendly",
- * "Witty", "Confident" — laid out in a flowing tag cloud with
- * decorative arrow pills interspersed.
+ * V3: EXPRESSIVE / EDITORIAL — Magazine-style typographic poster.
+ * Dramatic scale contrast: one hero word at display size, two at
+ * medium, rest at small body. Asymmetric, left-aligned composition
+ * that feels like a design studio manifesto.
  */
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
@@ -15,7 +15,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getHeadlineLineHeight } from '@/utils/typography';
 import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
@@ -92,9 +92,9 @@ export function PersonalityTile({ placementId }: PersonalityTileProps) {
   const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  // Apply font preview if active
+  const primaryFontChoice = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
   const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
-
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFontChoice, getFontCategory(primaryFontChoice));
   const { fontFamily: bodyFont } = useGoogleFonts(secondaryFontChoice, getFontCategory(secondaryFontChoice));
   const typeScale = getTypeScale(typography);
 
@@ -114,59 +114,6 @@ export function PersonalityTile({ placementId }: PersonalityTileProps) {
     const preset = candidates[Math.floor(Math.random() * candidates.length)];
     updateTile(tile.id, { items: preset }, true);
   }, [tile?.id, items, updateTile]);
-
-  /* ─── Pill styles ─── */
-  const pillFontSize = clampFontSize(typeScale.stepMinus1 * scale, 11, 18);
-
-  const getPillStyle = (index: number): React.CSSProperties => {
-    const variant = index % 4;
-    const base: React.CSSProperties = {
-      fontFamily: bodyFont,
-      fontWeight: parseInt(typography.weightBody) || 500,
-      fontSize: `${pillFontSize}px`,
-      letterSpacing: '0.04em',
-      borderRadius: '9999px',
-      padding: `${clampFontSize(6 * scale, 4, 10)}px ${clampFontSize(16 * scale, 10, 24)}px`,
-      lineHeight: 1.3,
-      whiteSpace: 'nowrap',
-      transition: 'all 0.2s ease',
-    };
-
-    if (variant === 0) {
-      // Solid primary
-      return {
-        ...base,
-        backgroundColor: primary,
-        color: getAdaptiveTextColor(primary, textColor, COLOR_DEFAULTS.TEXT_LIGHT),
-      };
-    } else if (variant === 1) {
-      // Outlined
-      return {
-        ...base,
-        backgroundColor: 'transparent',
-        color: adaptiveText,
-        border: `1.5px solid ${isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)'}`,
-      };
-    } else if (variant === 2) {
-      // Solid accent
-      return {
-        ...base,
-        backgroundColor: accent,
-        color: getAdaptiveTextColor(accent, textColor, COLOR_DEFAULTS.TEXT_LIGHT),
-      };
-    } else {
-      // Outlined
-      return {
-        ...base,
-        backgroundColor: 'transparent',
-        color: adaptiveText,
-        border: `1.5px solid ${isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)'}`,
-      };
-    }
-  };
-
-  // Interleave arrow pills at positions 2, 5
-  const ARROW_POSITIONS = new Set([2, 5]);
 
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
@@ -195,51 +142,93 @@ export function PersonalityTile({ placementId }: PersonalityTileProps) {
     </FloatingToolbar>
   );
 
-  // Build the rendered pills list with decorative arrows
-  const renderedPills: { text: string; isArrow: boolean; index: number }[] = [];
-  let pillIndex = 0;
-  items.forEach((item, i) => {
-    if (ARROW_POSITIONS.has(i)) {
-      renderedPills.push({ text: '\u2192', isArrow: true, index: pillIndex++ });
-    }
-    renderedPills.push({ text: item, isArrow: false, index: pillIndex++ });
-  });
+  /* ─── Layout tiers ─── */
+  const heroWord = items[0];
+  const midWords = items.slice(1, 3);
+  const smallWords = items.slice(3);
+
+  const heroSize = clampFontSize(typeScale.step3 * scale, 28, 56);
+  const midSize = clampFontSize(typeScale.step1 * scale, 16, 28);
+  const smallSize = clampFontSize(typeScale.stepMinus1 * scale, 11, 15);
 
   return (
     <div
       ref={containerRef}
-      className="w-full h-full flex flex-col justify-center transition-colors duration-300 relative overflow-hidden"
+      className="w-full h-full flex flex-col justify-end transition-colors duration-300 relative overflow-hidden"
       style={{
         backgroundColor: surfaceBg,
         padding: 'clamp(20px, 8%, 40px)',
       }}
     >
-      {/* Pill cloud */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: `${clampFontSize(8 * scale, 5, 12)}px`,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {renderedPills.map((pill) => (
-          <span
-            key={pill.index}
-            style={
-              pill.isArrow
-                ? {
-                    ...getPillStyle(1), // Use outlined style for arrows
-                    opacity: 0.4,
-                    fontSize: `${pillFontSize * 1.1}px`,
-                  }
-                : getPillStyle(pill.index)
-            }
-          >
-            {pill.text}
-          </span>
-        ))}
+      {/* Typographic composition — stacked, left-aligned */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {/* Hero word — massive display type */}
+        <span
+          style={{
+            fontFamily: headlineFont,
+            fontWeight: parseInt(typography.weightHeadline) || 700,
+            fontSize: `${heroSize}px`,
+            lineHeight: 1.0,
+            letterSpacing: getHeadlineTracking(typography),
+            color: adaptiveText,
+          }}
+        >
+          {heroWord}
+        </span>
+
+        {/* Mid-tier words — medium scale, stacked */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: `${clampFontSize(1 * scale, 0, 2)}px`,
+            marginTop: `${clampFontSize(4 * scale, 2, 8)}px`,
+          }}
+        >
+          {midWords.map((word, i) => (
+            <span
+              key={i}
+              style={{
+                fontFamily: headlineFont,
+                fontWeight: parseInt(typography.weightHeadline) || 700,
+                fontSize: `${midSize}px`,
+                lineHeight: getHeadlineLineHeight(typography),
+                letterSpacing: getHeadlineTracking(typography),
+                color: adaptiveText,
+                opacity: 0.65,
+              }}
+            >
+              {word}
+            </span>
+          ))}
+        </div>
+
+        {/* Small words — body scale, flowing inline */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: `${clampFontSize(3 * scale, 2, 6)}px ${clampFontSize(10 * scale, 6, 16)}px`,
+            marginTop: `${clampFontSize(10 * scale, 6, 18)}px`,
+          }}
+        >
+          {smallWords.map((word, i) => (
+            <span
+              key={i}
+              style={{
+                fontFamily: bodyFont,
+                fontWeight: parseInt(typography.weightBody) || 400,
+                fontSize: `${smallSize}px`,
+                letterSpacing: '0.02em',
+                color: adaptiveText,
+                opacity: 0.4,
+                lineHeight: 1.4,
+              }}
+            >
+              {word}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Corner label */}

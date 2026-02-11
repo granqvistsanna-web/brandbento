@@ -15,6 +15,11 @@ interface Typography {
   weightHeadline: string;
   weightBody: string;
   letterSpacing: "tight" | "normal" | "wide";
+  trackingHeadline: number;
+  trackingBody: number;
+  lineHeightHeadline: number;
+  lineHeightBody: number;
+  transformHeadline: "none" | "uppercase" | "capitalize";
 }
 
 interface Colors {

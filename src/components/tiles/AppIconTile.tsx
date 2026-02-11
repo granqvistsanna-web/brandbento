@@ -1,21 +1,26 @@
 /**
  * App Icon / Iconography Tile Component
  *
- * iPhone home screen mockup showing the brand's app icon alongside
- * system apps. The phone sits offset to the right against a bold
- * brand-colored background — the kind of context shot you see in
- * brand identity presentations.
+ * Presents the brand app icon as a dramatic hero statement — the way
+ * Pentagram or Collins might present a logo on a case study page.
+ * The icon sits at oversized scale with editorial typography creating
+ * compositional tension. A thin rule and subtle detail number anchor
+ * the design without cluttering it.
+ *
+ * Adapts layout based on tile shape:
+ * - Portrait: icon centered upper area, text composition bottom-aligned
+ * - Landscape: icon left with vertical rule, text right
+ * - Square: icon upper-right, text lower-left — diagonal tension
  */
 import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getAdaptiveTextColor } from '@/utils/color';
-import { hexToHSL } from '@/utils/colorMapping';
 import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getHeadlineLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -26,102 +31,13 @@ import {
   ToolbarLabel,
 } from './FloatingToolbar';
 
-/* ─── Phone design-space constants ─── */
-const PHONE_W = 236;
-const PHONE_H = 460;
-const BEZEL = 8;
-const PHONE_RADIUS = 40;
-const SCREEN_RADIUS = PHONE_RADIUS - BEZEL;
-const ICON_SIZE = 52;
-const ICON_RADIUS = 12;
-const ICON_GAP = 18;
-const LABEL_SIZE = 9;
-const ISLAND_W = 72;
-const ISLAND_H = 18;
-
 /* ─── Types ─── */
 
 interface AppIconTileProps {
   placementId?: string;
 }
 
-/* ─── System App Icons ─── */
-
-function CalendarIcon() {
-  const day = new Date().getDate();
-  const weekday = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][new Date().getDay()];
-  return (
-    <div
-      style={{
-        width: ICON_SIZE, height: ICON_SIZE, borderRadius: ICON_RADIUS,
-        backgroundColor: '#fff', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          width: '100%', height: 15, backgroundColor: '#ff3b30',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <span style={{ fontSize: 7.5, fontWeight: 700, color: '#fff', letterSpacing: '0.06em', lineHeight: 1 }}>
-          {weekday}
-        </span>
-      </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontSize: 24, fontWeight: 300, color: '#1a1a1a', lineHeight: 1, marginTop: -2 }}>
-          {day}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function CalculatorIcon() {
-  const rows = [
-    ['#a5a5a5', '#a5a5a5', '#a5a5a5', '#ff9500'],
-    ['#333', '#333', '#333', '#ff9500'],
-    ['#333', '#333', '#333', '#ff9500'],
-    ['#333', '#333', '#333', '#ff9500'],
-  ];
-  return (
-    <div
-      style={{
-        width: ICON_SIZE, height: ICON_SIZE, borderRadius: ICON_RADIUS,
-        backgroundColor: '#1c1c1e', display: 'flex', flexDirection: 'column',
-        gap: 2.5, padding: '7px 5px 5px',
-      }}
-    >
-      {rows.map((row, ri) => (
-        <div key={ri} style={{ display: 'flex', gap: 2.5, flex: 1 }}>
-          {row.map((c, ci) => (
-            <div key={ci} style={{ flex: 1, backgroundColor: c, borderRadius: 3 }} />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ThreadsIcon() {
-  return (
-    <div
-      style={{
-        width: ICON_SIZE, height: ICON_SIZE, borderRadius: ICON_RADIUS,
-        backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-    >
-      <svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-        <path
-          d="M12.186 2C14.04 2 15.633 2.42 16.892 3.178c1.26.757 2.193 1.83 2.787 3.158.388.871.638 1.868.736 2.96a6.95 6.95 0 0 1-.142 2.214c-.289 1.184-.85 2.188-1.658 2.98-.83.81-1.88 1.362-3.1 1.617a6.7 6.7 0 0 1-1.524.166c-.652 0-1.276-.089-1.862-.262-.586-.174-1.102-.422-1.542-.732a4.04 4.04 0 0 1-1.062-1.12 5.1 5.1 0 0 1-.59-1.4 6.02 6.02 0 0 1-.194-1.548c0-.926.17-1.76.51-2.496.336-.736.806-1.31 1.414-1.722.604-.41 1.282-.616 2.032-.616.498 0 .958.085 1.378.256.42.17.78.41 1.08.72.3.308.53.67.696 1.084.164.414.246.866.246 1.356 0 .57-.104 1.064-.312 1.482-.21.418-.494.74-.856.966-.36.228-.766.342-1.216.342a1.47 1.47 0 0 1-.776-.198.96.96 0 0 1-.434-.55"
-          stroke="#fff"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
-  );
-}
+type TileShape = 'portrait' | 'square' | 'landscape';
 
 /* ─── Component ─── */
 
@@ -166,15 +82,15 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
 
   /* ─── Colors ─── */
   const { bg, text: textColor, primary, surfaces } = colors;
-  const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 0 });
+  const surfaceBg = resolveSurfaceColor({ placementId, tileSurfaceIndex, surfaces, bg, defaultIndex: 1 });
   const adaptiveText = getAdaptiveTextColor(surfaceBg, textColor, COLOR_DEFAULTS.TEXT_LIGHT);
   const fontPreview = useBrandStore((state) => state.fontPreview);
 
   /* ─── Typography ─── */
-  // Apply font preview if active
   const secondaryFontChoice = fontPreview?.target === "secondary" ? fontPreview.font : typography.secondary;
-
+  const primaryFontChoice = fontPreview?.target === "primary" ? fontPreview.font : typography.primary;
   const { fontFamily: bodyFont } = useGoogleFonts(secondaryFontChoice, getFontCategory(secondaryFontChoice));
+  const { fontFamily: headlineFont } = useGoogleFonts(primaryFontChoice, getFontCategory(primaryFontChoice));
   const typeScale = getTypeScale(typography);
 
   /* ─── Content ─── */
@@ -214,217 +130,293 @@ export function AppIconTile({ placementId }: AppIconTileProps) {
   const brandIconBg = primary;
   const brandIconText = getAdaptiveTextColor(primary, '#ffffff', '#000000');
 
-  /* ─── Phone wallpaper color ─── */
-  const { l: surfL } = hexToHSL(surfaceBg);
-  const wallpaperBg = surfaces?.[1] || (surfL > 55 ? '#f2ece4' : '#2a2a2e');
-  const wallpaperText = getAdaptiveTextColor(wallpaperBg, '#000', '#fff');
+  /* ─── Shape detection ─── */
+  const ratio = dims.w / dims.h;
+  const shape: TileShape = ratio > 1.4 ? 'landscape' : ratio < 0.75 ? 'portrait' : 'square';
 
-  /* ─── Phone scale & position ─── */
-  const isLandscape = dims.w > dims.h * 1.3;
-  const widthFactor = isLandscape ? 0.45 : 0.55;
-  const phoneScale = Math.max(
-    0.3,
-    Math.min((dims.h * 0.92) / PHONE_H, (dims.w * widthFactor) / PHONE_W, 1.15)
-  );
-  const scaledW = PHONE_W * phoneScale;
-  const scaledH = PHONE_H * phoneScale;
+  /* ─── Proportional icon size ─── */
+  const shorter = Math.min(dims.w, dims.h);
+  const iconSize = Math.max(48, Math.min(shorter * 0.44, 200));
+  const iconRadius = iconSize * 0.22;
 
-  const apps = [
-    {
-      name: appName,
-      icon: (
-        <div
+  /* ─── Padding ─── */
+  const pad = 'clamp(20px, 8%, 40px)';
+
+  /* ─── Shared icon element ─── */
+  const iconElement = (
+    <div
+      style={{
+        width: iconSize,
+        height: iconSize,
+        borderRadius: iconRadius,
+        backgroundColor: brandIconBg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'background-color 0.3s ease',
+        flexShrink: 0,
+        boxShadow: `0 ${iconSize * 0.04}px ${iconSize * 0.16}px rgba(0,0,0,0.12), 0 ${iconSize * 0.02}px ${iconSize * 0.06}px rgba(0,0,0,0.08)`,
+      }}
+    >
+      {logo.image ? (
+        <img
+          src={logo.image}
+          alt=""
           style={{
-            width: ICON_SIZE, height: ICON_SIZE, borderRadius: ICON_RADIUS,
-            backgroundColor: brandIconBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background-color 0.3s ease',
+            width: iconSize * 0.58,
+            height: iconSize * 0.58,
+            objectFit: 'contain',
+          }}
+        />
+      ) : (
+        <span
+          style={{
+            fontSize: iconSize * 0.42,
+            fontWeight: 700,
+            color: brandIconText,
+            lineHeight: 1,
+            fontFamily: headlineFont,
           }}
         >
-          {logo.image ? (
-            <img src={logo.image} alt="" style={{ width: 30, height: 30, objectFit: 'contain' }} />
-          ) : (
-            <span style={{ fontSize: 22, fontWeight: 700, color: brandIconText }}>
-              {(logo.text || 'A').charAt(0)}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    { name: 'Calendar', icon: <CalendarIcon /> },
-    { name: 'Calculator', icon: <CalculatorIcon /> },
-    { name: 'Threads', icon: <ThreadsIcon /> },
-  ];
+          {(logo.text || 'A').charAt(0)}
+        </span>
+      )}
+    </div>
+  );
 
+  /* ─── Shared typography ─── */
+  const labelElement = (
+    <span
+      className="select-none"
+      style={{
+        fontFamily: bodyFont,
+        fontWeight: parseInt(typography.weightBody) || 400,
+        fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 12)}px`,
+        letterSpacing: '0.14em',
+        textTransform: 'uppercase',
+        color: adaptiveText,
+        opacity: 0.42,
+      }}
+    >
+      {label}
+    </span>
+  );
+
+  const headlineElement = (
+    <h1
+      style={{
+        fontFamily: headlineFont,
+        fontWeight: parseInt(typography.weightHeadline) || 700,
+        fontSize: `${clampFontSize(typeScale.step2, 20, 52)}px`,
+        lineHeight: getHeadlineLineHeight(typography),
+        letterSpacing: getHeadlineTracking(typography),
+        textTransform: getHeadlineTransform(typography) as React.CSSProperties['textTransform'],
+        color: adaptiveText,
+        textWrap: 'balance',
+        margin: 0,
+      }}
+    >
+      {appName}
+    </h1>
+  );
+
+  const detailElement = (
+    <span
+      className="select-none"
+      style={{
+        fontFamily: bodyFont,
+        fontWeight: parseInt(typography.weightBody) || 400,
+        fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 11)}px`,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: adaptiveText,
+        opacity: 0.28,
+        fontVariantNumeric: 'tabular-nums',
+      }}
+    >
+      01
+    </span>
+  );
+
+  const ruleStyle = {
+    backgroundColor: adaptiveText,
+    opacity: 0.1,
+  };
+
+  /* ─── LANDSCAPE: icon left, vertical rule, text right ─── */
+  if (shape === 'landscape') {
+    return (
+      <div
+        ref={containerRef}
+        className="w-full h-full relative overflow-hidden transition-colors duration-300"
+        style={{ backgroundColor: surfaceBg }}
+      >
+        <div
+          className="absolute select-none"
+          style={{ top: pad, right: pad }}
+        >
+          {detailElement}
+        </div>
+
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            padding: pad,
+            gap: 'clamp(20px, 6%, 48px)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              paddingLeft: 'clamp(8px, 3%, 24px)',
+            }}
+          >
+            {iconElement}
+          </div>
+
+          <div
+            style={{
+              width: 1,
+              alignSelf: 'stretch',
+              ...ruleStyle,
+              flexShrink: 0,
+              margin: 'clamp(12px, 8%, 32px) 0',
+            }}
+          />
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: `${clampFontSize(typeScale.base * 0.4, 6, 14)}px`,
+              minWidth: 0,
+            }}
+          >
+            {labelElement}
+            {headlineElement}
+          </div>
+        </div>
+
+        {toolbar}
+      </div>
+    );
+  }
+
+  /* ─── PORTRAIT: icon upper center, rule, text bottom ─── */
+  if (shape === 'portrait') {
+    return (
+      <div
+        ref={containerRef}
+        className="w-full h-full relative overflow-hidden transition-colors duration-300"
+        style={{ backgroundColor: surfaceBg }}
+      >
+        <div
+          className="absolute select-none"
+          style={{ top: pad, right: pad }}
+        >
+          {detailElement}
+        </div>
+
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: pad,
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: 'clamp(8px, 4%, 24px)',
+            }}
+          >
+            {iconElement}
+          </div>
+
+          <div
+            style={{
+              height: 1,
+              ...ruleStyle,
+              margin: `clamp(12px, 4%, 24px) 0`,
+            }}
+          />
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: `${clampFontSize(typeScale.base * 0.4, 6, 12)}px`,
+            }}
+          >
+            {labelElement}
+            {headlineElement}
+          </div>
+        </div>
+
+        {toolbar}
+      </div>
+    );
+  }
+
+  /* ─── SQUARE: diagonal tension — icon upper-right, text lower-left ─── */
   return (
     <div
       ref={containerRef}
       className="w-full h-full relative overflow-hidden transition-colors duration-300"
       style={{ backgroundColor: surfaceBg }}
     >
-      {/* ── Top-left accent bar ── */}
       <div
-        className="absolute z-10"
+        className="absolute select-none"
+        style={{ top: pad, left: pad }}
+      >
+        {detailElement}
+      </div>
+
+      <div
+        className="absolute"
         style={{
-          top: 0,
-          left: 0,
+          top: pad,
+          right: pad,
+          paddingTop: 'clamp(4px, 2%, 12px)',
         }}
       >
+        {iconElement}
+      </div>
+
+      <div
+        className="absolute"
+        style={{
+          bottom: pad,
+          left: pad,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: `${clampFontSize(typeScale.base * 0.4, 6, 12)}px`,
+          maxWidth: '75%',
+        }}
+      >
+        {/* Partial-width rule above text */}
         <div
           style={{
-            width: 'clamp(3px, 0.8%, 5px)',
-            height: 'clamp(24px, 10%, 48px)',
-            backgroundColor: primary,
-            borderRadius: '0 2px 2px 0',
-            transition: 'background-color 0.3s ease',
+            width: '60%',
+            height: 1,
+            ...ruleStyle,
+            marginBottom: `${clampFontSize(typeScale.base * 0.3, 4, 10)}px`,
           }}
         />
+        {labelElement}
+        {headlineElement}
       </div>
-
-      {/* ── Phone mockup — offset right, partially cropped ── */}
-      <div
-        style={{
-          position: 'absolute',
-          left: dims.w - scaledW * 0.88,
-          top: (dims.h - scaledH) / 2,
-          width: PHONE_W,
-          height: PHONE_H,
-          transform: `scale(${phoneScale})`,
-          transformOrigin: 'top left',
-        }}
-      >
-        {/* Dark bezel */}
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: '#1a1a1a',
-            borderRadius: PHONE_RADIUS,
-            padding: BEZEL,
-            boxSizing: 'border-box',
-            boxShadow: '-4px 4px 32px rgba(0,0,0,0.2), -1px 1px 8px rgba(0,0,0,0.1)',
-          }}
-        >
-          {/* Screen */}
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: wallpaperBg,
-              borderRadius: SCREEN_RADIUS,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              transition: 'background-color 0.3s ease',
-            }}
-          >
-            {/* Dynamic Island */}
-            <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 8 }}>
-              <div
-                style={{
-                  width: ISLAND_W,
-                  height: ISLAND_H,
-                  backgroundColor: '#000',
-                  borderRadius: ISLAND_H / 2,
-                }}
-              />
-            </div>
-
-            {/* Status bar */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '6px 20px 0',
-              }}
-            >
-              <span style={{ fontSize: 12, fontWeight: 600, color: wallpaperText }}>
-                12:30
-              </span>
-              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                <svg width="14" height="10" viewBox="0 0 14 10">
-                  {[0, 1, 2, 3].map((i) => (
-                    <rect
-                      key={i}
-                      x={i * 3.5}
-                      y={10 - (i + 1) * 2.5}
-                      width="2.5"
-                      height={(i + 1) * 2.5}
-                      rx="0.5"
-                      fill={wallpaperText}
-                    />
-                  ))}
-                </svg>
-                <svg width="12" height="10" viewBox="0 0 12 10" fill={wallpaperText}>
-                  <path d="M6 9a1.2 1.2 0 100-2.4A1.2 1.2 0 006 9z" />
-                  <path d="M3.5 6.5a3.5 3.5 0 015 0" stroke={wallpaperText} fill="none" strokeWidth="1.2" strokeLinecap="round" />
-                  <path d="M1.5 4.5a6 6 0 019 0" stroke={wallpaperText} fill="none" strokeWidth="1.2" strokeLinecap="round" />
-                </svg>
-                <svg width="18" height="9" viewBox="0 0 18 9">
-                  <rect x="0" y="0" width="15.5" height="9" rx="1.5" stroke={wallpaperText} fill="none" strokeWidth="1" />
-                  <rect x="2" y="2" width="10" height="5" rx="0.5" fill={wallpaperText} />
-                  <rect x="16" y="2.5" width="1.5" height="4" rx="0.5" fill={wallpaperText} opacity="0.4" />
-                </svg>
-              </div>
-            </div>
-
-            {/* App grid */}
-            <div
-              style={{
-                flex: 1,
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: ICON_GAP,
-                justifyItems: 'center',
-                alignContent: 'center',
-                padding: '24px 32px',
-              }}
-            >
-              {apps.map((app) => (
-                <div
-                  key={app.name}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}
-                >
-                  {app.icon}
-                  <span
-                    style={{
-                      fontSize: LABEL_SIZE,
-                      color: wallpaperText,
-                      fontWeight: 400,
-                      letterSpacing: '0.01em',
-                      textAlign: 'center',
-                      maxWidth: ICON_SIZE + 10,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {app.name}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Bottom-left label ── */}
-      <span
-        className="absolute select-none"
-        style={{
-          bottom: 'clamp(16px, 6%, 32px)',
-          left: 'clamp(16px, 6%, 32px)',
-          fontFamily: bodyFont,
-          fontWeight: parseInt(typography.weightBody) || 400,
-          fontSize: `${clampFontSize(typeScale.stepMinus1, 10, 14)}px`,
-          letterSpacing: '0.06em',
-          fontStyle: 'italic',
-          color: adaptiveText,
-          opacity: 0.3,
-        }}
-      >
-        {label}
-      </span>
 
       {toolbar}
     </div>

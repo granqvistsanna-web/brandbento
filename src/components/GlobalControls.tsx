@@ -4,16 +4,138 @@
  * Extracted from ControlPanel.jsx.
  */
 import React from "react";
-import { motion } from "motion/react";
-import { RiShuffleLine } from "react-icons/ri";
+import { motion, AnimatePresence } from "motion/react";
+import { RiShuffleLine, RiArrowRightSLine } from "react-icons/ri";
 import { useBrandStore } from "../store/useBrandStore";
 import { Section, PropRow, Input, Slider, SegmentedControl } from "./controls";
 import { FontSelector } from "./controls/FontSelector";
+import { GOOGLE_FONTS_MAP } from "../data/googleFontsMetadata";
 import { LayoutSelector, CanvasRatioPicker, CanvasBgPicker } from "./controls/LayoutControls";
 import { ColorPalettePanel } from "./color/ColorPalettePanel";
-import { getContrastRatio } from "../utils/colorMapping";
 import ImageDropZone from "./ImageDropZone";
 import { ImageCollections } from "./controls/ImageCollections";
+
+const WEIGHT_LABELS: Record<string, string> = {
+  '100': 'Thin', '200': 'ExtraLight', '300': 'Light', '400': 'Regular',
+  '500': 'Medium', '600': 'SemiBold', '700': 'Bold', '800': 'ExtraBold', '900': 'Black',
+};
+
+const getAvailableWeights = (fontFamily: string): string[] => {
+  const meta = GOOGLE_FONTS_MAP.get(fontFamily);
+  if (!meta?.variants?.length) return ['400', '700'];
+  return meta.variants.filter(v => !v.includes('italic')).sort((a, b) => parseInt(a) - parseInt(b));
+};
+
+/** Compact number input for typography values (leading, tracking) */
+const TypeInput = ({
+  label, value, onChange, onBlur, min, max, step, suffix,
+}: {
+  label: string; value: number; onChange: (v: number) => void; onBlur?: () => void;
+  min: number; max: number; step: number; suffix?: string;
+}) => (
+  <div className="flex items-center gap-1.5 flex-1">
+    <span className="text-11 flex-shrink-0" style={{ color: "var(--sidebar-text-muted)", minWidth: 14 }}>{label}</span>
+    <div className="relative flex-1">
+      <input
+        type="number"
+        value={Number(value.toFixed(step < 0.01 ? 3 : 2))}
+        onChange={(e) => {
+          const v = parseFloat(e.target.value);
+          if (!isNaN(v) && v >= min && v <= max) onChange(Math.round(v / step) * step);
+        }}
+        onBlur={onBlur}
+        min={min}
+        max={max}
+        step={step}
+        className="input-figma w-full text-right font-mono"
+        style={{ fontSize: 11, padding: '4px 6px', height: 28 }}
+      />
+      {suffix && (
+        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-10 pointer-events-none" style={{ color: "var(--sidebar-text-muted)" }}>{suffix}</span>
+      )}
+    </div>
+  </div>
+);
+
+/** Weight dropdown filtered to available font weights */
+const WeightSelect = ({
+  fontFamily, value, onChange,
+}: {
+  fontFamily: string; value: string; onChange: (w: string) => void;
+}) => {
+  const weights = getAvailableWeights(fontFamily);
+  return (
+    <select
+      value={weights.includes(value) ? value : weights[Math.floor(weights.length / 2)] || '400'}
+      onChange={(e) => onChange(e.target.value)}
+      className="input-figma flex-1 cursor-pointer"
+      style={{ fontSize: 11, padding: '4px 6px', height: 28, minWidth: 0 }}
+    >
+      {weights.map(w => (
+        <option key={w} value={w}>{WEIGHT_LABELS[w] || w}</option>
+      ))}
+    </select>
+  );
+};
+
+/** Compact sub-group for headline or body typography controls */
+const TypeRoleGroup = ({
+  label, fontFamily, weight, onWeightChange,
+  leading, onLeadingChange, onLeadingCommit,
+  tracking, onTrackingChange, onTrackingCommit,
+  transform, onTransformChange,
+  noHeader,
+}: {
+  label: string; fontFamily: string;
+  weight: string; onWeightChange: (w: string) => void;
+  leading: number; onLeadingChange: (v: number) => void; onLeadingCommit: () => void;
+  tracking: number; onTrackingChange: (v: number) => void; onTrackingCommit: () => void;
+  transform?: string; onTransformChange?: (v: string) => void;
+  noHeader?: boolean;
+}) => (
+  <div>
+    {!noHeader && (
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-11 font-medium uppercase" style={{ color: "var(--sidebar-text-muted)", letterSpacing: '0.06em' }}>
+          {label}
+        </span>
+        <div style={{ flex: 1, height: 1, background: "var(--sidebar-border-subtle)", opacity: 0.5 }} />
+      </div>
+    )}
+    <div style={{ display: 'grid', gridTemplateColumns: transform ? '1fr 1fr' : '1fr', gap: '6px 10px' }}>
+      <div className="flex items-center gap-1.5">
+        <span className="text-11 flex-shrink-0" style={{ color: "var(--sidebar-text-muted)", minWidth: 14 }}>Wt</span>
+        <WeightSelect fontFamily={fontFamily} value={weight} onChange={onWeightChange} />
+      </div>
+      {transform !== undefined && onTransformChange && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-11 flex-shrink-0" style={{ color: "var(--sidebar-text-muted)", minWidth: 14 }}>Aa</span>
+          <div className="flex flex-1 rounded-md overflow-hidden" style={{ background: "var(--sidebar-bg-hover)", padding: 2, gap: 1, height: 28 }}>
+            {([['none', 'Aa'], ['uppercase', 'AA'], ['capitalize', 'Ab']] as const).map(([val, lbl]) => (
+              <button
+                key={val}
+                onClick={() => onTransformChange(val)}
+                className="flex-1 text-11 font-medium rounded-sm transition-fast"
+                style={{
+                  background: transform === val ? "var(--sidebar-bg)" : "transparent",
+                  color: transform === val ? "var(--sidebar-text)" : "var(--sidebar-text-muted)",
+                  boxShadow: transform === val ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+                  border: "none", cursor: "pointer",
+                }}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <TypeInput label="LH" value={leading} onChange={onLeadingChange} onBlur={onLeadingCommit}
+        min={label === 'Headline' ? 0.9 : 1.2} max={label === 'Headline' ? 1.3 : 2.0} step={0.01} />
+      <TypeInput label="LS" value={tracking} onChange={onTrackingChange} onBlur={onTrackingCommit}
+        min={-0.05} max={0.1} step={0.005} suffix="em" />
+    </div>
+  </div>
+);
 
 const ShuffleButton = ({ onClick, shortcut }: { onClick: () => void; shortcut: string }) => (
   <motion.button
@@ -211,7 +333,9 @@ const GlobalControls = React.memo(() => {
   const shuffleTypography = useBrandStore((s) => s.shuffleTypography);
   const loadPreset = useBrandStore((s) => s.loadPreset);
   const activePreset = useBrandStore((s) => s.activePreset);
-
+  const [typoTarget, setTypoTarget] = React.useState<"headline" | "body">("headline");
+  const [typoAdvanced, setTypoAdvanced] = React.useState(false);
+  const isHeadline = typoTarget === "headline";
   const handleChange = (section: string, key: string, value: unknown, isCommit = false) => {
     updateBrand(
       {
@@ -286,137 +410,73 @@ const GlobalControls = React.memo(() => {
           unit="px"
         />
 
-        <Slider
-          label="Headline Weight"
-          value={parseInt(brand.typography.weightHeadline) || 700}
-          onChange={(val) =>
-            handleChange("typography", "weightHeadline", String(Math.round(val / 100) * 100), false)
-          }
-          onBlur={() =>
-            handleChange("typography", "weightHeadline", brand.typography.weightHeadline, true)
-          }
-          min={100}
-          max={900}
-          step={100}
-        />
+        {/* Fine-tuning disclosure */}
+        <div>
+          <button
+            onClick={() => setTypoAdvanced(!typoAdvanced)}
+            className="flex items-center gap-2 w-full group"
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            <motion.div
+              animate={{ rotate: typoAdvanced ? 90 : 0 }}
+              transition={{ duration: 0.15 }}
+              style={{ color: "var(--sidebar-text-muted)" }}
+            >
+              <RiArrowRightSLine size={11} />
+            </motion.div>
+            <span
+              className="text-11 font-medium uppercase"
+              style={{ color: "var(--sidebar-text-muted)", letterSpacing: "0.06em" }}
+            >
+              Fine Tuning
+            </span>
+            <div className="flex-1 h-px" style={{ background: "var(--sidebar-border-subtle)", opacity: 0.5 }} />
+          </button>
 
-        <Slider
-          label="Body Weight"
-          value={parseInt(brand.typography.weightBody) || 400}
-          onChange={(val) =>
-            handleChange("typography", "weightBody", String(Math.round(val / 100) * 100), false)
-          }
-          onBlur={() =>
-            handleChange("typography", "weightBody", brand.typography.weightBody, true)
-          }
-          min={100}
-          max={900}
-          step={100}
-        />
+          <AnimatePresence initial={false}>
+            {typoAdvanced && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                style={{ overflow: "hidden" }}
+              >
+                <div className="space-y-4" style={{ paddingTop: 12 }}>
+                  <SegmentedControl
+                    options={[
+                      { value: "headline", label: "Headline" },
+                      { value: "body", label: "Body" },
+                    ]}
+                    value={typoTarget}
+                    onChange={(val) => setTypoTarget(val as "headline" | "body")}
+                  />
 
-        <Slider
-          label="Headline Leading"
-          value={brand.typography.lineHeightHeadline}
-          onChange={(val) =>
-            handleChange("typography", "lineHeightHeadline", val, false)
-          }
-          onBlur={() =>
-            handleChange("typography", "lineHeightHeadline", brand.typography.lineHeightHeadline, true)
-          }
-          min={0.9}
-          max={1.3}
-          step={0.01}
-        />
-
-        <Slider
-          label="Body Leading"
-          value={brand.typography.lineHeightBody}
-          onChange={(val) =>
-            handleChange("typography", "lineHeightBody", val, false)
-          }
-          onBlur={() =>
-            handleChange("typography", "lineHeightBody", brand.typography.lineHeightBody, true)
-          }
-          min={1.2}
-          max={2.0}
-          step={0.01}
-        />
-
-        <Slider
-          label="Headline Tracking"
-          value={brand.typography.trackingHeadline}
-          onChange={(val) =>
-            handleChange("typography", "trackingHeadline", Math.round(val * 1000) / 1000, false)
-          }
-          onBlur={() =>
-            handleChange("typography", "trackingHeadline", brand.typography.trackingHeadline, true)
-          }
-          min={-0.05}
-          max={0.1}
-          step={0.005}
-          unit="em"
-        />
-
-        <Slider
-          label="Body Tracking"
-          value={brand.typography.trackingBody}
-          onChange={(val) =>
-            handleChange("typography", "trackingBody", Math.round(val * 1000) / 1000, false)
-          }
-          onBlur={() =>
-            handleChange("typography", "trackingBody", brand.typography.trackingBody, true)
-          }
-          min={-0.05}
-          max={0.1}
-          step={0.005}
-          unit="em"
-        />
-
-        <PropRow label="Headline Case">
-          <SegmentedControl
-            options={[
-              { value: "none", label: "None" },
-              { value: "uppercase", label: "Upper" },
-              { value: "capitalize", label: "Title" },
-            ]}
-            value={brand.typography.transformHeadline}
-            onChange={(val) => handleChange("typography", "transformHeadline", val, true)}
-          />
-        </PropRow>
+                  <TypeRoleGroup
+                    noHeader
+                    label={isHeadline ? "Headline" : "Body"}
+                    fontFamily={isHeadline ? brand.typography.primary : brand.typography.secondary}
+                    weight={isHeadline ? brand.typography.weightHeadline : brand.typography.weightBody}
+                    onWeightChange={(w) => handleChange("typography", isHeadline ? "weightHeadline" : "weightBody", w, true)}
+                    leading={isHeadline ? brand.typography.lineHeightHeadline : brand.typography.lineHeightBody}
+                    onLeadingChange={(v) => handleChange("typography", isHeadline ? "lineHeightHeadline" : "lineHeightBody", v, false)}
+                    onLeadingCommit={() => handleChange("typography", isHeadline ? "lineHeightHeadline" : "lineHeightBody", isHeadline ? brand.typography.lineHeightHeadline : brand.typography.lineHeightBody, true)}
+                    tracking={isHeadline ? brand.typography.trackingHeadline : brand.typography.trackingBody}
+                    onTrackingChange={(v) => handleChange("typography", isHeadline ? "trackingHeadline" : "trackingBody", v, false)}
+                    onTrackingCommit={() => handleChange("typography", isHeadline ? "trackingHeadline" : "trackingBody", isHeadline ? brand.typography.trackingHeadline : brand.typography.trackingBody, true)}
+                    transform={isHeadline ? brand.typography.transformHeadline : undefined}
+                    onTransformChange={isHeadline ? (v) => handleChange("typography", "transformHeadline", v, true) : undefined}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </Section>
 
       {/* Color Palettes */}
       <Section title="Color Palettes" defaultOpen noPadding action={<ShuffleButton onClick={shuffleColors} shortcut="C" />}>
         <ColorPalettePanel />
-      </Section>
-
-      {/* Colors – compact swatch bar */}
-      <Section title="Colors" badge={getContrastRatio(brand.colors.text, brand.colors.bg) >= 4.5 ? "AA" : null}>
-        <div className="flex items-center gap-1.5">
-          {[
-            { key: "bg", label: "BG" },
-            { key: "text", label: "Text" },
-            { key: "primary", label: "Pri" },
-            { key: "accent", label: "Acc" },
-            { key: "surface", label: "Surf" },
-          ].map(({ key, label }) => (
-            <button
-              key={key}
-              title={`${label}: ${(brand.colors as unknown as Record<string, string>)[key] || brand.colors.bg}`}
-              className="group flex flex-col items-center gap-0.5 cursor-pointer"
-              onClick={() => {
-                const section = document.querySelector('[data-section="Color Palettes"]');
-                if (section && !(section as HTMLElement).dataset.open) section.querySelector('button')?.click();
-              }}
-            >
-              <div
-                className="w-7 h-7 rounded-md ring-1 ring-inset ring-white/10 transition-transform group-hover:scale-110"
-                style={{ backgroundColor: (brand.colors as unknown as Record<string, string>)[key] || brand.colors.bg }}
-              />
-              <span className="text-[10px] uppercase tracking-wide" style={{ color: "var(--sidebar-text-muted)" }}>{label}</span>
-            </button>
-          ))}
-        </div>
       </Section>
 
       {/* Image Collections */}

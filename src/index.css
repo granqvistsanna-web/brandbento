@@ -475,6 +475,14 @@ main {
   background: var(--sidebar-text-muted);
 }
 
+/* Hidden scrollbar (for horizontal scroll areas) */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
 /* Transition utilities */
 .transition-fast {
   transition: all 100ms ease;
