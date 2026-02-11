@@ -13,7 +13,7 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 Phase: Phase 7 (Polish) - not started
 Plan: None created yet
 Status: In progress (working on todos)
-Last activity: 2026-02-11 - Completed quick/002-tile-reordering-drag-and-drop
+Last activity: 2026-02-11 - Completed quick/001-font-search-improvements
 
 Progress: [███████████░] 8/9 phases complete
 
@@ -58,11 +58,13 @@ Recent decisions affecting current work:
 - Outside GSD: 10 specialized tile components replacing original architecture
 - Outside GSD: 200+ curated color palettes, brand presets system
 - Todo font-01: Recent fonts tracked in store with undo/redo support, dual-escape behavior
+- Quick-001: addRecentFont wired inside FontSelector (not GlobalControls) since it already imports useBrandStore
 - Quick-002: HTML5 DnD tile swap (no external library), swap map in useLayoutStore, surface colors stay position-bound
 
 ### Pending Todos
 
 9 todos in `.planning/todos/pending/`:
+- ~~Font search improvements (ui)~~ DONE (quick-001)
 - Restructure color palettes panel (ui)
 - Expand surface color options (ui)
 - Per-tile color overrides (ui)
@@ -130,13 +132,14 @@ None currently blocking.
 - src/hooks/useTheme.ts (dark/light mode)
 - src/hooks/useBreakpoint.ts (responsive breakpoints)
 - src/hooks/useViewportHeight.ts (100dvh support)
+- src/hooks/useFontSearch.ts (fuzzy font search with Fuse.js, recently-used support)
 
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed quick/002-tile-reordering-drag-and-drop
+Stopped at: Completed quick/001-font-search-improvements
 Resume file: None
 
 ---
 *State initialized: 2026-02-06*
-*Last updated: 2026-02-11 after quick-002 tile reordering*
+*Last updated: 2026-02-11 after quick-001 font search improvements*
