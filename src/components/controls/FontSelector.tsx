@@ -9,6 +9,7 @@ import {
   RiStarFill as Star,
   RiSearchLine as SearchIcon,
   RiCloseLine as CloseIcon,
+  RiTimeLine as RecentIcon,
 } from "react-icons/ri";
 import { motion, AnimatePresence } from "motion/react";
 import { GOOGLE_FONTS_MAP, type FontSource } from "../../data/googleFontsMetadata";
@@ -83,11 +84,12 @@ export const FontSelector = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const loadedPreviewRef = useRef(new Set<string>());
 
-  // Get recentFonts from store
+  // Get recentFonts and addRecentFont from store
   const recentFonts = useBrandStore(state => state.recentFonts);
+  const addRecentFont = useBrandStore(state => state.addRecentFont);
 
   // Use the font search hook
-  const { fonts: filteredFonts, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter, recentCount } = useFontSearch(recentFonts);
+  const { fonts: filteredFonts, searchQuery, setSearchQuery, categoryFilter, setCategoryFilter } = useFontSearch(recentFonts);
 
   // Close on click outside
   useEffect(() => {
@@ -97,11 +99,13 @@ export const FontSelector = ({
         dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
+        setSearchQuery('');
+        setCategoryFilter(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [setSearchQuery, setCategoryFilter]);
 
   // Calculate position & focus search on open
   useEffect(() => {
@@ -130,11 +134,44 @@ export const FontSelector = ({
     }
   }, [isOpen]);
 
-  const firstNonCuratedIdx = useMemo(() => {
-    const idx = filteredFonts.findIndex((f) => !f.curated);
-    // If we have recent fonts, adjust the index
-    return idx >= 0 && recentCount > 0 ? idx + 1 : idx;
-  }, [filteredFonts, recentCount]);
+  // Compute section boundaries for recently-used / curated / more fonts
+  const { actualRecentCount, firstCuratedIdx, firstNonCuratedIdx } = useMemo(() => {
+    // Count how many recent fonts are actually in the filtered results
+    const recentSet = new Set(recentFonts);
+    let actualRecent = 0;
+    // Recent fonts are at the start of the array (from useFontSearch hook)
+    for (let i = 0; i < filteredFonts.length; i++) {
+      if (recentSet.has(filteredFonts[i].family) && i === actualRecent) {
+        actualRecent++;
+      } else {
+        break;
+      }
+    }
+
+    // Find first curated font after recent section
+    let firstCurated = -1;
+    for (let i = actualRecent; i < filteredFonts.length; i++) {
+      if (filteredFonts[i].curated) {
+        firstCurated = i;
+        break;
+      }
+    }
+
+    // Find first non-curated font after recent section
+    let firstNonCurated = -1;
+    for (let i = actualRecent; i < filteredFonts.length; i++) {
+      if (!filteredFonts[i].curated) {
+        firstNonCurated = i;
+        break;
+      }
+    }
+
+    return {
+      actualRecentCount: actualRecent,
+      firstCuratedIdx: firstCurated,
+      firstNonCuratedIdx: firstNonCurated,
+    };
+  }, [filteredFonts, recentFonts]);
 
   const handleFontHover = useCallback((family: string) => {
     if (!loadedPreviewRef.current.has(family)) {
@@ -159,9 +196,11 @@ export const FontSelector = ({
         setIsOpen(false);
       } else if (e.key === "Escape") {
         setIsOpen(false);
+        setSearchQuery('');
+        setCategoryFilter(null);
       }
     },
-    [isOpen, highlightIdx, filteredFonts, onChange]
+    [isOpen, highlightIdx, filteredFonts, onChange, setSearchQuery, setCategoryFilter]
   );
 
   useEffect(() => {
@@ -328,58 +367,82 @@ export const FontSelector = ({
                   className="px-3 py-6 text-center text-12"
                   style={{ color: "var(--sidebar-text-muted)" }}
                 >
-                  No fonts in this category
+                  {searchQuery ? "No fonts match your search" : "No fonts in this category"}
                 </div>
               ) : (
-                filteredFonts.map((font, idx) => (
-                  <React.Fragment key={font.family}>
-                    {idx === 0 && font.curated && (
-                      <div
-                        className="px-3 pt-1.5 pb-1 text-11 font-semibold uppercase tracking-wider flex items-center gap-1.5"
-                        style={{ color: "var(--sidebar-text-muted)" }}
-                      >
-                        <Star size={8} style={{ opacity: 0.5 }} />
-                        Curated
-                      </div>
-                    )}
-                    {idx === firstNonCuratedIdx && firstNonCuratedIdx > 0 && (
-                      <>
+                filteredFonts.map((font, idx) => {
+                  const isSearching = searchQuery.trim().length > 0;
+                  return (
+                    <React.Fragment key={font.family}>
+                      {/* Recently Used header */}
+                      {!isSearching && idx === 0 && actualRecentCount > 0 && (
                         <div
-                          className="mx-3 my-1"
-                          style={{
-                            borderTop: "1px solid var(--sidebar-border)",
-                          }}
-                        />
-                        <div
-                          className="px-3 pt-0.5 pb-1 text-11 font-semibold uppercase tracking-wider"
+                          className="px-3 pt-1.5 pb-1 text-11 font-semibold uppercase tracking-wider flex items-center gap-1.5"
                           style={{ color: "var(--sidebar-text-muted)" }}
                         >
-                          More fonts
+                          <RecentIcon size={8} style={{ opacity: 0.5 }} />
+                          Recently Used
                         </div>
-                      </>
-                    )}
-                    <div
-                      data-font-item
-                      {...(value === font.family ? { "data-selected": true } : {})}
-                      style={{
-                        background:
-                          highlightIdx === idx
-                            ? "var(--sidebar-bg-hover)"
-                            : undefined,
-                      }}
-                    >
-                      <FontItem
-                        font={font}
-                        isSelected={value === font.family}
-                        onSelect={() => {
-                          onChange(font.family);
-                          setIsOpen(false);
+                      )}
+                      {/* Curated header (after recent section, or at start if no recents) */}
+                      {!isSearching && idx === firstCuratedIdx && firstCuratedIdx >= 0 && (
+                        <>
+                          {actualRecentCount > 0 && (
+                            <div
+                              className="mx-3 my-1"
+                              style={{ borderTop: "1px solid var(--sidebar-border)" }}
+                            />
+                          )}
+                          <div
+                            className="px-3 pt-1.5 pb-1 text-11 font-semibold uppercase tracking-wider flex items-center gap-1.5"
+                            style={{ color: "var(--sidebar-text-muted)" }}
+                          >
+                            <Star size={8} style={{ opacity: 0.5 }} />
+                            Curated
+                          </div>
+                        </>
+                      )}
+                      {/* More Fonts header */}
+                      {!isSearching && idx === firstNonCuratedIdx && firstNonCuratedIdx > 0 && (
+                        <>
+                          <div
+                            className="mx-3 my-1"
+                            style={{ borderTop: "1px solid var(--sidebar-border)" }}
+                          />
+                          <div
+                            className="px-3 pt-0.5 pb-1 text-11 font-semibold uppercase tracking-wider"
+                            style={{ color: "var(--sidebar-text-muted)" }}
+                          >
+                            More fonts
+                          </div>
+                        </>
+                      )}
+                      <div
+                        data-font-item
+                        {...(value === font.family ? { "data-selected": true } : {})}
+                        style={{
+                          background:
+                            highlightIdx === idx
+                              ? "var(--sidebar-bg-hover)"
+                              : undefined,
                         }}
-                        onHover={() => handleFontHover(font.family)}
-                      />
-                    </div>
-                  </React.Fragment>
-                ))
+                      >
+                        <FontItem
+                          font={font}
+                          isSelected={value === font.family}
+                          onSelect={() => {
+                            addRecentFont(font.family);
+                            onChange(font.family);
+                            setIsOpen(false);
+                            setSearchQuery('');
+                            setCategoryFilter(null);
+                          }}
+                          onHover={() => handleFontHover(font.family)}
+                        />
+                      </div>
+                    </React.Fragment>
+                  );
+                })
               )}
             </div>
 
