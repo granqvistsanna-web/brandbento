@@ -12,8 +12,8 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 
 Phase: Phase 7 (Polish) - not started
 Plan: None created yet
-Status: Awaiting planning
-Last activity: 2026-02-09 - Roadmap audit and update
+Status: In progress (working on todos)
+Last activity: 2026-02-11 - Completed font-search-improvements/01-PLAN.md
 
 Progress: [███████████░] 8/9 phases complete
 
@@ -57,11 +57,11 @@ Recent decisions affecting current work:
 - Outside GSD: Placement-based tile rendering (BentoCanvasNew + BentoGridNew)
 - Outside GSD: 10 specialized tile components replacing original architecture
 - Outside GSD: 200+ curated color palettes, brand presets system
+- Todo font-01: Recent fonts tracked in store with undo/redo support, dual-escape behavior
 
 ### Pending Todos
 
-10 todos in `.planning/todos/pending/`:
-- Font search improvements (ui)
+9 todos in `.planning/todos/pending/`:
 - Restructure color palettes panel (ui)
 - Expand surface color options (ui)
 - Per-tile color overrides (ui)
@@ -132,8 +132,8 @@ None currently blocking.
 
 ## Session Continuity
 
-Last session: 2026-02-09
-Stopped at: Roadmap audit and update
+Last session: 2026-02-11
+Stopped at: Completed font-search-improvements/01-PLAN.md
 Resume file: None
 
 ---
