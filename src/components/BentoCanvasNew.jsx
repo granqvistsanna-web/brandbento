@@ -26,7 +26,7 @@
  * @example
  * <BentoCanvasNew ref={canvasRef} />
  */
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import { BentoGridNew } from "./BentoGridNew";
 import { BentoTileEmpty } from "./BentoTileEmpty";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -58,7 +58,7 @@ import { ColorBlocksTile } from "./tiles/ColorBlocksTile";
 import { BusinessCardTile } from "./tiles/BusinessCardTile";
 import { AppIconTile } from "./tiles/AppIconTile";
 import { StoryTile } from "./tiles/StoryTile";
-import { getPlacementTileId, getPlacementTileType } from "../config/placements";
+import { getPlacementTileId, getPlacementTileType, resolveSwappedId } from "../config/placements";
 const BentoCanvasNew = React.forwardRef((props, ref) => {
   const setFocusedTile = useBrandStore((s) => s.setFocusedTile);
   const focusedTileId = useBrandStore((s) => s.focusedTileId);
@@ -67,8 +67,14 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
   const activePreset = useBrandStore((s) => s.activePreset);
   const canvasBg = useLayoutStore((s) => s.canvasBg);
   const preset = useLayoutStore((s) => s.preset);
+  const placementSwaps = useLayoutStore((s) => s.placementSwaps);
+  const swapPlacements = useLayoutStore((s) => s.swapPlacements);
   const zoom = typeof props.zoom === 'number' ? props.zoom : 100;
   const zoomScale = Math.max(25, Math.min(200, zoom)) / 100;
+
+  // Drag-and-drop state
+  const dragSourceRef = useRef(null);
+  const [dropTarget, setDropTarget] = useState(null);
 
   // Keyboard tile navigation
   const getPlacementIds = useCallback(() => {
@@ -149,14 +155,16 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
   };
 
   const getTileForPlacement = (id) => {
+    // Resolve through swaps: find which placement's tile should render here
+    const effectiveId = resolveSwappedId(id, placementSwaps);
     // Each placement maps to a unique tile ID via placements.ts
-    const placementTileId = getPlacementTileId(id);
+    const placementTileId = getPlacementTileId(effectiveId);
     if (placementTileId) {
       const byId = tiles.find((t) => t.id === placementTileId);
       if (byId) return byId;
     }
     // Fallback: match by expected tile type for this placement
-    const placementTileType = getPlacementTileType(id);
+    const placementTileType = getPlacementTileType(effectiveId);
     if (placementTileType) {
       const byType = tiles.find((t) => t.type === placementTileType);
       if (byType) return byType;
@@ -232,7 +240,8 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
     }
 
     // 2. Fall back to placement kind (for placements without a matching tile)
-    const kind = getPlacementKind(id);
+    const effectiveId = resolveSwappedId(id, placementSwaps);
+    const kind = getPlacementKind(effectiveId);
     switch (kind) {
       case 'identity':
         return <LogoTile placementId={id} />;
@@ -268,6 +277,44 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
           renderSlot={(placement) => {
             const content = renderTile(placement.id);
             const isFocused = placement.id === focusedTileId;
+            const isDropTarget = placement.id === dropTarget;
+            const isDragSource = dragSourceRef.current === placement.id;
+
+            // Shared drag-and-drop handlers for both filled and empty tiles
+            const dragHandlers = {
+              draggable: true,
+              onDragStart: (e) => {
+                dragSourceRef.current = placement.id;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', placement.id);
+              },
+              onDragOver: (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dragSourceRef.current && dragSourceRef.current !== placement.id) {
+                  setDropTarget(placement.id);
+                }
+              },
+              onDragLeave: (e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  setDropTarget(null);
+                }
+              },
+              onDrop: (e) => {
+                e.preventDefault();
+                const sourceId = dragSourceRef.current;
+                if (sourceId && sourceId !== placement.id) {
+                  swapPlacements(sourceId, placement.id);
+                }
+                dragSourceRef.current = null;
+                setDropTarget(null);
+              },
+              onDragEnd: () => {
+                dragSourceRef.current = null;
+                setDropTarget(null);
+              },
+            };
+
             return content ? (
               <div
                 tabIndex={0}
@@ -276,8 +323,11 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
                 style={{
                   boxShadow: isFocused
                     ? '0 0 0 1.5px var(--accent), 0 0 0 4px var(--accent-muted)'
-                    : 'var(--shadow-tile)',
-                  transition: 'box-shadow 150ms ease',
+                    : isDropTarget
+                      ? '0 0 0 2px var(--accent), 0 0 0 5px var(--accent-muted)'
+                      : 'var(--shadow-tile)',
+                  opacity: isDragSource ? 0.5 : 1,
+                  transition: 'box-shadow 150ms ease, opacity 150ms ease',
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -290,23 +340,30 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
                     setFocusedTile(placement.id);
                   }
                 }}
+                {...dragHandlers}
               >
                 <ErrorBoundary>
                   {content}
                 </ErrorBoundary>
               </div>
             ) : (
-              <div className="w-full h-full relative">
+              <div
+                className="w-full h-full relative"
+                style={{
+                  opacity: isDragSource ? 0.5 : 1,
+                  transition: 'opacity 150ms ease',
+                }}
+                {...dragHandlers}
+              >
                 <BentoTileEmpty
                   slotId={placement.id}
                   {...getPlaceholderMeta(placement.id)}
-                  isFocused={isFocused}
+                  isFocused={isFocused || isDropTarget}
                   onClick={(e) => {
                     e.stopPropagation();
                     setFocusedTile(placement.id);
                   }}
                 />
-
               </div>
             );
           }}
