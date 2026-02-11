@@ -56,9 +56,13 @@ const SHUFFLE_IMAGES = [
   '/images/56e84307-f1bb-4833-a598-c955b362fd80-cloud-redefine-realistic-2x.png',
 ];
 
-/** Pick a random image from the pool, excluding `current` to avoid no-ops. */
+/** Pick a random image from the active pool, excluding `current` to avoid no-ops.
+ *  Uses Lummi collection pool when active, falls back to local SHUFFLE_IMAGES. */
 export function getRandomShuffleImage(current?: string): string {
-  const pool = current ? SHUFFLE_IMAGES.filter((img) => img !== current) : SHUFFLE_IMAGES;
+  const { collectionImagePool } = useBrandStore.getState();
+  const source = collectionImagePool.length > 0 ? collectionImagePool : SHUFFLE_IMAGES;
+  const pool = current ? source.filter((img) => img !== current) : source;
+  if (pool.length === 0) return source[0] ?? SHUFFLE_IMAGES[0];
   return pool[Math.floor(Math.random() * pool.length)];
 }
 

@@ -17,10 +17,6 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
-  ToolbarDivider,
-  ToolbarSegmented,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -170,14 +166,6 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
       updateTile(tile.id, { imageLocked: !tile?.content?.imageLocked }, true);
     }
   }, [placementId, placementContent?.imageLocked, tile?.id, tile?.content?.imageLocked, setPlacementContent, updateTile]);
-
-  const handleContentChange = useCallback((key: string, value: string | number, isCommit = false) => {
-    if (placementId) {
-      setPlacementContent(placementId, { [key]: value }, isCommit);
-    } else if (tile?.id) {
-      updateTile(tile.id, { [key]: value }, isCommit);
-    }
-  }, [placementId, setPlacementContent, tile?.id, updateTile]);
 
   const renderCard = (index: number) => {
     const post = socialPosts?.[index];
@@ -364,60 +352,6 @@ export function SocialPostTile({ placementId }: SocialPostTileProps) {
             imageLocked={placementContent?.imageLocked || tile?.content?.imageLocked}
             onToggleLock={handleToggleLock}
             onImageUpload={handleImageUpload}
-          />
-          <ToolbarDivider />
-          <ToolbarLabel>Social Post</ToolbarLabel>
-          <ToolbarTextInput
-            label="Handle"
-            value={handle}
-            onChange={(v) => handleContentChange('socialHandle', v)}
-            onCommit={(v) => handleContentChange('socialHandle', v, true)}
-            placeholder="handle"
-          />
-          <ToolbarTextInput
-            label="Caption"
-            value={caption}
-            onChange={(v) => handleContentChange('socialCaption', v)}
-            onCommit={(v) => handleContentChange('socialCaption', v, true)}
-            placeholder="Caption text"
-          />
-          <ToolbarTextInput
-            label="Likes"
-            value={likesRaw}
-            onChange={(v) => handleContentChange('socialLikes', v)}
-            onCommit={(v) => handleContentChange('socialLikes', v, true)}
-            placeholder="1,204 likes"
-          />
-          <ToolbarSegmented
-            label="Posts"
-            options={[
-              { value: '1', label: '1' },
-              { value: '2', label: '2' },
-              { value: '3', label: '3' },
-            ]}
-            value={String(postCount)}
-            onChange={(v) => handleContentChange('socialPostCount', parseInt(v), true)}
-          />
-          <ToolbarDivider />
-          <ToolbarLabel>Appearance</ToolbarLabel>
-          <ToolbarSegmented
-            label="Style"
-            options={[
-              { value: 'full', label: 'Full' },
-              { value: 'clean', label: 'No Caption' },
-              { value: 'minimal', label: 'Minimal' },
-            ]}
-            value={socialStyle}
-            onChange={(v) => handleContentChange('socialStyle', v, true)}
-          />
-          <ToolbarSegmented
-            label="Card BG"
-            options={[
-              { value: 'white', label: 'White' },
-              { value: 'surface', label: 'Surface' },
-            ]}
-            value={socialCardBg}
-            onChange={(v) => handleContentChange('socialCardBg', v, true)}
           />
         </FloatingToolbar>
       )}

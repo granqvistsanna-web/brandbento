@@ -469,6 +469,10 @@ export interface BrandStore {
   tileSurfaces: Record<string, number | undefined>;
   /** Placement-specific content overrides (e.g., social post content) */
   placementContent: Record<string, TileContent>;
+  /** Currently selected Lummi collection ID (null = local images) */
+  activeCollectionId: string | null;
+  /** Cached image URLs from the active Lummi collection (shuffle pool source) */
+  collectionImagePool: string[];
 
   // ─────────────────────────────────────────────────────────────────
   // UI State Actions
@@ -501,6 +505,8 @@ export interface BrandStore {
   loadPreset: (presetName: string) => void;
   /** Applies a color palette, mapping to semantic roles */
   applyPalette: (paletteId: string, complexity?: 'simple' | 'curated' | 'full') => void;
+  /** Applies raw hex colors (e.g. from Coolors import) through the mapping pipeline */
+  applyRawPalette: (colors: string[]) => void;
 
   // ─────────────────────────────────────────────────────────────────
   // Tile Actions
@@ -521,6 +527,8 @@ export interface BrandStore {
 
   /** Updates brand configuration (isCommit=true creates undo point) */
   updateBrand: (newBrand: Partial<Brand>, isCommit?: boolean) => void;
+  /** Sets active Lummi collection and auto-fills all image tiles */
+  setImageCollection: (collectionId: string | null, imageUrls: string[]) => void;
   /** Resets brand and tiles to default values */
   resetToDefaults: () => void;
 
@@ -1420,6 +1428,8 @@ export const useBrandStore = create<BrandStore>()(
       },
       tileSurfaces: { ...INITIAL_TILE_SURFACES },
       placementContent: defaultPlacementContent,
+      activeCollectionId: null,
+      collectionImagePool: [],
 
       setFocusedTile: (id) => set({ focusedTileId: id }),
 
@@ -1457,6 +1467,8 @@ export const useBrandStore = create<BrandStore>()(
           activePreset: "custom",
           tileSurfaces: { ...INITIAL_TILE_SURFACES },
           placementContent: defaultPlacementContent,
+          activeCollectionId: null,
+          collectionImagePool: [],
           history: {
             past: [],
             future: [],
@@ -1643,6 +1655,22 @@ export const useBrandStore = create<BrandStore>()(
         });
       },
 
+      applyRawPalette: (colors) => {
+        if (colors.length === 0) return;
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+
+        const rawMapping = mapPaletteToBrand(colors);
+        const colorMapping = enforceContrast(rawMapping);
+
+        set({
+          brand: { ...brand, colors: colorMapping as Colors },
+          history: {
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            future: [],
+          },
+        });
+      },
+
       applyPalette: (paletteId, complexity = 'full') => {
         const { brand, tiles, tileSurfaces, placementContent, history } = get();
         const palette = getPaletteById(paletteId);
@@ -1822,6 +1850,52 @@ export const useBrandStore = create<BrandStore>()(
           activePreset: "default",
           tileSurfaces: { ...INITIAL_TILE_SURFACES },
           placementContent: defaultPlacementContent,
+          activeCollectionId: null,
+          collectionImagePool: [],
+          history: {
+            past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
+            future: [],
+          },
+        });
+      },
+
+      setImageCollection: (collectionId, imageUrls) => {
+        const { brand, tiles, tileSurfaces, placementContent, history } = get();
+
+        if (imageUrls.length === 0) {
+          set({ activeCollectionId: collectionId, collectionImagePool: [] });
+          return;
+        }
+
+        const IMAGE_TILE_TYPES = new Set([
+          'hero', 'product', 'image', 'social', 'split-hero', 'overlay', 'split-list',
+        ]);
+
+        let urlIndex = 0;
+        const nextUrl = () => {
+          const url = imageUrls[urlIndex % imageUrls.length];
+          urlIndex++;
+          return url;
+        };
+
+        const newTiles = tiles.map((tile) => {
+          if (!IMAGE_TILE_TYPES.has(tile.type)) return tile;
+          if (tile.content.imageLocked) return tile;
+          return { ...tile, content: { ...tile.content, image: nextUrl() } };
+        });
+
+        const newPlacementContent = { ...placementContent };
+        for (const [pid, pc] of Object.entries(placementContent)) {
+          if (pc.image && !pc.imageLocked) {
+            newPlacementContent[pid] = { ...pc, image: nextUrl() };
+          }
+        }
+
+        set({
+          activeCollectionId: collectionId,
+          collectionImagePool: imageUrls,
+          tiles: newTiles,
+          placementContent: newPlacementContent,
           history: {
             past: pushToHistory(history.past, { brand, tiles, tileSurfaces, placementContent }),
             future: [],
@@ -1905,6 +1979,8 @@ export const useBrandStore = create<BrandStore>()(
             ...defaultPlacementContent,
             ...(persistedState.placementContent ?? current.placementContent),
           },
+          activeCollectionId: persistedState.activeCollectionId ?? null,
+          collectionImagePool: persistedState.collectionImagePool ?? [],
         } as BrandStore;
       },
       // Persist only serializable user data. Exclude:
@@ -1919,6 +1995,8 @@ export const useBrandStore = create<BrandStore>()(
         theme: state.theme,
         tileSurfaces: state.tileSurfaces,
         placementContent: state.placementContent,
+        activeCollectionId: state.activeCollectionId,
+        collectionImagePool: state.collectionImagePool,
       }),
     }
   )

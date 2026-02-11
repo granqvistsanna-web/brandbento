@@ -5,20 +5,20 @@
 :root {
   /* === OSMO-INSPIRED DESIGN SYSTEM === */
 
-  /* Sidebar (Light Theme - Warm Neutrals) */
-  --sidebar-bg: #FAFAF8;
-  --sidebar-bg-elevated: #F5F4F1;
-  --sidebar-bg-hover: #EFEEEB;
-  --sidebar-bg-active: #E5E4E0;
+  /* Sidebar (Light Theme — White, distinct from canvas) */
+  --sidebar-bg: #FFFFFF;
+  --sidebar-bg-elevated: #F7F7F5;
+  --sidebar-bg-hover: #F0EFEC;
+  --sidebar-bg-active: #E6E5E1;
   --sidebar-border: #E0DED8;
-  --sidebar-border-subtle: #EAE8E3;
+  --sidebar-border-subtle: #ECEAE5;
   --sidebar-text: #1C1917;
   --sidebar-text-secondary: #57534E;
   --sidebar-text-muted: #A8A29E;
 
-  /* Canvas (Light Theme - Warm) */
-  --canvas-bg: #F5F4F1;
-  --canvas-bg-dots: #E0DED8;
+  /* Canvas (Light Theme — Warm gray, offset from white sidebar) */
+  --canvas-bg: #F0EFEB;
+  --canvas-bg-dots: #DBD9D3;
   --canvas-surface: #FAFAF8;
   --canvas-border: #E5E3DD;
   --canvas-text: #1C1917;
@@ -124,23 +124,23 @@
 
 /* === DARK MODE OVERRIDES === */
 .dark {
-  /* Sidebar (Dark Theme - Warm Walnut) */
-  --sidebar-bg: #1C1917;
-  --sidebar-bg-elevated: #231F1C;
-  --sidebar-bg-hover: #2C2621;
-  --sidebar-bg-active: #3B3530;
-  --sidebar-border: #3F3A34;
-  --sidebar-border-subtle: #2C2621;
-  --sidebar-text: #E7E5E4;
+  /* Sidebar (Dark Theme — Elevated off true-black canvas) */
+  --sidebar-bg: #161514;
+  --sidebar-bg-elevated: #1E1C1A;
+  --sidebar-bg-hover: #272422;
+  --sidebar-bg-active: #35322F;
+  --sidebar-border: #2E2B28;
+  --sidebar-border-subtle: #232120;
+  --sidebar-text: #EDECEB;
   --sidebar-text-secondary: #A8A29E;
-  --sidebar-text-muted: #78716C;
+  --sidebar-text-muted: #6B6560;
 
-  /* Canvas (Dark Theme - Warm) */
-  --canvas-bg: #0F0E0D;
-  --canvas-bg-dots: #1C1917;
-  --canvas-surface: #171412;
-  --canvas-border: #292524;
-  --canvas-text: #FAFAF9;
+  /* Canvas (Dark Theme — Near-black, gallery feel) */
+  --canvas-bg: #0A0A09;
+  --canvas-bg-dots: #161514;
+  --canvas-surface: #141312;
+  --canvas-border: #252321;
+  --canvas-text: #F5F5F4;
   --canvas-text-secondary: #A8A29E;
 
   /* Accent Colors (Blue for dark bg) */

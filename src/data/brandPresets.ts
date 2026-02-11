@@ -246,7 +246,7 @@ export const BRAND_PRESETS: Record<string, Brand> = {
       paletteColors: ["#2D2A57", "#9A79E8", "#1E1C2E", "#44403B", "#79716B", "#D6D3D1", "#E3DBC8", "#F7F2EA"],
     },
     logo: {
-      text: "SAVOR SPIRE",
+      text: "FORAGE",
       padding: 18,
       size: 22,
     },

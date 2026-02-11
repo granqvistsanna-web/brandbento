@@ -6,7 +6,7 @@
  * - 'hero' (default): bottom-aligned, left-aligned, 2 fields (headline, subcopy)
  * - 'overlay': centered/bottom-aligned based on shape, 3 fields (label, headline, body)
  */
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
@@ -19,9 +19,6 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
-  ToolbarDivider,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -107,14 +104,6 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
 
   // Floating toolbar
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
-
-  const handleTextChange = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
-  }, [updateTile, tile?.id]);
-
-  const handleTextCommit = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
-  }, [updateTile, tile?.id]);
 
   // Shared image/toolbar actions
   const toolbarActions = (
@@ -224,29 +213,6 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
         {isFocused && anchorRect && (
           <FloatingToolbar anchorRect={anchorRect}>
             {toolbarActions}
-            <ToolbarDivider />
-            <ToolbarLabel>Content</ToolbarLabel>
-            <ToolbarTextInput
-              label="Label"
-              value={label || ''}
-              onChange={(v) => handleTextChange('subcopy', v)}
-              onCommit={(v) => handleTextCommit('subcopy', v)}
-              placeholder={overlayCopy.label}
-            />
-            <ToolbarTextInput
-              label="Headline"
-              value={headline}
-              onChange={(v) => handleTextChange('headline', v)}
-              onCommit={(v) => handleTextCommit('headline', v)}
-              placeholder={overlayCopy.headline}
-            />
-            <ToolbarTextInput
-              label="Body"
-              value={subcopy}
-              onChange={(v) => handleTextChange('body', v)}
-              onCommit={(v) => handleTextCommit('body', v)}
-              placeholder={overlayCopy.body}
-            />
           </FloatingToolbar>
         )}
       </div>
@@ -322,22 +288,6 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
       {isFocused && anchorRect && (
         <FloatingToolbar anchorRect={anchorRect}>
           {toolbarActions}
-          <ToolbarDivider />
-          <ToolbarLabel>Content</ToolbarLabel>
-          <ToolbarTextInput
-            label="Headline"
-            value={headline}
-            onChange={(v) => handleTextChange('headline', v)}
-            onCommit={(v) => handleTextCommit('headline', v)}
-            placeholder="Your brand, on its best day."
-          />
-          <ToolbarTextInput
-            label="Subcopy"
-            value={subcopy}
-            onChange={(v) => handleTextChange('subcopy', v)}
-            onCommit={(v) => handleTextCommit('subcopy', v)}
-            placeholder="Build a visual world that feels unmistakably you."
-          />
         </FloatingToolbar>
       )}
     </div>

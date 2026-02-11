@@ -23,5 +23,15 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment variables
+.env
+.env.local
+
 # Large image assets
 public/images/
+
+# Screenshots and review images
+*.png
+
+# Playwright
+.playwright-mcp/

@@ -20,11 +20,8 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
   ToolbarSlider,
   ToolbarSegmented,
-  ToolbarDivider,
 } from './FloatingToolbar';
 
 /** Design-space dimensions for the button specimen card (px).
@@ -48,7 +45,6 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
 
   const updateBrand = useBrandStore((s) => s.updateBrand);
   const brand = useBrandStore((s) => s.brand);
-  const updateTile = useBrandStore((s) => s.updateTile);
 
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
@@ -161,13 +157,6 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
     updateBrand({ ui: { ...brand.ui, [key]: value } }, isCommit);
   }, [updateBrand, brand.ui]);
 
-  const handleTextChange = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
-  }, [updateTile, tile?.id]);
-
-  const handleTextCommit = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
-  }, [updateTile, tile?.id]);
 
   return (
     <div
@@ -303,7 +292,6 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
             onChange={(v) => handleUiChange('buttonLetterSpacing', Math.round(v * 100) / 100, false)}
             onCommit={(v) => handleUiChange('buttonLetterSpacing', Math.round(v * 100) / 100, true)}
           />
-          <ToolbarDivider />
           {/* Color picker (unique to InterfaceTile) */}
           <div>
             <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>Color</span>
@@ -349,22 +337,6 @@ export function InterfaceTile({ placementId }: InterfaceTileProps) {
             )}
           </div>
 
-          <ToolbarDivider />
-          <ToolbarLabel>Labels</ToolbarLabel>
-          <ToolbarTextInput
-            label="Primary"
-            value={primaryLabel}
-            onChange={(v) => handleTextChange('buttonLabel', v)}
-            onCommit={(v) => handleTextCommit('buttonLabel', v)}
-            placeholder="Get Started"
-          />
-          <ToolbarTextInput
-            label="Secondary"
-            value={secondaryLabel}
-            onChange={(v) => handleTextChange('headerTitle', v)}
-            onCommit={(v) => handleTextCommit('headerTitle', v)}
-            placeholder="Learn More"
-          />
         </FloatingToolbar>
       )}
     </div>

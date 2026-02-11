@@ -645,7 +645,7 @@ function AppContent() {
           data-export-exclude="true"
           className="flex items-center justify-between z-20 flex-shrink-0"
           style={{
-            height: 52,
+            height: 54,
             paddingInline: "var(--space-5)",
             background: "var(--sidebar-bg)",
             borderBottom: "1px solid var(--sidebar-border-subtle)",

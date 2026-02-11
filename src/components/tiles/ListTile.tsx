@@ -10,7 +10,7 @@
  *   on one side, and a headed numbered list on the other.
  *   Adapts to portrait/landscape/square shapes.
  */
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore, type Tile } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
@@ -25,10 +25,6 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
-  ToolbarDivider,
-  ToolbarItemList,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -103,14 +99,6 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
   // Floating toolbar
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
-  const handleTextChange = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
-  }, [updateTile, tile?.id]);
-
-  const handleTextCommit = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
-  }, [updateTile, tile?.id]);
-
   const content = { ...tile?.content, ...(placementContent || {}) };
 
   if (variant === 'split') {
@@ -133,8 +121,6 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
         anchorRect={anchorRect}
         tile={tile}
         updateTile={updateTile}
-        handleTextChange={handleTextChange}
-        handleTextCommit={handleTextCommit}
       />
     );
   }
@@ -151,10 +137,6 @@ export function ListTile({ placementId, variant = 'list' }: ListTileProps) {
       activePreset={activePreset}
       isFocused={isFocused}
       anchorRect={anchorRect}
-      tile={tile}
-      updateTile={updateTile}
-      handleTextChange={handleTextChange}
-      handleTextCommit={handleTextCommit}
     />
   );
 }
@@ -172,10 +154,6 @@ function StandaloneLayout({
   activePreset,
   isFocused,
   anchorRect,
-  tile,
-  updateTile,
-  handleTextChange,
-  handleTextCommit,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   content: Record<string, unknown>;
@@ -187,10 +165,6 @@ function StandaloneLayout({
   activePreset: string;
   isFocused: boolean;
   anchorRect: DOMRect | null;
-  tile: Tile | undefined;
-  updateTile: BrandStore['updateTile'];
-  handleTextChange: (key: string, value: string) => void;
-  handleTextCommit: (key: string, value: string) => void;
 }) {
   const industryDefaults = getPresetContent(activePreset).menu;
   const subcopy = (content.subcopy as string) || industryDefaults.subcopy;
@@ -263,34 +237,6 @@ function StandaloneLayout({
               /* List tile has no image to shuffle */
             }}
           />
-          <ToolbarDivider />
-          <ToolbarLabel>Content</ToolbarLabel>
-          <ToolbarTextInput
-            label="Section"
-            value={(content.subcopy as string) || ''}
-            onChange={(v) => handleTextChange('subcopy', v)}
-            onCommit={(v) => handleTextCommit('subcopy', v)}
-            placeholder={industryDefaults.subcopy}
-          />
-          <ToolbarTextInput
-            label="Action"
-            value={(content.buttonLabel as string) || ''}
-            onChange={(v) => handleTextChange('buttonLabel', v)}
-            onCommit={(v) => handleTextCommit('buttonLabel', v)}
-            placeholder={industryDefaults.action}
-          />
-          <ToolbarDivider />
-          <ToolbarItemList
-            label="Items"
-            items={items}
-            maxItems={4}
-            onChange={(newItems) => {
-              if (tile?.id) updateTile(tile.id, { items: newItems }, false);
-            }}
-            onCommit={(newItems) => {
-              if (tile?.id) updateTile(tile.id, { items: newItems }, true);
-            }}
-          />
         </FloatingToolbar>
       )}
     </div>
@@ -317,8 +263,6 @@ function SplitLayout({
   anchorRect,
   tile,
   updateTile,
-  handleTextChange,
-  handleTextCommit,
 }: {
   containerRef: React.RefObject<HTMLDivElement | null>;
   shape: TileShape;
@@ -337,8 +281,6 @@ function SplitLayout({
   anchorRect: DOMRect | null;
   tile: Tile | undefined;
   updateTile: BrandStore['updateTile'];
-  handleTextChange: (key: string, value: string) => void;
-  handleTextCommit: (key: string, value: string) => void;
 }) {
   const industryCopy = getPresetContent(activePreset).splitList;
   const imageUrl = content.image as string | undefined;
@@ -502,34 +444,6 @@ function SplitLayout({
             }}
             onImageUpload={(dataUrl) => {
               if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
-            }}
-          />
-          <ToolbarDivider />
-          <ToolbarLabel>Content</ToolbarLabel>
-          <ToolbarTextInput
-            label="Label"
-            value={(content.label as string) || ''}
-            onChange={(v) => handleTextChange('label', v)}
-            onCommit={(v) => handleTextCommit('label', v)}
-            placeholder={industryCopy.brandLabel}
-          />
-          <ToolbarTextInput
-            label="Headline"
-            value={(content.headline as string) || ''}
-            onChange={(v) => handleTextChange('headline', v)}
-            onCommit={(v) => handleTextCommit('headline', v)}
-            placeholder={industryCopy.headline}
-          />
-          <ToolbarDivider />
-          <ToolbarItemList
-            label="Items"
-            items={items}
-            maxItems={4}
-            onChange={(newItems) => {
-              if (tile?.id) updateTile(tile.id, { items: newItems }, false);
-            }}
-            onCommit={(newItems) => {
-              if (tile?.id) updateTile(tile.id, { items: newItems }, true);
             }}
           />
         </FloatingToolbar>

@@ -190,9 +190,12 @@ function BarsLayout({
     textColorMap.get(bgHex) ?? COLOR_DEFAULTS.PRIMARY;
 
   const handleCopy = (color: string) => {
-    navigator.clipboard.writeText(color);
-    setCopied(color);
-    setTimeout(() => setCopied(null), 1500);
+    navigator.clipboard.writeText(color).then(() => {
+      setCopied(color);
+      setTimeout(() => setCopied(null), 1500);
+    }).catch(() => {
+      // Clipboard access denied — silently ignore
+    });
   };
 
   const bars = [

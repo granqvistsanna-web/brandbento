@@ -22,9 +22,6 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
-  ToolbarDivider,
 } from './FloatingToolbar';
 
 /* ─── Shuffle presets ─── */
@@ -106,14 +103,6 @@ export function StatsTile({ placementId }: StatsTileProps) {
   /* ─── Toolbar ─── */
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
-  const handleChange = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
-  }, [updateTile, tile?.id]);
-
-  const handleCommit = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
-  }, [updateTile, tile?.id]);
-
   const handleShuffle = useCallback(() => {
     if (!tile?.id) return;
     const candidates = STAT_PRESETS.filter((p) => p.headline !== statValue);
@@ -156,26 +145,6 @@ export function StatsTile({ placementId }: StatsTileProps) {
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
       <ToolbarActions onShuffle={handleShuffle} />
-      <ToolbarDivider />
-      <ToolbarLabel>Stat</ToolbarLabel>
-      <ToolbarTextInput
-        label="Value"
-        value={statValue}
-        onChange={(v) => handleChange('headline', v)}
-        onCommit={(v) => handleCommit('headline', v)}
-      />
-      <ToolbarTextInput
-        label="Label"
-        value={statLabel}
-        onChange={(v) => handleChange('label', v)}
-        onCommit={(v) => handleCommit('label', v)}
-      />
-      <ToolbarTextInput
-        label="Detail"
-        value={detail}
-        onChange={(v) => handleChange('body', v)}
-        onCommit={(v) => handleCommit('body', v)}
-      />
     </FloatingToolbar>
   );
 

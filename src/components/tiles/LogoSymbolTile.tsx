@@ -60,7 +60,11 @@ export const LogoSymbolTile = memo(function LogoSymbolTile({ placementId }: Logo
 
   const toolbar = isFocused && anchorRect && (
     <FloatingToolbar anchorRect={anchorRect}>
-      <ToolbarActions onShuffle={() => {/* no-op */}} />
+      <ToolbarActions
+        onShuffle={() => {/* no-op */}}
+        hasImage
+        onImageUpload={(dataUrl) => handleLogoChange('image', dataUrl)}
+      />
       <ToolbarDivider />
       <ToolbarLabel>Symbol</ToolbarLabel>
       <ToolbarSlider

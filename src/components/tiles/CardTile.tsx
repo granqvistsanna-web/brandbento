@@ -4,7 +4,7 @@
  * Versatile card with image, title, subtitle, badge, and detail.
  * Works for products, services, features, or any branded content.
  */
-import { useCallback } from 'react';
+
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getAdaptiveTextColor } from '@/utils/color';
@@ -17,9 +17,6 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
-  ToolbarDivider,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -68,13 +65,7 @@ export function CardTile({ placementId }: CardTileProps) {
 
   const { isFocused, containerRef, anchorRect } = useTileToolbar(placementId);
 
-  const handleChange = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
-  }, [updateTile, tile?.id]);
 
-  const handleCommit = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
-  }, [updateTile, tile?.id]);
 
   return (
     <div
@@ -171,34 +162,6 @@ export function CardTile({ placementId }: CardTileProps) {
             onImageUpload={(dataUrl) => {
               if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
             }}
-          />
-          <ToolbarDivider />
-          <ToolbarLabel>Card</ToolbarLabel>
-          <ToolbarTextInput
-            label="Title"
-            value={title}
-            onChange={(v) => handleChange('label', v)}
-            onCommit={(v) => handleCommit('label', v)}
-            placeholder="Title"
-          />
-          <ToolbarTextInput
-            label="Subtitle"
-            value={subtitle}
-            onChange={(v) => handleChange('subcopy', v)}
-            onCommit={(v) => handleCommit('subcopy', v)}
-          />
-          <ToolbarTextInput
-            label="Badge"
-            value={badge}
-            onChange={(v) => handleChange('body', v)}
-            onCommit={(v) => handleCommit('body', v)}
-          />
-          <ToolbarTextInput
-            label="Detail"
-            value={detail}
-            onChange={(v) => handleChange('price', v)}
-            onCommit={(v) => handleCommit('price', v)}
-            placeholder="Detail"
           />
         </FloatingToolbar>
       )}

@@ -9,7 +9,7 @@
  * - Landscape/square: side-by-side (image left, copy right)
  * - Portrait/narrow: stacked (image top, copy bottom)
  */
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { motion } from 'motion/react';
@@ -24,10 +24,6 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
-  ToolbarSegmented,
-  ToolbarDivider,
   getRandomShuffleImage,
 } from './FloatingToolbar';
 
@@ -148,14 +144,6 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
   // Floating toolbar
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
-  const handleTextChange = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
-  }, [updateTile, tile?.id]);
-
-  const handleTextCommit = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
-  }, [updateTile, tile?.id]);
-
   const isPortrait = shape === 'portrait';
 
   return (
@@ -272,42 +260,6 @@ export function SplitHeroTile({ placementId }: SplitHeroTileProps) {
               if (tile?.id) updateTile(tile.id, { image: dataUrl }, true);
             }}
           />
-          <ToolbarDivider />
-          <ToolbarLabel>Content</ToolbarLabel>
-          <ToolbarTextInput
-            label="Headline"
-            value={headline}
-            onChange={(v) => handleTextChange('headline', v)}
-            onCommit={(v) => handleTextCommit('headline', v)}
-            placeholder={industryCopy.headline}
-          />
-          <ToolbarTextInput
-            label="Body"
-            value={content.body || content.subcopy || ''}
-            onChange={(v) => handleTextChange('body', v)}
-            onCommit={(v) => handleTextCommit('body', v)}
-            placeholder={industryCopy.body}
-          />
-          <ToolbarSegmented
-            label="Button"
-            options={[
-              { value: 'show', label: 'Show' },
-              { value: 'hide', label: 'Hide' },
-            ]}
-            value={ctaHidden ? 'hide' : 'show'}
-            onChange={(v) => {
-              if (tile?.id) updateTile(tile.id, { ctaHidden: v === 'hide' }, true);
-            }}
-          />
-          {!ctaHidden && (
-            <ToolbarTextInput
-              label="CTA"
-              value={content.cta || content.buttonLabel || ''}
-              onChange={(v) => handleTextChange('cta', v)}
-              onCommit={(v) => handleTextCommit('cta', v)}
-              placeholder={industryCopy.cta}
-            />
-          )}
         </FloatingToolbar>
       )}
     </div>

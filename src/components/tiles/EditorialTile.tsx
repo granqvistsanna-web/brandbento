@@ -10,7 +10,7 @@
  * - Portrait/tall: bottom-aligned magazine composition
  * - Landscape/compact: centered, tighter spacing
  */
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useBrandStore, type BrandStore } from '@/store/useBrandStore';
 import { useShallow } from 'zustand/react/shallow';
 import { getAdaptiveTextColor } from '@/utils/color';
@@ -24,9 +24,6 @@ import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
   ToolbarActions,
-  ToolbarLabel,
-  ToolbarTextInput,
-  ToolbarDivider,
 } from './FloatingToolbar';
 
 interface EditorialTileProps {
@@ -67,7 +64,6 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
     }))
   );
   const activePreset = useBrandStore((state) => state.activePreset);
-  const updateTile = useBrandStore((s) => s.updateTile);
   const placementTileId = getPlacementTileId(placementId);
   const placementTileType = getPlacementTileType(placementId);
   const tile = useBrandStore((state: BrandStore) => {
@@ -108,14 +104,6 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
 
   // Floating toolbar
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
-
-  const handleTextChange = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, false);
-  }, [updateTile, tile?.id]);
-
-  const handleTextCommit = useCallback((key: string, value: string) => {
-    if (tile?.id) updateTile(tile.id, { [key]: value }, true);
-  }, [updateTile, tile?.id]);
 
   // Landscape: two-column layout with pretitle+headline left, body right
   if (isLandscape) {
@@ -201,29 +189,6 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
           <FloatingToolbar anchorRect={anchorRect}>
             <ToolbarActions
               onShuffle={() => {}}
-            />
-            <ToolbarDivider />
-            <ToolbarLabel>Content</ToolbarLabel>
-            <ToolbarTextInput
-              label="Pretitle"
-              value={pretitle}
-              onChange={(v) => handleTextChange('subcopy', v)}
-              onCommit={(v) => handleTextCommit('subcopy', v)}
-              placeholder={presetCopy.pretitle}
-            />
-            <ToolbarTextInput
-              label="Headline"
-              value={title}
-              onChange={(v) => handleTextChange('headline', v)}
-              onCommit={(v) => handleTextCommit('headline', v)}
-              placeholder={presetCopy.title}
-            />
-            <ToolbarTextInput
-              label="Body"
-              value={body}
-              onChange={(v) => handleTextChange('body', v)}
-              onCommit={(v) => handleTextCommit('body', v)}
-              placeholder={presetCopy.body}
             />
           </FloatingToolbar>
         )}
@@ -316,29 +281,6 @@ export function EditorialTile({ placementId }: EditorialTileProps) {
         <FloatingToolbar anchorRect={anchorRect}>
           <ToolbarActions
             onShuffle={() => {}}
-          />
-          <ToolbarDivider />
-          <ToolbarLabel>Content</ToolbarLabel>
-          <ToolbarTextInput
-            label="Pretitle"
-            value={pretitle}
-            onChange={(v) => handleTextChange('subcopy', v)}
-            onCommit={(v) => handleTextCommit('subcopy', v)}
-            placeholder={presetCopy.pretitle}
-          />
-          <ToolbarTextInput
-            label="Headline"
-            value={title}
-            onChange={(v) => handleTextChange('headline', v)}
-            onCommit={(v) => handleTextCommit('headline', v)}
-            placeholder={presetCopy.title}
-          />
-          <ToolbarTextInput
-            label="Body"
-            value={body}
-            onChange={(v) => handleTextChange('body', v)}
-            onCommit={(v) => handleTextCommit('body', v)}
-            placeholder={presetCopy.body}
           />
         </FloatingToolbar>
       )}
