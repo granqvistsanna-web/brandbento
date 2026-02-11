@@ -58,6 +58,20 @@ Recent decisions affecting current work:
 - Outside GSD: 10 specialized tile components replacing original architecture
 - Outside GSD: 200+ curated color palettes, brand presets system
 
+### Pending Todos
+
+10 todos in `.planning/todos/pending/`:
+- Font search improvements (ui)
+- Restructure color palettes panel (ui)
+- Expand surface color options (ui)
+- Per-tile color overrides (ui)
+- Export presets for sized outputs (ui)
+- Lummi image collections UI (ui)
+- Code-splitting for bundle size (tooling)
+- IconsTile overhaul (ui)
+- Tile reordering via drag-and-drop (ui)
+- SVG and PDF export options (ui)
+
 ### Blockers/Concerns
 
 None currently blocking.
