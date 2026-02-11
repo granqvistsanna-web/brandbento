@@ -152,3 +152,30 @@ export const getPlacementTileId = (id?: string): string | undefined => {
   if (!id) return undefined;
   return PLACEMENT_TILE_ID_BY_ID[id as PlacementId];
 };
+
+// ── Swap-aware resolution helpers ──
+
+/** Resolve a placement ID through the swap map. Returns the effective placement ID
+ *  (i.e. which placement's content should appear in this slot). */
+export const resolveSwappedId = (
+  placementId: string,
+  swaps: Record<string, string>
+): string => {
+  return swaps[placementId] ?? placementId;
+};
+
+/** Swap-aware tile type lookup: resolves swaps first, then gets the tile type. */
+export const getSwappedPlacementTileType = (
+  placementId: string,
+  swaps: Record<string, string>
+): string | undefined => {
+  return getPlacementTileType(resolveSwappedId(placementId, swaps));
+};
+
+/** Swap-aware tile ID lookup: resolves swaps first, then gets the tile instance ID. */
+export const getSwappedPlacementTileId = (
+  placementId: string,
+  swaps: Record<string, string>
+): string | undefined => {
+  return getPlacementTileId(resolveSwappedId(placementId, swaps));
+};

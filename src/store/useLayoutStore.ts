@@ -44,6 +44,10 @@ interface LayoutStore {
   /** Canvas aspect ratio constraint. 'auto' fills available space; fixed ratios
    *  (16:9, 4:3, etc.) center the grid in a fixed-ratio box. Persisted. */
   canvasRatio: CanvasRatio;
+  /** Maps placement IDs to swapped placement IDs. If placementSwaps contains
+   *  { "hero": "b", "b": "hero" }, then the "hero" slot renders what "b"
+   *  normally shows, and vice versa. Persisted. */
+  placementSwaps: Record<string, string>;
 
   // ── Actions ──
 
@@ -59,6 +63,10 @@ interface LayoutStore {
   setCanvasBg: (color: string | null) => void;
   /** Set canvas aspect ratio constraint */
   setCanvasRatio: (ratio: CanvasRatio) => void;
+  /** Swap two placement slots. Handles chained swaps correctly. */
+  swapPlacements: (idA: string, idB: string) => void;
+  /** Reset all placement swaps (e.g. when changing layout presets). */
+  clearPlacementSwaps: () => void;
 }
 
 /** Layout store hook — provides grid layout state and actions.
@@ -73,6 +81,7 @@ export const useLayoutStore = create<LayoutStore>()(
       debugMode: false,
       canvasBg: null,
       canvasRatio: 'auto',
+      placementSwaps: {},
 
       setBreakpoint: (breakpoint) => set({ breakpoint }),
       setPreset: (preset) => set({ preset }),
@@ -80,6 +89,20 @@ export const useLayoutStore = create<LayoutStore>()(
       toggleDebug: () => set((state) => ({ debugMode: !state.debugMode })),
       setCanvasBg: (color) => set({ canvasBg: color }),
       setCanvasRatio: (ratio) => set({ canvasRatio: ratio }),
+      swapPlacements: (idA, idB) =>
+        set((state) => {
+          // Resolve what is CURRENTLY at each slot (follow existing swaps)
+          const resolvedA = state.placementSwaps[idA] ?? idA;
+          const resolvedB = state.placementSwaps[idB] ?? idB;
+          return {
+            placementSwaps: {
+              ...state.placementSwaps,
+              [idA]: resolvedB,
+              [idB]: resolvedA,
+            },
+          };
+        }),
+      clearPlacementSwaps: () => set({ placementSwaps: {} }),
     }),
     {
       name: 'layout-store',
@@ -90,6 +113,7 @@ export const useLayoutStore = create<LayoutStore>()(
         density: state.density,
         canvasBg: state.canvasBg,
         canvasRatio: state.canvasRatio,
+        placementSwaps: state.placementSwaps,
       }),
     }
   )
