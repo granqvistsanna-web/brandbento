@@ -232,6 +232,12 @@ export interface TileContent {
   iconColor?: string;
   /** Whether to show tinted cell backgrounds behind icons (default true) */
   iconShowBg?: boolean;
+  /** Which icon library to display (icons tiles) */
+  iconLibrary?: 'remix' | 'feather' | 'lucide' | 'phosphor' | 'tabler';
+  /** Grid layout for icons tile: single icon, 2x2, or 3x3 */
+  iconGridSize?: '1' | '2x2' | '3x3';
+  /** Data URI of a custom uploaded SVG (replaces icon grid when set) */
+  iconCustomSvg?: string;
 }
 
 /**
@@ -1305,10 +1311,7 @@ const defaultTileContent: Record<string, TileContent> = {
     headline: "AäBbCcĐdEè\nFfGgHhIiJjKkLl\nMmNnØoPp\nQqRrSsTtŨuVv\nWwXxYyZż",
     label: "Typography",
   },
-  personality: {
-    items: ["Friendly", "Witty", "Confident", "Playful", "Human", "Enthusiastic", "Energetic", "Curious"],
-    label: "Personality",
-  },
+
   "color-blocks": {
     label: "Colour",
   },
