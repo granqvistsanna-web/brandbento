@@ -17,7 +17,7 @@ import { COLOR_DEFAULTS } from '@/utils/colorDefaults';
 import { resolveSurfaceColor } from '@/utils/surface';
 import { usePlacementTile } from '@/hooks/usePlacementTile';
 import { useGoogleFonts } from '@/hooks/useGoogleFonts';
-import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getBodyTracking, getHeadlineLineHeight, getBodyLineHeight } from '@/utils/typography';
+import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking } from '@/utils/typography';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -53,6 +53,7 @@ type TileShape = 'portrait' | 'square' | 'landscape';
 export function StatsTile({ placementId }: StatsTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shape, setShape] = useState<TileShape>('square');
+  const [containerWidth, setContainerWidth] = useState(300);
 
   /* Shape detection */
   useEffect(() => {
@@ -65,6 +66,7 @@ export function StatsTile({ placementId }: StatsTileProps) {
       if (ratio > 1.8) setShape('landscape');
       else if (ratio < 0.75) setShape('portrait');
       else setShape('square');
+      setContainerWidth(width);
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -109,7 +111,6 @@ export function StatsTile({ placementId }: StatsTileProps) {
   const tileContent = tile?.content || {};
   const statValue = tileContent.headline || '12M+';
   const statLabel = tileContent.label || 'Happy Humans';
-  const detail = tileContent.body || 'And counting, every single day';
 
   /* ─── Toolbar ─── */
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
@@ -133,24 +134,18 @@ export function StatsTile({ placementId }: StatsTileProps) {
     lineHeight: 1.3,
   };
 
+  // Scale stat to fill ~80% of container width based on character count
+  const charCount = statValue.length || 1;
+  const megaSize = clampFontSize((containerWidth * 0.8) / (charCount * 0.6), 40, 260);
+
   const statStyle: React.CSSProperties = {
     fontFamily: headlineFont,
     fontWeight: parseInt(typography.weightHeadline) || 700,
-    fontSize: `${clampFontSize(typeScale.step3 * 2, 36, 140)}px`,
-    lineHeight: getHeadlineLineHeight(typography),
+    fontSize: `${megaSize}px`,
+    lineHeight: 1,
     letterSpacing: getHeadlineTracking(typography),
     color: adaptiveText,
-    textWrap: 'balance',
-  };
-
-  const detailStyle: React.CSSProperties = {
-    fontFamily: bodyFont,
-    fontWeight: parseInt(typography.weightBody) || 400,
-    fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 14)}px`,
-    color: adaptiveText,
-    opacity: 0.38,
-    lineHeight: getBodyLineHeight(typography),
-    letterSpacing: getBodyTracking(typography),
+    whiteSpace: 'nowrap',
   };
 
   /* ─── Toolbar JSX (shared between layouts) ─── */
@@ -185,34 +180,7 @@ export function StatsTile({ placementId }: StatsTileProps) {
         onCommit={(v) => tile?.id && updateTile(tile.id, { label: v }, true)}
         placeholder="Happy Humans"
       />
-      <ToolbarTextInput
-        label="Detail"
-        value={detail}
-        onChange={(v) => tile?.id && updateTile(tile.id, { body: v }, false)}
-        onCommit={(v) => tile?.id && updateTile(tile.id, { body: v }, true)}
-        placeholder="Supporting detail..."
-      />
     </FloatingToolbar>
-  );
-
-  /* ─── Corner index — anchors the empty upper space ─── */
-  const cornerIndex = (
-    <span
-      className="absolute select-none"
-      style={{
-        top: 'clamp(16px, 6%, 28px)',
-        right: 'clamp(16px, 6%, 28px)',
-        fontFamily: bodyFont,
-        fontWeight: parseInt(typography.weightBody) || 400,
-        fontSize: `${clampFontSize(typeScale.stepMinus2, 9, 11)}px`,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase' as const,
-        color: adaptiveText,
-        opacity: 0.25,
-      }}
-    >
-      {'\u2014'}
-    </span>
   );
 
   /* ─── Landscape: side-by-side ─── */
@@ -240,7 +208,6 @@ export function StatsTile({ placementId }: StatsTileProps) {
           }}
         >
           <span style={labelStyle}>{statLabel}</span>
-          <span style={detailStyle}>{detail}</span>
         </div>
 
         {toolbar}
@@ -259,7 +226,6 @@ export function StatsTile({ placementId }: StatsTileProps) {
         paddingBottom: 'clamp(28px, 12%, 56px)',
       }}
     >
-      {cornerIndex}
 
       {/* Label */}
       <span style={labelStyle}>{statLabel}</span>
@@ -272,16 +238,6 @@ export function StatsTile({ placementId }: StatsTileProps) {
         }}
       >
         {statValue}
-      </span>
-
-      {/* Detail line — generous pause after the number */}
-      <span
-        style={{
-          ...detailStyle,
-          marginTop: `${clampFontSize(typeScale.base * 1, 10, 24)}px`,
-        }}
-      >
-        {detail}
       </span>
 
       {toolbar}

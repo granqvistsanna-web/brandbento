@@ -547,3 +547,16 @@ main {
   text-decoration: underline;
   margin-left: 8px;
 }
+
+/* Compact color picker inside floating toolbar */
+.toolbar-color-picker-compact .react-colorful {
+  width: 100% !important;
+  height: 120px !important;
+}
+.toolbar-color-picker-compact .react-colorful__saturation {
+  border-radius: 6px 6px 0 0;
+}
+.toolbar-color-picker-compact .react-colorful__hue {
+  height: 10px;
+  border-radius: 0 0 6px 6px;
+}

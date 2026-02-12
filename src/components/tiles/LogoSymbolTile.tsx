@@ -249,7 +249,7 @@ export const LogoSymbolTile = memo(function LogoSymbolTile({ placementId }: Logo
           : adaptiveText}
         paletteColors={paletteColors}
         onChange={(hex) => handleContentChange({ symbolColor: hex }, false)}
-        onCommit={() => handleContentChange({ symbolColor: tileContent.symbolColor }, true)}
+        onCommit={(val) => handleContentChange({ symbolColor: val !== undefined ? val : tileContent.symbolColor }, true)}
       />
       {logoImage && (
         <ToolbarSegmented
@@ -279,7 +279,7 @@ export const LogoSymbolTile = memo(function LogoSymbolTile({ placementId }: Logo
             autoColor={primary}
             paletteColors={paletteColors}
             onChange={(hex) => handleContentChange({ symbolBgColor: hex || primary }, false)}
-            onCommit={() => handleContentChange({ symbolBgColor: tileContent.symbolBgColor || primary }, true)}
+            onCommit={(val) => handleContentChange({ symbolBgColor: val !== undefined ? (val || primary) : (tileContent.symbolBgColor || primary) }, true)}
           />
           <ToolbarSlider
             label="Radius"

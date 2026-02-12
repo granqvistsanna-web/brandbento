@@ -11,10 +11,6 @@ export interface EditorialPresetContent {
   detail: string;
 }
 
-export interface OverlayPresetContent {
-  headline: string;
-}
-
 export interface SplitHeroPresetContent {
   headline: string;
   body: string;
@@ -56,7 +52,6 @@ export interface StoryPresetContent {
 
 interface PresetContent {
   editorial: EditorialPresetContent;
-  overlay: OverlayPresetContent;
   splitHero: SplitHeroPresetContent;
   menu: MenuPresetContent;
   splitList: SplitListPresetContent;
@@ -73,9 +68,6 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       title: 'Your brand has a point of view.',
       body: 'Good brands don\u2019t whisper. They walk in and everyone just knows.',
       detail: 'No. 01',
-    },
-    overlay: {
-      headline: 'Less, But Better',
     },
     splitHero: {
       headline: 'Start With Why Not',
@@ -118,9 +110,6 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       body: 'No onboarding tutorial needed. Just open it and go.',
       detail: 'v2.0',
     },
-    overlay: {
-      headline: 'Shipping Is a Feature',
-    },
     splitHero: {
       headline: 'Built for Builders',
       body: 'Clean APIs, zero hand-holding. The DX you\u2019ve been waiting for.',
@@ -161,9 +150,6 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       title: 'Quality you feel before you see.',
       body: 'You pick it up, and you just know.',
       detail: 'SS 26',
-    },
-    overlay: {
-      headline: 'Quiet Luxury, Loud Confidence',
     },
     splitHero: {
       headline: 'Made to Last',
@@ -206,9 +192,6 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       body: 'Real impact starts with real people. Not a campaign\u2014a conversation.',
       detail: 'Ch. 01',
     },
-    overlay: {
-      headline: 'Neighbors First',
-    },
     splitHero: {
       headline: 'People Over Presentations',
       body: 'No jargon. We show up, and we stick around.',
@@ -250,9 +233,6 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       body: 'We make the kind of projects that keep you up at night\u2014in a good way.',
       detail: 'Issue 04',
     },
-    overlay: {
-      headline: 'The Messy Middle',
-    },
     splitHero: {
       headline: 'Less Deck, More Doing',
       body: 'Strategy is great. Shipping is better.',
@@ -293,9 +273,6 @@ const TILE_PRESET_CONTENT: Record<string, PresetContent> = {
       title: 'Every plate has a point of view.',
       body: 'Good food doesn\u2019t need a story. Ours has one anyway.',
       detail: 'Pg. 12',
-    },
-    overlay: {
-      headline: 'Ingredient-First, Always',
     },
     splitHero: {
       headline: 'Come Hungry',

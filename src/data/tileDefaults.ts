@@ -160,11 +160,6 @@ export const DEFAULT_TILE_CONTENT: Record<string, TileContent> = {
     cta: "See How",
     image: "/images/20250622_2048_Candid Office Consultation_simple_compose_01jycfdk73fj1az74wv8n0rgwt.png",
   },
-  overlay: {
-    headline: "Less, But Better",
-    image: "/images/visualelectric-1751915506477.png",
-    heroVariation: 'image-headline',
-  },
   "split-list": {
     headline: "What\nWe Do",
     overlayText: "Our Craft",

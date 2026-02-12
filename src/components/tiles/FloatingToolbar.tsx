@@ -34,7 +34,6 @@ import {
   RiImageFill,
   RiHashtag,
   RiLayoutColumnFill,
-  RiCheckboxBlankFill,
   RiLayoutRowFill,
   RiSparklingFill,
   RiFingerprintFill,
@@ -722,7 +721,6 @@ const TILE_TYPES = [
   { value: 'logo-symbol', label: 'Symbol', icon: RiFingerprintFill },
   { value: 'icons', label: 'Icons', icon: RiGridFill },
   { value: 'split-hero', label: 'Split', icon: RiLayoutColumnFill },
-  { value: 'overlay', label: 'Overlay', icon: RiCheckboxBlankFill },
   { value: 'split-list', label: 'Split List', icon: RiLayoutRowFill },
   { value: 'pattern', label: 'Pattern', icon: RiLayoutGrid2Fill },
   { value: 'stats', label: 'Stats', icon: RiLineChartFill },
@@ -801,16 +799,18 @@ interface ToolbarColorPickerProps {
   autoColor: string;
   paletteColors?: string[];
   onChange: (hex: string | undefined) => void;
-  onCommit?: () => void;
+  /** Called to commit the current value. When triggered by a discrete click
+   *  (palette swatch or Auto), the chosen hex is passed so the consumer
+   *  doesn't read a stale closure. On blur it's called without a value. */
+  onCommit?: (hex?: string | null) => void;
 }
 
 export function ToolbarColorPicker({ label, color, autoColor, paletteColors = [], onChange, onCommit }: ToolbarColorPickerProps) {
   const [open, setOpen] = useState(false);
   const [hexInput, setHexInput] = useState(color.toUpperCase());
   const isAuto = color === autoColor;
-  const swatchSize = 20;
+  const swatchSize = 22;
 
-  // Keep hex input in sync with external color changes
   useEffect(() => {
     setHexInput(color.toUpperCase());
   }, [color]);
@@ -820,15 +820,18 @@ export function ToolbarColorPicker({ label, color, autoColor, paletteColors = []
       <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--sidebar-text-muted)', display: 'block', marginBottom: 6 }}>
         {label}
       </span>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+
+      {/* Palette swatches — primary selection */}
+      <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
         {/* Auto button */}
         <button
-          onClick={() => { onChange(undefined); setOpen(false); onCommit?.(); }}
+          onClick={() => { onChange(undefined); setOpen(false); onCommit?.(null); }}
           style={{
             fontSize: 10,
             fontWeight: 600,
             padding: '2px 6px',
             borderRadius: 4,
+            height: swatchSize,
             border: 'none',
             cursor: 'pointer',
             background: isAuto ? 'var(--accent)' : 'var(--sidebar-bg-hover)',
@@ -839,74 +842,90 @@ export function ToolbarColorPicker({ label, color, autoColor, paletteColors = []
           Auto
         </button>
 
-        {/* Current color swatch — toggles picker */}
+        {paletteColors.slice(0, 7).map((c, i) => {
+          const selected = c.toLowerCase() === color.toLowerCase();
+          return (
+            <button
+              key={i}
+              onClick={() => { onChange(c); onCommit?.(c); }}
+              style={{
+                width: swatchSize,
+                height: swatchSize,
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: c,
+                boxShadow: selected
+                  ? `0 0 0 2px var(--sidebar-bg), 0 0 0 3.5px ${c}`
+                  : 'inset 0 0 0 1px rgba(0,0,0,0.1)',
+                transition: 'box-shadow 0.15s ease',
+                flexShrink: 0,
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Custom color — compact toggle row */}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 6 }}>
         <button
           onClick={() => setOpen(!open)}
           style={{
-            width: swatchSize,
-            height: swatchSize,
-            borderRadius: '50%',
+            fontSize: 10,
+            fontWeight: 500,
+            padding: '2px 6px',
+            borderRadius: 4,
             border: 'none',
             cursor: 'pointer',
-            backgroundColor: color,
-            boxShadow: open
-              ? `0 0 0 2px var(--sidebar-bg), 0 0 0 4px var(--accent)`
-              : 'inset 0 0 0 1px rgba(0,0,0,0.12)',
-            transition: 'box-shadow 0.15s ease',
+            background: open ? 'var(--sidebar-bg-active)' : 'var(--sidebar-bg-hover)',
+            color: open ? 'var(--sidebar-text)' : 'var(--sidebar-text-muted)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          Custom
+        </button>
+        <div style={{
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          backgroundColor: color,
+          boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.12)',
+          flexShrink: 0,
+        }} />
+        <input
+          type="text"
+          value={hexInput}
+          onChange={(e) => {
+            const raw = e.target.value.toUpperCase();
+            setHexInput(raw);
+            const cleaned = raw.replace('#', '');
+            if (/^[0-9A-F]{6}$/.test(cleaned)) {
+              onChange('#' + cleaned);
+            }
+          }}
+          onBlur={() => onCommit?.()}
+          style={{
+            width: 64,
+            fontSize: 10,
+            fontFamily: 'ui-monospace, monospace',
+            fontWeight: 500,
+            padding: '2px 6px',
+            borderRadius: 4,
+            border: '1px solid var(--sidebar-border)',
+            background: 'transparent',
+            color: 'var(--sidebar-text)',
+            textAlign: 'center',
+            boxSizing: 'border-box',
           }}
         />
-
-        {/* Palette quick-picks */}
-        {paletteColors.filter(c => c !== color).slice(0, 5).map((c, i) => (
-          <button
-            key={i}
-            onClick={() => { onChange(c); onCommit?.(); }}
-            style={{
-              width: swatchSize - 4,
-              height: swatchSize - 4,
-              borderRadius: '50%',
-              border: 'none',
-              cursor: 'pointer',
-              backgroundColor: c,
-              boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
-              transition: 'box-shadow 0.15s ease',
-            }}
-          />
-        ))}
       </div>
 
+      {/* Expanded color picker */}
       {open && (
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 6 }} className="toolbar-color-picker-compact">
           <HexColorPicker
             color={color}
             onChange={(hex) => onChange(hex)}
-          />
-          <input
-            type="text"
-            value={hexInput}
-            onChange={(e) => {
-              const raw = e.target.value.toUpperCase();
-              setHexInput(raw);
-              const cleaned = raw.replace('#', '');
-              if (/^[0-9A-F]{6}$/.test(cleaned)) {
-                onChange('#' + cleaned);
-              }
-            }}
-            onBlur={() => onCommit?.()}
-            style={{
-              marginTop: 6,
-              width: '100%',
-              fontSize: 10,
-              fontFamily: 'ui-monospace, monospace',
-              fontWeight: 500,
-              padding: '3px 6px',
-              borderRadius: 4,
-              border: '1px solid var(--sidebar-border)',
-              background: 'transparent',
-              color: 'var(--sidebar-text)',
-              textAlign: 'center',
-              boxSizing: 'border-box',
-            }}
           />
         </div>
       )}

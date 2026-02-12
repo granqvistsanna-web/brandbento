@@ -248,6 +248,8 @@ export interface TileContent {
   iconLibrary?: 'remix' | 'feather' | 'lucide' | 'phosphor' | 'tabler';
   /** Grid layout for icons tile: single icon, 2x2, or 3x3 */
   iconGridSize?: '1' | '2x2' | '3x3';
+  /** Icon arrangement layout */
+  iconLayout?: 'single' | 'row' | 'column' | 'grid';
   /** Data URI of a custom uploaded SVG (replaces icon grid when set) */
   iconCustomSvg?: string;
 
@@ -268,6 +270,10 @@ export interface TileContent {
   symbolStroke?: boolean;
   /** Optional short label below/beside symbol */
   symbolLabel?: string;
+
+  /* ─── Specimen tile fields ─── */
+  /** Specimen variation: 'alphabet' (classic) or 'wordlist' (stacked words with accent highlight) */
+  specimenVariation?: 'alphabet' | 'wordlist';
 
   /* ─── Hero/Statement tile fields ─── */
   /** Variation mode: 'image' (no text), 'image-headline' (default), 'solid-headline' */
@@ -395,6 +401,15 @@ const mergeBrand = (source?: Partial<Brand> | null): Brand => {
     mergedLogo.image = null;
   }
 
+  // Deep-merge columnOverrides so partial updates don't lose sibling keys
+  const baseOverrides = base.colors.columnOverrides ?? {};
+  const sourceOverrides = source.colors?.columnOverrides ?? {};
+  const mergedOverrides = {
+    primary: { ...baseOverrides.primary, ...sourceOverrides.primary },
+    surface: { ...baseOverrides.surface, ...sourceOverrides.surface },
+    accent: { ...baseOverrides.accent, ...sourceOverrides.accent },
+  };
+
   return {
     typography: { ...base.typography, ...(source.typography ?? {}) },
     colors: {
@@ -402,6 +417,7 @@ const mergeBrand = (source?: Partial<Brand> | null): Brand => {
       ...(source.colors ?? {}),
       surfaces: source.colors?.surfaces ?? base.colors.surfaces,
       paletteColors: source.colors?.paletteColors ?? base.colors.paletteColors,
+      columnOverrides: mergedOverrides,
     },
     logo: mergedLogo,
     imagery: { ...base.imagery, ...(source.imagery ?? {}) },
@@ -484,14 +500,14 @@ const hasBrandChanges = (brand: Brand, newBrand: Partial<Brand>): boolean => {
     }
   }
 
-  // Top-level direct updates (rare in this codebase)
-  const topLevelKeys = Object.keys(newBrand) as (keyof Brand)[];
-  return topLevelKeys.some((key) => {
-    if (key === 'typography' || key === 'colors' || key === 'logo' || key === 'imagery') {
-      return false;
+  if (newBrand.ui) {
+    const current = brand.ui;
+    for (const key of Object.keys(newBrand.ui) as (keyof UISettings)[]) {
+      if (newBrand.ui[key] !== current[key]) return true;
     }
-    return (newBrand[key] as unknown) !== (brand[key] as unknown);
-  });
+  }
+
+  return false;
 };
 
 /** Same as `hasBrandChanges` but for tile content — prevents no-op history entries
@@ -502,7 +518,17 @@ const hasTileContentChanges = (
 ): boolean => {
   return Object.keys(newContent).some((key) => {
     const typedKey = key as keyof TileContent;
-    return newContent[typedKey] !== content[typedKey];
+    const newVal = newContent[typedKey];
+    const curVal = content[typedKey];
+    if (newVal === curVal) return false;
+    // Deep-compare arrays and objects
+    if (Array.isArray(newVal) && Array.isArray(curVal)) {
+      return !shallowEqualArray(newVal, curVal);
+    }
+    if (typeof newVal === 'object' && typeof curVal === 'object' && newVal !== null && curVal !== null) {
+      return JSON.stringify(newVal) !== JSON.stringify(curVal);
+    }
+    return true;
   });
 };
 
@@ -875,7 +901,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
       },
       {
         id: "social-1",
-        type: "overlay",
+        type: "hero",
         content: {
           headline: "The Messy Middle",
           body: "Every portfolio shows the finish line. We\u2019re here for the all-nighter.",
@@ -1121,7 +1147,7 @@ const STARTER_TEMPLATES: StarterTemplate[] = [
       },
       {
         id: "ui-preview-1",
-        type: "overlay",
+        type: "hero",
         content: {
           headline: "Start Where You Are",
           body: "You don\u2019t need a retreat. Just five minutes.",
@@ -1347,11 +1373,6 @@ const defaultTileContent: Record<string, TileContent> = {
   utility: { headline: "Features", items: ["Item 1", "Item 2", "Item 3"] },
   menu: { headline: "Menu", items: ["Breakfast", "Brunch", "Seasonal"] },
   logo: { label: "Brand" },
-  overlay: {
-    headline: "The Winter Collection",
-    image: "/images/visualelectric-1751915506477.png",
-    heroVariation: 'image-headline',
-  },
   social: {
     image: "/images/visualelectric-1750703676698.png",
     overlayText: "Atmosphere",
@@ -1476,18 +1497,9 @@ export const useBrandStore = create<BrandStore>()(
         _lastTemplateIdx = idx;
         const randomTemplate = STARTER_TEMPLATES[idx];
 
-        // Deduplicate tile types — if a template somehow has
-        // duplicate types, keep only the first of each type
-        const seenTypes = new Set<string>();
-        const dedupedTiles = randomTemplate.tiles.filter((t) => {
-          if (seenTypes.has(t.type)) return false;
-          seenTypes.add(t.type);
-          return true;
-        });
-
         set({
           brand: randomTemplate.brand,
-          tiles: dedupedTiles,
+          tiles: randomTemplate.tiles,
           activePreset: "custom",
           tileSurfaces: { ...INITIAL_TILE_SURFACES },
           placementContent: defaultPlacementContent,
@@ -1595,7 +1607,7 @@ export const useBrandStore = create<BrandStore>()(
             const g = parseInt(rgb.slice(2, 4), 16) / 255;
             const b = parseInt(rgb.slice(4, 6), 16) / 255;
             const max = Math.max(r, g, b), min = Math.min(r, g, b);
-            if (max === min) return 0.4;
+            if (max === min) continue;
             let h = 0;
             const d = max - min;
             if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
@@ -1772,6 +1784,15 @@ export const useBrandStore = create<BrandStore>()(
         if (!newBrand || Object.keys(newBrand).length === 0) return;
         if (!hasBrandChanges(brand, newBrand)) return;
 
+        // Deep-merge columnOverrides so partial updates preserve sibling keys
+        const baseOverrides = brand.colors.columnOverrides ?? {};
+        const newOverrides = newBrand.colors?.columnOverrides;
+        const mergedOverrides = newOverrides ? {
+          primary: { ...baseOverrides.primary, ...newOverrides.primary },
+          surface: { ...baseOverrides.surface, ...newOverrides.surface },
+          accent: { ...baseOverrides.accent, ...newOverrides.accent },
+        } : brand.colors.columnOverrides;
+
         const nextBrand: Brand = {
           ...brand,
           ...newBrand,
@@ -1781,6 +1802,7 @@ export const useBrandStore = create<BrandStore>()(
             ...(newBrand.colors ?? {}),
             surfaces: newBrand.colors?.surfaces ?? brand.colors.surfaces,
             paletteColors: newBrand.colors?.paletteColors ?? brand.colors.paletteColors,
+            columnOverrides: mergedOverrides,
           },
           logo: { ...brand.logo, ...(newBrand.logo ?? {}) },
           imagery: { ...brand.imagery, ...(newBrand.imagery ?? {}) },
@@ -1868,6 +1890,11 @@ export const useBrandStore = create<BrandStore>()(
       resetToDefaults: () => {
         const { history, brand, tiles, tileSurfaces, placementContent, recentFonts } = get();
 
+        // Reset module-level shuffle indices so next shuffle starts fresh
+        _lastTemplateIdx = -1;
+        _lastShufflePaletteIdx = -1;
+        _lastShuffleFontIdx = -1;
+
         set({
           brand: DEFAULT_BRAND,
           tiles: INITIAL_TILES,
@@ -1892,7 +1919,7 @@ export const useBrandStore = create<BrandStore>()(
         }
 
         const IMAGE_TILE_TYPES = new Set([
-          'hero', 'product', 'image', 'social', 'split-hero', 'overlay', 'split-list', 'story',
+          'hero', 'product', 'image', 'social', 'split-hero', 'split-list', 'story',
         ]);
 
         let urlIndex = 0;
@@ -1942,7 +1969,7 @@ export const useBrandStore = create<BrandStore>()(
           recentFonts: previous.recentFonts ?? [],
           history: {
             past: newPast,
-            future: [{ brand, tiles, tileSurfaces, placementContent, recentFonts }, ...history.future],
+            future: [{ brand, tiles, tileSurfaces, placementContent, recentFonts }, ...history.future].slice(0, MAX_HISTORY),
           },
         });
       },
@@ -2005,7 +2032,6 @@ export const useBrandStore = create<BrandStore>()(
 
         return {
           ...current,
-          ...persistedState,
           brand: mergeBrand(persistedState.brand),
           tiles,
           theme: persistedState.theme ?? current.theme,

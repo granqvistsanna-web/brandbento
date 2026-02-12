@@ -24,9 +24,6 @@ import { AppIconTile } from './tiles/AppIconTile';
 import { StoryTile } from './tiles/StoryTile';
 
 /* Variant wrappers so previews render the correct variant */
-function OverlayTile({ placementId }: { placementId?: string }) {
-  return <HeroTile placementId={placementId} variant="overlay" />;
-}
 function ColorBarsTile({ placementId }: { placementId?: string }) {
   return <SwatchTile placementId={placementId} variant="bars" />;
 }
@@ -242,24 +239,6 @@ const TILE_CATALOG: CatalogEntry[] = [
     fields: [],
     sizes: [
       { w: 200, h: 200, label: '1x1' },
-    ],
-  },
-  {
-    type: 'overlay',
-    label: 'HeroTile (overlay)',
-    component: OverlayTile,
-    placementId: 'hero',
-    tileId: '',
-    fields: [
-      { name: 'headline', contentKey: 'headline', type: 'text' },
-      { name: 'body', contentKey: 'body', type: 'text' },
-      { name: 'label', contentKey: 'label', type: 'text' },
-      { name: 'image', contentKey: 'image', type: 'image' },
-    ],
-    sizes: [
-      { w: 300, h: 200, label: '2x1' },
-      { w: 200, h: 300, label: '1x2' },
-      { w: 300, h: 300, label: '2x2' },
     ],
   },
   {

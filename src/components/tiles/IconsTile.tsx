@@ -100,7 +100,7 @@ interface IconsTileProps {
 }
 
 type LibraryId = 'remix' | 'feather' | 'lucide' | 'phosphor' | 'tabler';
-type GridSize = '1' | '2x2' | '3x3';
+type LayoutMode = 'single' | 'row' | 'column' | 'grid';
 
 /* ─── Icon Libraries ─── */
 
@@ -133,11 +133,11 @@ const LIBRARIES: Record<LibraryId, IconType[][]> = {
   ],
 };
 
-/* ─── Grid Configs ─── */
+/* ─── Layout Configs ─── */
 
-interface GridConfig {
-  gridW: number;
-  gridH: number;
+interface LayoutConfig {
+  totalW: number;
+  totalH: number;
   cell: number;
   gap: number;
   iconSize: number;
@@ -146,10 +146,11 @@ interface GridConfig {
   radius: string;
 }
 
-const GRID_CONFIGS: Record<GridSize, GridConfig> = {
-  '1': { gridW: 60, gridH: 60, cell: 60, gap: 0, iconSize: 36, cols: 1, count: 1, radius: 'rounded-2xl' },
-  '2x2': { gridW: 120, gridH: 120, cell: 48, gap: 12, iconSize: 22, cols: 2, count: 4, radius: 'rounded-xl' },
-  '3x3': { gridW: 180, gridH: 180, cell: 48, gap: 12, iconSize: 20, cols: 3, count: 9, radius: 'rounded-lg' },
+const LAYOUT_CONFIGS: Record<LayoutMode, LayoutConfig> = {
+  single: { totalW: 64, totalH: 64, cell: 64, gap: 0, iconSize: 38, cols: 1, count: 1, radius: 'rounded-2xl' },
+  row:    { totalW: 186, totalH: 42, cell: 42, gap: 6, iconSize: 22, cols: 4, count: 4, radius: 'rounded-xl' },
+  column: { totalW: 42, totalH: 186, cell: 42, gap: 6, iconSize: 22, cols: 1, count: 4, radius: 'rounded-xl' },
+  grid:   { totalW: 138, totalH: 138, cell: 42, gap: 6, iconSize: 20, cols: 3, count: 9, radius: 'rounded-lg' },
 };
 
 /* ─── Component ─── */
@@ -182,11 +183,11 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
   const iconColorOverride = placementContent?.iconColor || undefined;
   const iconShowBg = placementContent?.iconShowBg ?? true;
   const iconLibrary: LibraryId = (placementContent?.iconLibrary as LibraryId) || 'remix';
-  const iconGridSize: GridSize = (placementContent?.iconGridSize as GridSize) || '2x2';
+  const iconLayout: LayoutMode = (placementContent?.iconLayout as LayoutMode) || 'grid';
   const iconCustomSvg = placementContent?.iconCustomSvg || undefined;
 
   const { primary, bg, surfaces } = colors;
-  const gridConfig = GRID_CONFIGS[iconGridSize];
+  const layoutConfig = LAYOUT_CONFIGS[iconLayout];
 
   const surfaceBg = resolveSurfaceColor({
     placementId,
@@ -215,8 +216,8 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
       if (width === 0 || height === 0) return;
       const pad = Math.min(width, height) * 0.12;
       const s = Math.min(
-        (width - pad * 2) / gridConfig.gridW,
-        (height - pad * 2) / gridConfig.gridH
+        (width - pad * 2) / layoutConfig.totalW,
+        (height - pad * 2) / layoutConfig.totalH
       );
       setScale(s);
     };
@@ -224,7 +225,7 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
     ro.observe(el);
     update();
     return () => ro.disconnect();
-  }, [gridConfig.gridW, gridConfig.gridH]);
+  }, [layoutConfig.totalW, layoutConfig.totalH]);
 
   const librarySets = LIBRARIES[iconLibrary];
 
@@ -243,9 +244,9 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
     setIconSetIndex(0);
   }, [placementId, setPlacementContent]);
 
-  const handleGridSizeChange = useCallback((value: string) => {
+  const handleLayoutChange = useCallback((value: string) => {
     if (!placementId) return;
-    setPlacementContent(placementId, { iconGridSize: value as GridSize }, true);
+    setPlacementContent(placementId, { iconLayout: value as LayoutMode }, true);
   }, [placementId, setPlacementContent]);
 
   const handleSvgUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -268,7 +269,7 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
 
   const { isFocused, anchorRect } = useTileToolbar(placementId, containerRef);
 
-  const currentIcons = librarySets[iconSetIndex % librarySets.length].slice(0, gridConfig.count);
+  const currentIcons = librarySets[iconSetIndex % librarySets.length].slice(0, layoutConfig.count);
   const paletteColors = useBrandStore((s) => s.brand.colors.paletteColors) || [];
 
   const handleIconColorChange = useCallback((hex: string | undefined) => {
@@ -276,9 +277,9 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
     setPlacementContent(placementId, { iconColor: hex || '' }, !hex);
   }, [placementId, setPlacementContent]);
 
-  const handleIconColorCommit = useCallback(() => {
+  const handleIconColorCommit = useCallback((val?: string | null) => {
     if (!placementId) return;
-    setPlacementContent(placementId, { iconColor: iconColorOverride }, true);
+    setPlacementContent(placementId, { iconColor: val !== undefined ? (val || '') : iconColorOverride }, true);
   }, [placementId, iconColorOverride, setPlacementContent]);
 
   const handleToggleBg = useCallback((checked: boolean) => {
@@ -319,14 +320,15 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
         onChange={handleLibraryChange}
       />
       <ToolbarSegmented
-        label="Grid"
+        label="Layout"
         options={[
-          { value: '1', label: 'Single' },
-          { value: '2x2', label: '2 x 2' },
-          { value: '3x3', label: '3 x 3' },
+          { value: 'single', label: 'Single' },
+          { value: 'row', label: 'Row' },
+          { value: 'column', label: 'Column' },
+          { value: 'grid', label: 'Grid' },
         ]}
-        value={iconGridSize}
-        onChange={handleGridSizeChange}
+        value={iconLayout}
+        onChange={handleLayoutChange}
       />
       <ToolbarDivider />
       <ToolbarLabel>Custom SVG</ToolbarLabel>
@@ -411,7 +413,7 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
         <div className="absolute inset-0" style={{ backgroundColor: surfaceBg }} />
         <div className="relative h-full w-full flex items-center justify-center">
           <div
-            className={`flex items-center justify-center ${GRID_CONFIGS['1'].radius}`}
+            className={`flex items-center justify-center ${LAYOUT_CONFIGS['single'].radius}`}
             style={{
               width: 60 * scale,
               height: 60 * scale,
@@ -442,18 +444,18 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
       <div className="relative h-full w-full flex items-center justify-center">
         <div
           style={{
-            width: gridConfig.gridW * scale,
-            height: gridConfig.gridH * scale,
+            width: layoutConfig.totalW * scale,
+            height: layoutConfig.totalH * scale,
             flexShrink: 0,
           }}
         >
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${gridConfig.cols}, ${gridConfig.cell}px)`,
-              gap: gridConfig.gap,
-              width: gridConfig.gridW,
-              height: gridConfig.gridH,
+              gridTemplateColumns: `repeat(${layoutConfig.cols}, ${layoutConfig.cell}px)`,
+              gap: layoutConfig.gap,
+              width: layoutConfig.totalW,
+              height: layoutConfig.totalH,
               transform: `scale(${scale})`,
               transformOrigin: 'top left',
             }}
@@ -461,16 +463,16 @@ export const IconsTile = memo(function IconsTile({ placementId }: IconsTileProps
             {currentIcons.map((Icon, i) => (
               <div
                 key={`${iconLibrary}-${iconSetIndex}-${i}`}
-                className={`${gridConfig.radius} flex items-center justify-center`}
+                className={`${layoutConfig.radius} flex items-center justify-center`}
                 style={{
-                  width: gridConfig.cell,
-                  height: gridConfig.cell,
+                  width: layoutConfig.cell,
+                  height: layoutConfig.cell,
                   background: tintBg,
                   aspectRatio: '1',
                 }}
               >
                 <Icon
-                  size={gridConfig.iconSize}
+                  size={layoutConfig.iconSize}
                   color={iconColor}
                 />
               </div>

@@ -196,8 +196,6 @@ const BentoCanvasNew = React.forwardRef((props, ref) => {
         return <ListTile placementId={id} />;
       case 'split-hero':
         return <SplitHeroTile placementId={id} />;
-      case 'overlay':
-        return <HeroTile placementId={id} variant="overlay" />;
       case 'split-list':
         return <ListTile placementId={id} variant="split" />;
       case 'swatch':

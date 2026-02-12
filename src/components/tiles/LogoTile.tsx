@@ -105,7 +105,7 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
         autoColor={defaultBg}
         paletteColors={paletteColors}
         onChange={(hex) => handleLogoChange('bgColor', hex ?? null, false)}
-        onCommit={() => handleLogoChange('bgColor', logo.bgColor ?? null, true)}
+        onCommit={(val) => handleLogoChange('bgColor', val !== undefined ? (val ?? null) : (logo.bgColor ?? null), true)}
       />
       <ToolbarColorPicker
         label="Text Color"
@@ -113,7 +113,7 @@ export const LogoTile = memo(function LogoTile({ placementId }: LogoTileProps) {
         autoColor={autoTextColor}
         paletteColors={paletteColors}
         onChange={(hex) => handleLogoChange('color', hex ?? null, false)}
-        onCommit={() => handleLogoChange('color', logo.color ?? null, true)}
+        onCommit={(val) => handleLogoChange('color', val !== undefined ? (val ?? null) : (logo.color ?? null), true)}
       />
       <ToolbarDivider />
       <ToolbarLabel>Logo</ToolbarLabel>

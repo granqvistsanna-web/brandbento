@@ -7,6 +7,7 @@
  * - 'solid-headline': Colored surface + headline (no image)
  *
  * Provides granular controls for typography, positioning, and overlay treatment.
+ * (Previously also served as "overlay" tile type — now merged into one.)
  */
 import { useRef, useCallback } from 'react';
 import { useBrandStore, type BrandStore, type TileContent } from '@/store/useBrandStore';
@@ -17,7 +18,6 @@ import { useGoogleFonts } from '@/hooks/useGoogleFonts';
 import { clampFontSize, getFontCategory, getTypeScale, getHeadlineTracking, getHeadlineLineHeight, getHeadlineTransform } from '@/utils/typography';
 import { IMAGE_OVERLAY_TEXT } from '@/utils/colorDefaults';
 import { getImageFilter } from '@/utils/imagery';
-import { getPresetContent } from '@/data/tilePresetContent';
 import { useTileToolbar } from '@/hooks/useTileToolbar';
 import {
   FloatingToolbar,
@@ -36,14 +36,10 @@ import {
 interface HeroTileProps {
   /** Grid placement ID — determines tile content and surface color */
   placementId?: string;
-  /** 'hero' or 'overlay' — determines which preset content key to use for fallback defaults */
-  variant?: 'hero' | 'overlay';
 }
 
-export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
+export function HeroTile({ placementId }: HeroTileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const isOverlay = variant === 'overlay';
 
   // Shape detection removed - not needed for current simplified design
 
@@ -55,7 +51,6 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
     }))
   );
   const imageFilter = getImageFilter(imagery.style, imagery.overlay);
-  const activePreset = useBrandStore((state: BrandStore) => state.activePreset);
   const updateTile = useBrandStore((s) => s.updateTile);
   const swapTileType = useBrandStore((s) => s.swapTileType);
   const fontPreview = useBrandStore((state: BrandStore) => state.fontPreview);
@@ -76,12 +71,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
   const content = { ...tile?.content, ...(placementContent || {}) };
   const imageUrl = content.image;
 
-  // Fallback defaults from preset content
-  const presetContent = getPresetContent(activePreset);
-  const defaultHeadline = isOverlay
-    ? presetContent.overlay.headline
-    : 'Your brand, on its best day.';
-  const headline = content.headline || defaultHeadline;
+  const headline = content.headline || 'Your brand, on its best day.';
 
   // Read hero control fields with sensible defaults
   const variation = content.heroVariation || 'image-headline';
@@ -239,7 +229,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
           {toolbarActions}
           {toolbarActions && <ToolbarDivider />}
           <ToolbarTileTypeGrid
-            currentType={tile?.type || variant}
+            currentType={tile?.type || 'hero'}
             onTypeChange={(type) => tile?.id && swapTileType(tile.id, type)}
           />
           <ToolbarDivider />
@@ -325,7 +315,7 @@ export function HeroTile({ placementId, variant = 'hero' }: HeroTileProps) {
                 autoColor={variation === 'solid-headline' ? colors.text : IMAGE_OVERLAY_TEXT}
                 paletteColors={[colors.text, colors.primary, colors.accent, IMAGE_OVERLAY_TEXT, '#000000', '#FFFFFF']}
                 onChange={(hex) => handleContentChange({ heroTextColor: hex || undefined }, false)}
-                onCommit={() => handleContentChange({ heroTextColor: content.heroTextColor }, true)}
+                onCommit={(val) => handleContentChange({ heroTextColor: val !== undefined ? (val || undefined) : content.heroTextColor }, true)}
               />
               <ToolbarSegmented
                 label="Align"
